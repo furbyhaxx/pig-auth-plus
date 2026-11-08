@@ -15,6 +15,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
 	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
+	uimodels "github.com/furbyhaxx/pig-auth-plus/internal/ui/models"
 	uiproviders "github.com/furbyhaxx/pig-auth-plus/internal/ui/providers"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
 	uisettings "github.com/furbyhaxx/pig-auth-plus/internal/ui/settings"
@@ -33,13 +34,16 @@ type dashboard struct {
 	st     *state
 	frame  *frame.Frame
 	provs  *uiproviders.Tab
+	models *uimodels.Tab
 	sett   *uisettings.Tab
 	quotas *uiquotas.Tab
 	tokens *uitokens.Tab
 
-	mu       sync.Mutex
-	counting context.CancelFunc
-	rows     []uiproviders.Row
+	mu         sync.Mutex
+	counting   context.CancelFunc
+	rows       []uiproviders.Row
+	catalog    []uimodels.Model
+	catalogErr string
 }
 
 // openDashboard shows the /auth panel on the tab named by section. solo starts the Quotas tab
@@ -50,7 +54,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		ctx.Notify("pig-auth-plus is not active in this session.", "warning")
 		return nil
 	}
-	if section != "providers" && section != "quotas" && section != "tokens" && section != "settings" {
+	if section != "providers" && section != "quotas" && section != "tokens" && section != "models" && section != "settings" {
 		ctx.Notify("The "+section+" tab is not available yet.", "info")
 		return nil
 	}
@@ -62,6 +66,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		Reset:     func(id string) { d.async(func(c context.Context) { d.reset(c, id) }) },
 	}, solo)
 	d.tokens = uitokens.New(st.tokens.Latest, a.tokenDisplay, func() { d.count(true) })
+	d.models = uimodels.New(d.catalogRows, d.catalogError)
 	d.sett = uisettings.New(st.settings.Snapshot, uisettings.Actions{
 		Save:    func(edits []config.Edit) { d.async(func(c context.Context) { d.saveSettings(c, edits) }) },
 		Preview: d.previewTemplate,
@@ -76,7 +81,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 			h = defaultRows
 		}
 		return frame.Env{Width: w, Rows: h, Theme: ctx.UITheme()}
-	}, section, d.provs, d.quotas, d.tokens, d.sett)
+	}, section, d.provs, d.quotas, d.tokens, d.models, d.sett)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()
 	stopTokens := st.tokens.OnChange(func(*tokens.Report, tokens.Reason) {
@@ -86,6 +91,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 	defer stopTokens()
 	d.count(true)
 	d.rereadProviders(ctx)
+	d.rereadCatalog(ctx)
 	_, err := ctx.Custom(d.frame, nil)
 	return err
 }
@@ -334,4 +340,30 @@ func (d *dashboard) knownProviders(key string) []string {
 		return []string{"claude", "anthropic"}
 	}
 	return nil
+}
+
+func (d *dashboard) catalogRows() []uimodels.Model {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.catalog
+}
+
+// rereadCatalog loads the model list off the render path.
+func (d *dashboard) rereadCatalog(host sdk.Context) {
+	d.async(func(context.Context) {
+		rows, err := d.a.catalogRows(host)
+		d.mu.Lock()
+		d.catalog, d.catalogErr = rows, ""
+		if err != nil {
+			d.catalogErr = err.Error()
+		}
+		d.mu.Unlock()
+		d.frame.Invalidate()
+	})
+}
+
+func (d *dashboard) catalogError() string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.catalogErr
 }

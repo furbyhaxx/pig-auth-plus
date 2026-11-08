@@ -10,6 +10,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
+	uimodels "github.com/furbyhaxx/pig-auth-plus/internal/ui/models"
 	uiproviders "github.com/furbyhaxx/pig-auth-plus/internal/ui/providers"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
 	uisettings "github.com/furbyhaxx/pig-auth-plus/internal/ui/settings"
@@ -179,6 +180,13 @@ func (a *App) textCommand(ctx sdk.Context, st *state, req command.Request) error
 		ctx.Notify(uiproviders.PlainText(a.providerRows(ctx, time.Now()), headlessWidth, time.Now()), "info")
 	case command.SectionTokens:
 		ctx.Notify(uitokens.PlainText(st.tokens.Latest(), a.tokenDisplay(), headlessWidth), "info")
+	case command.SectionModels:
+		rows, err := a.catalogRows(ctx)
+		if err != nil {
+			ctx.Notify("Models: "+err.Error(), "error")
+			return nil
+		}
+		ctx.Notify(uimodels.PlainText(rows, headlessWidth), "info")
 	case command.SectionSettings:
 		ctx.Notify(uisettings.PlainText(st.settings.Snapshot(), headlessWidth, req.Key), "info")
 	default:
