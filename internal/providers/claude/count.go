@@ -58,6 +58,10 @@ func (c *Counter) SystemText(text string) string {
 
 // Context implements tokens.NativeCounter. It never fails: false keeps the labelled estimate.
 func (c *Counter) Context(ctx context.Context, in tokens.NativeInput) (tokens.Count, bool) {
+	// The endpoint rejects an empty conversation, so there is nothing to count natively.
+	if len(in.Messages) == 0 {
+		return tokens.Count{}, false
+	}
 	token, err := c.Token(ctx)
 	if err != nil || ctx.Err() != nil {
 		return tokens.Count{}, false

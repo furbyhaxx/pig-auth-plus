@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
+	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
+	uitokens "github.com/furbyhaxx/pig-auth-plus/internal/ui/tokens"
 )
 
 const (
@@ -25,6 +28,10 @@ type dashboard struct {
 	st     *state
 	frame  *frame.Frame
 	quotas *uiquotas.Tab
+	tokens *uitokens.Tab
+
+	mu       sync.Mutex
+	counting context.CancelFunc
 }
 
 // openDashboard shows the /auth panel on the tab named by section. solo starts the Quotas tab
@@ -35,7 +42,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 		ctx.Notify("pig-auth-plus is not active in this session.", "warning")
 		return nil
 	}
-	if section != "quotas" {
+	if section != "quotas" && section != "tokens" {
 		ctx.Notify("The "+section+" tab is not available yet.", "info")
 		return nil
 	}
@@ -45,6 +52,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 		Placement: func() { d.async(d.choosePlacement) },
 		Reset:     func(id string) { d.async(func(c context.Context) { d.reset(c, id) }) },
 	}, solo)
+	d.tokens = uitokens.New(st.tokens.Latest, a.tokenDisplay, func() { d.count(true) })
 	d.frame = frame.New(func() frame.Env {
 		w, h := ctx.Width(), ctx.Height()
 		if w <= 0 {
@@ -54,11 +62,50 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 			h = defaultRows
 		}
 		return frame.Env{Width: w, Rows: h, Theme: ctx.UITheme()}
-	}, section, d.quotas)
+	}, section, d.quotas, d.tokens)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()
+	stopTokens := st.tokens.OnChange(func(*tokens.Report, tokens.Reason) {
+		d.frame.Invalidate()
+		d.count(false)
+	})
+	defer stopTokens()
+	d.count(true)
 	_, err := ctx.Custom(d.frame, nil)
 	return err
+}
+
+func (a *App) tokenDisplay() uitokens.Display {
+	s := a.settings()
+	return uitokens.Display{WarningPercent: s.TokensWarningPercent, ErrorPercent: s.TokensErrorPercent}
+}
+
+// count recounts the breakdown in the background, and the report too when refresh is set;
+// overlapping requests collapse into the newest.
+func (d *dashboard) count(refresh bool) {
+	d.mu.Lock()
+	if d.counting != nil {
+		d.counting()
+	}
+	d.mu.Unlock()
+	d.async(func(ctx context.Context) {
+		run, cancel := context.WithCancel(ctx)
+		defer cancel()
+		d.mu.Lock()
+		d.counting = cancel
+		d.mu.Unlock()
+		d.tokens.SetBreakdown(uitokens.Breakdown{Loading: true})
+		d.frame.Invalidate()
+		if refresh {
+			d.st.tokens.Refresh(run, tokens.ReasonRequest)
+		}
+		parts, ok := d.st.tokens.Breakdown(run)
+		if run.Err() != nil {
+			return
+		}
+		d.tokens.SetBreakdown(uitokens.Breakdown{Parts: parts, Failed: !ok})
+		d.frame.Invalidate()
+	})
 }
 
 func (a *App) display() uiquotas.Display {

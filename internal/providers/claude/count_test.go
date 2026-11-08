@@ -1,10 +1,13 @@
 package claude
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 )
 
 func TestAdaptCountDropsGenerationFieldsAndBillingBlock(t *testing.T) {
@@ -48,5 +51,12 @@ func TestAdaptCountKeepsFirstSystemBlockForAPIKeys(t *testing.T) {
 func TestAdaptCountRefusesUnexpectedEndpoint(t *testing.T) {
 	if _, ok := adaptCount(countRequest{url: "https://x/other", header: http.Header{}, body: []byte(`{}`)}, "k", false); ok {
 		t.Fatal("only /v1/messages requests can become count requests")
+	}
+}
+
+func TestContextNeedsMessages(t *testing.T) {
+	c := &Counter{Token: func(context.Context) (string, error) { t.Fatal("must not resolve a credential"); return "", nil }}
+	if _, ok := c.Context(context.Background(), tokens.NativeInput{Model: "m"}); ok {
+		t.Fatal("an empty conversation cannot be counted natively")
 	}
 }

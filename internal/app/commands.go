@@ -11,6 +11,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
+	uitokens "github.com/furbyhaxx/pig-auth-plus/internal/ui/tokens"
 )
 
 const headlessWidth = 100
@@ -21,6 +22,12 @@ func (a *App) registerCommands(ext *sdk.Extension) {
 		GetArgumentCompletions: a.authCompletions,
 		Handler:                a.authCommand,
 	})
+	for _, name := range []string{"tokens", "token"} {
+		ext.RegisterCommand(name, sdk.CommandOptions{
+			Description: "Show the context token count, its sources and the full-request breakdown",
+			Handler:     a.tokensCommand,
+		})
+	}
 	for _, name := range []string{"quotas", "quota"} {
 		ext.RegisterCommand(name, sdk.CommandOptions{
 			Description:            "Show quotas; `reset [provider]` spends a reset credit after asking",
@@ -126,6 +133,15 @@ func (a *App) authCommand(ctx sdk.Context, args string) error {
 	return a.run(ctx, req)
 }
 
+func (a *App) tokensCommand(ctx sdk.Context, args string) error {
+	req, err := command.Tokens(args)
+	if err != nil {
+		ctx.Notify(err.Error(), "warning")
+		return nil
+	}
+	return a.run(ctx, req)
+}
+
 func (a *App) quotasCommand(ctx sdk.Context, args string) error {
 	req, err := command.Quotas(args, a.resolver())
 	if err != nil {
@@ -155,6 +171,8 @@ func (a *App) textCommand(ctx sdk.Context, st *state, req command.Request) error
 	switch req.Section {
 	case command.SectionQuotas:
 		ctx.Notify(uiquotas.PlainText(st.quotas.View(), a.display(), req.Provider, headlessWidth, time.Now()), "info")
+	case command.SectionTokens:
+		ctx.Notify(uitokens.PlainText(st.tokens.Latest(), a.tokenDisplay(), headlessWidth), "info")
 	default:
 		ctx.Notify("The "+string(req.Section)+" view needs the interactive TUI.", "info")
 	}
