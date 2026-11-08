@@ -5,15 +5,15 @@ document:
   title: "Delegating provider streams to PiG builtin APIs from Go"
   description: "Spike result: how a Go extension provider reuses PiG's builtin wire protocols with a request-local fetch, and which routes fail"
   status: "published"
-  revision: 1
+  revision: 2
   created_at: "2026-11-08T19:02:45+01:00"
-  updated_at: "2026-11-08T19:02:45+01:00"
+  updated_at: "2026-11-08T20:10:00+01:00"
   created_by: "orchestrator"
   updated_by: "orchestrator"
   changelog:
-    - revision: 1
-      reason: "document creation"
-      changes: ["spike against pig 0.7.0+1.5.0 with a fake SSE transport"]
+    - revision: 2
+      reason: "antigravity port"
+      changes: ["Google adapter rejects custom fetch", "identity relabeling and section order findings"]
 ---
 
 # Delegating provider streams to PiG builtin APIs
@@ -59,8 +59,15 @@ which streams an arbitrary model object, is not exposed by the Go SDK 0.7.0.
 
 ## Consequences
 
-- Every pig-auth-plus inference provider uses the private-runtime route; the `fetch` callback is
-  the single place to shape requests and rewrite responses.
+- `claude` and `synthetic` use the private-runtime route; the `fetch` callback is the single
+  place to shape requests and rewrite responses.
+- The route does not work for Google: PiG's `google-generative-ai` adapter rejects any custom
+  `fetch` ("Custom fetch is not supported by the Google Generative AI adapter", `ai/google.go`,
+  upstream parity). `antigravity` therefore builds the Gemini request and parses the stream itself.
+- The wire runtime must relabel history to the wire provider and results back to the public one,
+  or PiG drops thinking and signatures of earlier turns and persists the wire provider name.
+- The Go SDK decodes system message `sections` into a map; passing the request back sorts the
+  sections by name unless the order is restored (B-0001).
 - A recursion guard is unnecessary on this route but the public provider id must never be
   registered in the private runtime.
 - PiG's builtin `anthropic-messages` already maps Claude Code tool names both ways and adds the

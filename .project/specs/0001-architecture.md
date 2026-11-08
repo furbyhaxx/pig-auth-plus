@@ -51,7 +51,7 @@ web-search tool, the dedicated `/quota codex login` flow, project-scope settings
 | Config file `<agentDir>/auth-plus.toml`, layers builtin < user < session | User decision 2026-11-08; no project layer |
 | Saves preserve comments and unknown keys, lock, write atomically (0600), refuse malformed files | Config never loses data |
 | Commands `/auth`, `/quotas` (`/quota`), `/tokens` (`/token`) | Drop-in replacement for pi-auth-plus |
-| Providers delegate wire protocols to PiG builtin APIs (`anthropic-messages`, `google-generative-ai`, `openai-completions`) through a private `ModelRuntime` holding hidden wire providers, and shape traffic in a request-local fetch callback | Reuses PiG's tested SSE parsers; the session registry route recurses or misroutes (ANA-provider-delegation) |
+| `claude` and `synthetic` delegate to PiG's builtin `anthropic-messages` through a private `ModelRuntime` holding hidden wire providers, and shape traffic in a request-local fetch callback; `antigravity` converts and parses Gemini itself | Reuses PiG's tested SSE parser where possible; PiG's Google adapter refuses a custom fetch, and the session registry route recurses or misroutes (ANA-provider-delegation) |
 | A provider owns its usage: Synthetic's final message carries real input tokens and de-duplicated `cacheWrite`; cost is computed from the provider-reported units | pi-auth-plus' `message_end` correction never ran under PiG, so persisted messages and other extensions saw scaled units (pi-accordion ANA 2026-11-05 B4) |
 | Synthetic real tokens: measured per-model stream factor, else character estimate of the request body; no tokenizer | Factors are stable to 0.1 % and under 1 % off for every current model (ANA-synthetic-usage-units) |
 | Codex quota credential: PiG `openai-codex` login, then read-only fallback to `<agentDir>/quotas-codex-auth.json` | PiG ships the Codex OAuth flow |
@@ -73,7 +73,7 @@ internal/
   session/                   session-owned state and lifecycle (start, shutdown, replacement)
   providers/
     claude/                  oauth, identity, version, billing block, sanitize, tool names, fetch
-    antigravity/             oauth, project, catalog, levels, envelope, signatures, schema, errors
+    antigravity/             oauth, project, catalog, levels, convert, envelope, events, signatures, schema, errors
     synthetic/               catalog, usage correction, interleaved folding
     hooks/                   openai verbosity, anthropic cache retention
   quotas/

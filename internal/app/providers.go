@@ -9,6 +9,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/paths"
+	"github.com/furbyhaxx/pig-auth-plus/internal/providers/antigravity"
 	"github.com/furbyhaxx/pig-auth-plus/internal/providers/claude"
 	"github.com/furbyhaxx/pig-auth-plus/internal/providers/synthetic"
 	"github.com/furbyhaxx/pig-auth-plus/internal/wire"
@@ -16,9 +17,10 @@ import (
 
 // providers are registered once per process; sessions bind the wire runtime and refresh catalogs.
 type providers struct {
-	runtime   *wire.Runtime
-	claude    *claude.Provider
-	synthetic *synthetic.Provider
+	runtime     *wire.Runtime
+	claude      *claude.Provider
+	synthetic   *synthetic.Provider
+	antigravity *antigravity.Provider
 }
 
 func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
@@ -57,12 +59,25 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 	if err := ext.RegisterNativeProvider(ps.synthetic.Native()); err != nil {
 		return nil, fmt.Errorf("synthetic provider: %w", err)
 	}
+	agCatalog, err := antigravity.NewCatalog()
+	if err != nil {
+		return nil, fmt.Errorf("antigravity catalog: %w", err)
+	}
+	ps.antigravity = &antigravity.Provider{
+		Catalog: agCatalog, Auth: &antigravity.Auth{Endpoints: antigravity.DefaultEndpoints},
+		Projects: &antigravity.Projects{}, Sessions: &antigravity.Sessions{}, Runtime: ps.runtime,
+	}
+	if err := ext.RegisterNativeProvider(ps.antigravity.Native()); err != nil {
+		return nil, fmt.Errorf("antigravity provider: %w", err)
+	}
 	return ps, nil
 }
 
 // start binds the session and republishes catalogs that differ from the running host's.
 func (ps *providers) start(ctx sdk.Context) {
 	ps.runtime.Bind(&ctx)
+	// The CLI re-derives its project per run; a new session does the same.
+	ps.antigravity.Projects.Reset()
 	anthropic, err := ctx.ModelRegistry().GetModelsOfType("chat", "anthropic")
 	if err == nil && ps.claude.Catalog.Update(anthropic) {
 		force := true

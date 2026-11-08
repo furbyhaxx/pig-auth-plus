@@ -28,3 +28,20 @@ func TestOrderSectionsFollowsTheComposedPrompt(t *testing.T) {
 		t.Fatalf("text = %q", got)
 	}
 }
+
+func TestCurrentSystemFoldsUpdatesAndReplaysTools(t *testing.T) {
+	messages := []any{
+		map[string]any{"role": "system", "content": "", "sections": map[string]any{"b": "B", "a": "A"},
+			"toolsAdded": []any{map[string]any{"name": "read"}, map[string]any{"name": "bash"}}},
+		map[string]any{"role": "user", "content": "hi"},
+		map[string]any{"role": "system", "content": "note", "sections": map[string]any{"a": nil, "c": "C"},
+			"toolsRemoved": []any{map[string]any{"name": "read"}}, "toolsAdded": []any{map[string]any{"name": "grep"}}},
+	}
+	got := CurrentSystem(messages, "B\n\nA")
+	if got.Prompt != "note\n\nB\n\nC" {
+		t.Fatalf("prompt = %q", got.Prompt)
+	}
+	if len(got.Tools) != 2 || got.Tools[0]["name"] != "bash" || got.Tools[1]["name"] != "grep" {
+		t.Fatalf("tools = %v", got.Tools)
+	}
+}
