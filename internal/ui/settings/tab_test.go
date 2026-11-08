@@ -108,3 +108,87 @@ func TestPlainTextNamesSource(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+func open(t *testing.T, key string) *Tab {
+	t.Helper()
+	tb := New(snap(t, ""), Actions{Known: func(string) []string { return []string{"claude", "codex", "xai"} }}, key)
+	tb.Key("\r")
+	if tb.coll == nil {
+		t.Fatalf("%s must open a collection editor", key)
+	}
+	return tb
+}
+
+func typeText(tb *Tab, s string) {
+	for _, c := range s {
+		tb.Key(string(c))
+	}
+}
+
+func TestProviderListStagesCheckedAndCustomIDs(t *testing.T) {
+	tb := open(t, "quotas.providers")
+	tb.Key(" ") // claude
+	tb.Key("a")
+	typeText(tb, "my-proxy")
+	tb.Key("\r")
+	tb.Key("\x13")
+	e := tb.Staged()
+	got, _ := e[0].Value.([]string)
+	if tb.coll != nil || len(e) != 1 || strings.Join(got, ",") != "claude,my-proxy" {
+		t.Fatalf("staged %+v, editor open=%v", e, tb.coll != nil)
+	}
+}
+
+func TestEscOnDirtyEditorNeedsConfirmation(t *testing.T) {
+	tb := open(t, "claude.cacheRetentionProviders")
+	tb.Key(" ")
+	if !tb.Dirty() {
+		t.Fatal("a changed draft must count as unsaved")
+	}
+	tb.Key("\x1b")
+	if tb.coll == nil {
+		t.Fatal("the first Esc must not discard a draft")
+	}
+	tb.Key("\x1b")
+	if tb.coll != nil || len(tb.Staged()) != 0 {
+		t.Fatal("the second Esc discards and stages nothing")
+	}
+}
+
+func TestPatternRulesAddEditReorderDrop(t *testing.T) {
+	tb := open(t, "claude.replacePatterns")
+	tb.Key("a")
+	typeText(tb, "old")
+	tb.Key("\r")
+	typeText(tb, "new")
+	tb.Key("\r")
+	tb.Key("a")
+	typeText(tb, "secret")
+	tb.Key("\r")
+	tb.Key("\r") // empty replacement: drop paragraphs
+	tb.Key("\x1b[1;2A")
+	body := strings.Join(tb.Body(frame.Env{Width: 80, Rows: 20}), "\n")
+	if !strings.Contains(body, `1. drop paragraphs containing "secret"`) || !strings.Contains(body, `2. "old" → "new"`) {
+		t.Fatalf("rules not ordered as edited:\n%s", body)
+	}
+	tb.Key("\x13")
+	rules, _ := tb.Staged()[0].Value.([]config.ReplacePattern)
+	if len(rules) != 2 || rules[0].HasReplacement || !rules[1].HasReplacement {
+		t.Fatalf("got %+v", rules)
+	}
+}
+
+func TestCollectionEditorsFitAllWidths(t *testing.T) {
+	for _, key := range []string{"quotas.providers", "claude.replacePatterns"} {
+		tb := open(t, key)
+		tb.Key("a")
+		typeText(tb, strings.Repeat("long-input ", 10))
+		for _, w := range []int{36, 57, 80, 140} {
+			for _, row := range tb.Body(frame.Env{Width: w, Rows: 20}) {
+				if tui.VisibleWidth(row) > w {
+					t.Fatalf("%s width %d: %q", key, w, row)
+				}
+			}
+		}
+	}
+}

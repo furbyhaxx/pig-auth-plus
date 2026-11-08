@@ -11,6 +11,7 @@ import (
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
+	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
@@ -20,8 +21,8 @@ type Actions struct {
 	// Save asks the owner to pick a scope and persist the staged edits; the owner calls
 	// [Tab.Saved] on success. It runs off the panel's queue.
 	Save func(edits []config.Edit)
-	// Collection opens a typed editor for a collection setting and reports whether one exists.
-	Collection func(key string) bool
+	// Known lists the provider ids offered by a provider-list setting.
+	Known func(key string) []string
 	// Preview renders a quota line template at width and lists its ignored syntax.
 	Preview func(template string, width int) (lines, unknown []string)
 }
@@ -36,6 +37,9 @@ type Tab struct {
 	top     int
 	staged  map[string]config.Edit
 	editing *edit
+	coll    collection
+	collKey string
+	leave   bool
 	notice  string
 	warn    bool
 }
@@ -68,13 +72,13 @@ func (t *Tab) Title() string { return "Settings" }
 func (t *Tab) Dirty() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return len(t.staged) > 0 || t.editing != nil
+	return len(t.staged) > 0 || t.editing != nil || (t.coll != nil && t.coll.Dirty())
 }
 
 // Discard implements frame.Tab.
 func (t *Tab) Discard() {
 	t.mu.Lock()
-	t.staged, t.editing, t.notice = map[string]config.Edit{}, nil, ""
+	t.staged, t.editing, t.coll, t.leave, t.notice = map[string]config.Edit{}, nil, nil, false, ""
 	t.mu.Unlock()
 }
 
@@ -134,6 +138,9 @@ func (t *Tab) Body(env frame.Env) []string {
 	th := uitheme.Theme{T: env.Theme}
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	if t.coll != nil {
+		return t.collBody(th, env)
+	}
 	rows := t.rows()
 	t.sel = max(0, min(t.sel, len(rows)-1))
 	cur := rows[t.sel]
@@ -198,6 +205,10 @@ var printable = func(r rune) bool { return unicode.IsPrint(r) }
 func (t *Tab) Key(data string) bool {
 	t.mu.Lock()
 	t.notice = ""
+	if t.coll != nil {
+		defer t.mu.Unlock()
+		return t.collKeyLocked(data)
+	}
 	if t.editing != nil {
 		defer t.mu.Unlock()
 		return t.editKey(data)
@@ -293,12 +304,22 @@ func (t *Tab) enter() {
 	switch d.Kind {
 	case config.KindBool, config.KindEnum:
 		t.step(1)
-	case config.KindInt, config.KindString, config.KindStringList:
+	case config.KindStringList:
+		var known []string
+		if t.actions.Known != nil {
+			known = t.actions.Known(d.Key)
+		}
+		empty := ""
+		if d.Key == "quotas.providers" {
+			empty = "all quota sources are polled"
+		} else {
+			empty = "the override is disabled"
+		}
+		t.coll, t.collKey, t.leave = newProviderList(known, t.current(d).([]string), empty), d.Key, false
+	case config.KindInt, config.KindString:
 		cur := t.current(d)
 		text := ""
 		switch x := cur.(type) {
-		case []string:
-			text = strings.Join(x, ", ")
 		case int64:
 			text = strconv.FormatInt(x, 10)
 		case string:
@@ -308,10 +329,7 @@ func (t *Tab) enter() {
 	case config.KindAliases:
 		t.notice, t.warn = "Aliases are edited in the Models tab.", false
 	case config.KindReplacePatterns:
-		if t.actions.Collection != nil && t.actions.Collection(d.Key) {
-			return
-		}
-		t.notice, t.warn = "No editor is available for "+d.Key+".", true
+		t.coll, t.collKey, t.leave = newPatternList(t.current(d).([]config.ReplacePattern)), d.Key, false
 	}
 }
 
@@ -353,8 +371,6 @@ func (t *Tab) commit() {
 			return
 		}
 		value = n
-	case config.KindStringList:
-		value = strings.FieldsFunc(text, func(r rune) bool { return r == ',' || unicode.IsSpace(r) })
 	default:
 		value = text
 	}
@@ -374,7 +390,14 @@ func (t *Tab) commit() {
 func (t *Tab) Hints(frame.Env) []string {
 	t.mu.Lock()
 	editing := t.editing != nil
+	coll := t.coll
 	t.mu.Unlock()
+	if coll != nil {
+		if t.inputOpenOn(coll) {
+			return coll.Hints()
+		}
+		return append(coll.Hints(), sdk.KeyHint("tui.select.cancel", "back"))
+	}
 	if editing {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
@@ -387,7 +410,15 @@ func (t *Tab) Hints(frame.Env) []string {
 }
 
 // Help implements frame.Tab.
-func (t *Tab) Help(frame.Env) []string { return strings.Split(helpText, "\n") }
+func (t *Tab) Help(frame.Env) []string {
+	t.mu.Lock()
+	coll := t.coll
+	t.mu.Unlock()
+	if coll != nil {
+		return strings.Split(coll.Help(), "\n")
+	}
+	return strings.Split(helpText, "\n")
+}
 
 const helpText = ` Settings
  Every setting with its effective value and the layer it comes from:
@@ -396,5 +427,54 @@ const helpText = ` Settings
  Left/Right or h/l  toggle, cycle or nudge      Enter  edit text, numbers and lists
  Space  toggle or advance                      Backspace  stage the built-in default
  Ctrl+S  save staged edits                      Esc  cancel an edit; closing asks first
- Lists take ids separated by commas. A higher layer overrides a lower one, so a saved
+ Lists open a typed editor. A higher layer overrides a lower one, so a saved
  value can stay shadowed; the save reports which keys.`
+
+func (t *Tab) collBody(th line.Theme, env frame.Env) []string {
+	lines := t.coll.Lines(th, env.Width)
+	head := paint(th, " Settings › "+t.collKey, "accent")
+	if t.coll.Dirty() {
+		head += paint(th, "  ● unsaved", "warning")
+	}
+	out := []string{fit(head, env.Width)}
+	out = append(out, lines[:min(len(lines), max(env.Rows-2, 1))]...)
+	if t.leave {
+		out = append(out, fit(paint(th, " ▲ Esc again discards this draft; ctrl+s applies it", "warning"), env.Width))
+	}
+	return out
+}
+
+// collKeyLocked routes a key to the open collection editor; the caller holds t.mu.
+func (t *Tab) collKeyLocked(data string) bool {
+	kb := tui.GetKeybindings()
+	switch {
+	case tui.MatchesKey(data, "ctrl+s"):
+		d, _ := config.Lookup(t.collKey)
+		t.stage(d, t.coll.Value())
+		t.coll, t.leave = nil, false
+		return true
+	case kb.Matches(data, "tui.select.cancel") && !t.inputOpen():
+		if t.coll.Dirty() && !t.leave {
+			t.leave = true
+			return true
+		}
+		t.coll, t.leave = nil, false
+		return true
+	}
+	t.leave = false
+	t.coll.Key(data)
+	return true
+}
+
+// inputOpen reports whether the editor's inline input owns Esc.
+func (t *Tab) inputOpen() bool { return t.inputOpenOn(t.coll) }
+
+func (t *Tab) inputOpenOn(coll collection) bool {
+	switch c := coll.(type) {
+	case *providerList:
+		return c.input != nil
+	case *patternList:
+		return c.input != nil
+	}
+	return false
+}

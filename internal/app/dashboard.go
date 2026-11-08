@@ -65,6 +65,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 	d.sett = uisettings.New(st.settings.Snapshot, uisettings.Actions{
 		Save:    func(edits []config.Edit) { d.async(func(c context.Context) { d.saveSettings(c, edits) }) },
 		Preview: d.previewTemplate,
+		Known:   d.knownProviders,
 	}, key)
 	d.frame = frame.New(func() frame.Env {
 		w, h := ctx.Width(), ctx.Height()
@@ -316,4 +317,21 @@ func (d *dashboard) saveSettings(ctx context.Context, edits []config.Edit) {
 		d.sett.SetNotice(msg, len(res.Shadowed) > 0)
 		d.frame.Invalidate()
 	}
+}
+
+// knownProviders lists the ids a provider-list setting offers.
+func (d *dashboard) knownProviders(key string) []string {
+	switch key {
+	case "quotas.providers":
+		var ids []string
+		for _, s := range d.st.quotas.Sources() {
+			ids = append(ids, s.ID)
+		}
+		return ids
+	case "openai.verbosityProviders":
+		return []string{"openai", "openai-codex"}
+	case "claude.cacheRetentionProviders":
+		return []string{"claude", "anthropic"}
+	}
+	return nil
 }
