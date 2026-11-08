@@ -49,9 +49,12 @@ pig-auth-plus corrects the final assistant message before it is stored: prompt t
 divided by the model's measured factor, the duplicated cache-write is dropped, output
 tokens and cost stay as reported. Models without a measured factor fall back to a character
 estimate of the request, never to the raw scaled units. The factors were measured against
-each model's published tokenizer and agree within 1%; they live in
-`internal/providers/synthetic/units.go` and need re-measuring when Synthetic adds models.
-Evidence: `.project/analyses/synthetic-usage-units/report.md`.
+each model's published tokenizer and cross-checked against OpenRouter's `prompt_tokens` for
+the same content: within 0.1% on text and about 1% with tool definitions, whose chat-template
+rendering differs per host. The factors live in `internal/providers/synthetic/units.go` and
+need re-measuring when Synthetic adds models.
+Evidence: `.project/analyses/synthetic-usage-units/report.md`,
+`.project/analyses/synthetic-openrouter-crosscheck/report.md`.
 
 ## Tokens tab
 
