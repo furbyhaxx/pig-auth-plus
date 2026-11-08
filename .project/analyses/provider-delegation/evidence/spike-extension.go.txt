@@ -1,0 +1,133 @@
+package papspike
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"maps"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
+
+	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
+)
+
+const sse = "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"m\",\"content\":[],\"stop_reason\":null,\"usage\":{\"input_tokens\":11,\"output_tokens\":1}}}\n\n" +
+	"event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n" +
+	"event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"spike-ok\"}}\n\n" +
+	"event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\n" +
+	"event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":3}}\n\n" +
+	"event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+
+func logf(format string, a ...any) {
+	f, _ := os.OpenFile("/tmp/pap-spike/log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	defer f.Close()
+	fmt.Fprintf(f, format+"\n", a...)
+}
+
+var calls atomic.Int32
+var fetches atomic.Int32
+
+const toolSSE = "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_0\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"m\",\"content\":[],\"stop_reason\":null,\"usage\":{\"input_tokens\":11,\"output_tokens\":1}}}\n\n" +
+	"event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"read\",\"input\":{}}}\n\n" +
+	"event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"path\\\":\\\"/tmp/pap-spike/go.mod\\\"}\"}}\n\n" +
+	"event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\n" +
+	"event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":3}}\n\n" +
+	"event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+
+var (
+	rtMu sync.Mutex
+	rt   *sdk.ModelRuntime
+)
+
+func runtimeFor(ctx sdk.Context) (*sdk.ModelRuntime, error) {
+	rtMu.Lock()
+	defer rtMu.Unlock()
+	if rt != nil && os.Getenv("SPIKE_REUSE") == "1" {
+		return rt, nil
+	}
+	f := false
+	r, err := sdk.ModelRuntimeCreate(ctx, sdk.ModelRuntimeCreateOptions{NoModelsFile: true, RefreshOnCreate: &f, AuthPath: "/tmp/pap-spike/auth.json"})
+	if err != nil {
+		return nil, err
+	}
+	err = r.RegisterProvider("wire", map[string]any{
+		"api": "anthropic-messages", "baseUrl": "https://wire.invalid", "apiKey": "unused",
+		"models": []map[string]any{{"id": "m", "name": "Wire", "reasoning": false, "input": []string{"text"},
+			"cost": map[string]any{"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}, "contextWindow": 100000, "maxTokens": 1000}},
+	})
+	if err != nil {
+		return nil, err
+	}
+	rt = r
+	return r, nil
+}
+
+func Extension() *sdk.Extension {
+	e := sdk.New("pap-spike")
+	var stream sdk.ProviderStreamSimpleFunc = func(ctx sdk.Context, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
+		logf("streamSimple model.api=%v provider=%v optionKeys=%v", model["api"], model["provider"], keys(options))
+		if calls.Add(1) > 3 {
+			return nil, fmt.Errorf("recursion guard")
+		}
+		m := maps.Clone(model)
+		m["api"] = "anthropic-messages"
+		m["provider"] = os.Getenv("SPIKE_PROVIDER")
+		m["id"] = os.Getenv("SPIKE_ID")
+		opts := maps.Clone(options)
+		opts["apiKey"] = "sk-ant-fake"
+		opts["fetch"] = sdk.ModelFetchFunc(func(r *http.Request) (*http.Response, error) {
+			body, _ := io.ReadAll(r.Body)
+			logf("fetch %s %s ua=%q bodylen=%d bodyhead=%s", r.Method, r.URL, r.Header.Get("user-agent"), len(body), head(string(body)))
+			payload := sse
+			if fetches.Add(1) == 1 {
+				payload = toolSSE
+			}
+			return &http.Response{StatusCode: 200, Status: "200 OK", Header: http.Header{"Content-Type": {"text/event-stream"}}, Body: io.NopCloser(bytes.NewBufferString(payload)), Request: r}, nil
+		})
+		if os.Getenv("SPIKE_RUNTIME") == "1" {
+			rt, err := runtimeFor(ctx)
+			if err != nil {
+				logf("runtime create err: %v", err)
+				return nil, err
+			}
+			m["provider"] = "wire"
+			m["id"] = "m"
+			return rt.StreamSimple(m, request, opts), nil
+		}
+		return ctx.ModelRegistry().StreamSimple(m, request, opts), nil
+	}
+	e.RegisterProvider("pap-spike", sdk.ProviderConfig{
+		"api":          "pap-spike-api",
+		"baseUrl":      "https://example.invalid",
+		"apiKey":       "fake",
+		"streamSimple": stream,
+		"models": []map[string]any{{
+			"id": "m", "name": "Spike", "reasoning": false, "input": []string{"text"},
+			"cost":          map[string]any{"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+			"contextWindow": 100000, "maxTokens": 1000,
+		}},
+	})
+	return e
+}
+
+func keys(m map[string]any) []string {
+	out := []string{}
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+func head(s string) string {
+	s = strings.ReplaceAll(s, "\n", " ")
+	if len(s) > 300 {
+		return s[:300]
+	}
+	var v any
+	_ = json.Unmarshal([]byte(s), &v)
+	return s
+}

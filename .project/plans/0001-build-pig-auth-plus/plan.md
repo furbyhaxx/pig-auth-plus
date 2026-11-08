@@ -25,8 +25,9 @@ by line.
 
 ## Progress
 
-- Now: M0 foundation.
-- Next: M1.1 provider delegation spike.
+- Done: M0 foundation (paths, fsx, config, import, session lifecycle, conflict check).
+- Now: M1.1 provider delegation spike.
+- Next: M1.2 claude.
 
 ## M0 Foundation
 

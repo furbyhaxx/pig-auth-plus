@@ -51,7 +51,7 @@ web-search tool, the dedicated `/quota codex login` flow, project-scope settings
 | Config file `<agentDir>/auth-plus.toml`, layers builtin < user < session | User decision 2026-11-08; no project layer |
 | Saves preserve comments and unknown keys, lock, write atomically (0600), refuse malformed files | Config never loses data |
 | Commands `/auth`, `/quotas` (`/quota`), `/tokens` (`/token`) | Drop-in replacement for pi-auth-plus |
-| Providers delegate wire protocols to PiG builtin APIs (`anthropic-messages`, `google-generative-ai`, `openai-completions`) and shape traffic in a request-local fetch callback | Reuses PiG's tested SSE parsers; mirrors pi-auth-plus' request-local fetch without patching global state |
+| Providers delegate wire protocols to PiG builtin APIs (`anthropic-messages`, `google-generative-ai`, `openai-completions`) through a private `ModelRuntime` holding hidden wire providers, and shape traffic in a request-local fetch callback | Reuses PiG's tested SSE parsers; the session registry route recurses or misroutes (ANA-provider-delegation) |
 | A provider owns its usage: Synthetic's final message carries real input tokens and de-duplicated `cacheWrite`; cost is computed from the provider-reported units | pi-auth-plus' `message_end` correction never ran under PiG, so persisted messages and other extensions saw scaled units (pi-accordion ANA 2026-11-05 B4) |
 | Synthetic real tokens: tokenizer when available, else measured per-model factor estimate, else character estimate; the source is labelled | User accepts mostly accurate estimates; tokenizer is preferred |
 | Codex quota credential: PiG `openai-codex` login, then read-only fallback to `<agentDir>/quotas-codex-auth.json` | PiG ships the Codex OAuth flow |
