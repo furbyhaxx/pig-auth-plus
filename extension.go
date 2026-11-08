@@ -4,6 +4,8 @@ package authplus
 
 import (
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
+
+	"github.com/furbyhaxx/pig-auth-plus/internal/app"
 )
 
 // name is the extension identity; it must equal the selecting directory or Package member.
@@ -11,5 +13,7 @@ const name = "pig-auth-plus"
 
 // Extension is the conventional Go factory PiG builds, packs and can fuse into a Piglet Binary.
 func Extension() *sdk.Extension {
-	return sdk.New(name)
+	e := sdk.New(name)
+	app.Register(e)
+	return e
 }

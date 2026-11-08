@@ -1,0 +1,1 @@
+Per-session lifetimes. `Group` joins every background goroutine on `Close` (session shutdown); never start a goroutine outside a Group. `Conflict` detects another owner of our commands (pi-auth-plus) from `ctx.GetCommands()`.

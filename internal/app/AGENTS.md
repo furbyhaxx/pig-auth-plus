@@ -1,0 +1,1 @@
+SDK wiring and the per-session `state`. Handlers read `a.cur` under `a.mu`; a new session_start stops the previous state first. Keep feature logic in sibling packages; this package only adapts SDK calls.
