@@ -27,7 +27,7 @@ type Provider struct {
 
 // Runtime lazily owns the private ModelRuntime and the wire providers registered in it.
 type Runtime struct {
-	dir string
+	dir func() (string, error)
 
 	mu         sync.Mutex
 	host       *sdk.Context
@@ -35,8 +35,9 @@ type Runtime struct {
 	registered map[string]string
 }
 
-// NewRuntime keeps the private runtime's auth and model store under dir.
-func NewRuntime(dir string) *Runtime {
+// NewRuntime keeps the private runtime's auth and model store under the directory dir resolves;
+// it is resolved on first use because the host's facts are unavailable in the factory.
+func NewRuntime(dir func() (string, error)) *Runtime {
 	return &Runtime{dir: dir}
 }
 
@@ -48,9 +49,9 @@ func (r *Runtime) Bind(c *sdk.Context) {
 	r.host, r.rt, r.registered = c, nil, nil
 }
 
-// StreamSimple streams model through the wire provider p. The model keeps its id; options carry
-// the credential and fetch callback.
-func (r *Runtime) StreamSimple(p Provider, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
+// Stream streams model through the wire provider p, with Pi's streamSimple options when simple
+// is set. The model keeps its id; options carry the credential and fetch callback.
+func (r *Runtime) Stream(p Provider, simple bool, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
 	rt, err := r.ensure(p)
 	if err != nil {
 		return nil, err
@@ -58,7 +59,10 @@ func (r *Runtime) StreamSimple(p Provider, model, request, options map[string]an
 	m := maps.Clone(model)
 	m["provider"] = p.Name
 	delete(m, "api")
-	return rt.StreamSimple(m, request, options), nil
+	if simple {
+		return rt.StreamSimple(m, request, options), nil
+	}
+	return rt.Stream(m, request, options), nil
 }
 
 func (r *Runtime) ensure(p Provider) (*sdk.ModelRuntime, error) {
@@ -89,17 +93,18 @@ func (r *Runtime) ensure(p Provider) (*sdk.ModelRuntime, error) {
 
 // create isolates the runtime from the user's credentials, models.json and model store.
 func (r *Runtime) create(c sdk.Context) (*sdk.ModelRuntime, error) {
-	if r.dir == "" {
-		return nil, errors.New("wire runtime has no private directory")
+	dir, err := r.dir()
+	if err != nil {
+		return nil, fmt.Errorf("wire runtime: %w", err)
 	}
-	if err := os.MkdirAll(r.dir, 0o700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("wire runtime: %w", err)
 	}
 	refresh := false
 	rt, err := sdk.ModelRuntimeCreate(c, sdk.ModelRuntimeCreateOptions{
-		AuthPath:        filepath.Join(r.dir, "auth.json"),
+		AuthPath:        filepath.Join(dir, "auth.json"),
 		NoModelsFile:    true,
-		ModelsStorePath: filepath.Join(r.dir, "models-store.json"),
+		ModelsStorePath: filepath.Join(dir, "models-store.json"),
 		RefreshOnCreate: &refresh,
 	})
 	if err != nil {

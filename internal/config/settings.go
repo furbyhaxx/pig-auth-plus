@@ -63,3 +63,12 @@ func project(v map[string]any) Settings {
 		TokensErrorPercent:      i("tokens.errorPercent"),
 	}
 }
+
+// Defaults returns the built-in settings.
+func Defaults() Settings {
+	values := make(map[string]any, len(Catalog))
+	for _, d := range Catalog {
+		values[d.Key] = d.Default
+	}
+	return project(values)
+}

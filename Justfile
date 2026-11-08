@@ -42,3 +42,7 @@ artifacts:
 	python3 scripts/check_artifacts.py .
 
 check: fmt-check vet test validate artifacts
+
+# Refresh the bundled first-run catalog from the running pig's builtin anthropic catalog.
+catalog:
+	CATALOG_DUMP_OUT="{{justfile_directory()}}/internal/providers/claude/catalog.json" pig --no-extensions --offline --no-session -e scripts/catalog-dump -p "/catalog-dump anthropic"

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -235,10 +237,14 @@ func TestVersionResolution(t *testing.T) {
 }
 
 func TestIdentityPersistsDevice(t *testing.T) {
-	dir := t.TempDir()
+	root := t.TempDir()
+	legacy := strings.Repeat("ab", 32)
+	_ = os.MkdirAll(filepath.Join(root, "pi-auth-plus"), 0o700)
+	_ = os.WriteFile(filepath.Join(root, "pi-auth-plus", "claude-device-id"), []byte(legacy), 0o600)
+	dir := func() (string, error) { return filepath.Join(root, "pig-auth-plus"), nil }
 	a := newIdentity(dir).deviceID()
 	b := newIdentity(dir).deviceID()
-	if a != b || len(a) != 64 {
+	if a != b || a != legacy {
 		t.Fatalf("device ids %s %s", a, b)
 	}
 	id := newIdentity(dir)

@@ -30,13 +30,19 @@ type state struct {
 
 // App holds the current session's state.
 type App struct {
-	mu  sync.Mutex
-	cur *state
+	mu        sync.Mutex
+	cur       *state
+	providers *providers
 }
 
 // Register wires lifecycle handlers into ext.
 func Register(ext *sdk.Extension) {
 	a := &App{}
+	ps, err := registerProviders(ext, a)
+	if err != nil {
+		panic("pig-auth-plus: " + err.Error())
+	}
+	a.providers = ps
 	ext.OnSessionStart(a.start)
 	ext.OnSessionShutdown(a.shutdown)
 }
@@ -75,7 +81,19 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 	a.mu.Lock()
 	a.cur = st
 	a.mu.Unlock()
+	a.providers.start(ctx)
 	return nil, nil
+}
+
+// settings is the current session's resolved settings, or the built-in defaults between sessions.
+func (a *App) settings() config.Settings {
+	a.mu.Lock()
+	st := a.cur
+	a.mu.Unlock()
+	if st == nil {
+		return config.Defaults()
+	}
+	return st.settings.Snapshot().Settings
 }
 
 func (a *App) shutdown(sdk.Context, map[string]any) (any, error) {
@@ -90,6 +108,9 @@ func (a *App) stop() {
 	a.mu.Unlock()
 	if st != nil {
 		st.group.Close()
+	}
+	if a.providers != nil {
+		a.providers.stop()
 	}
 }
 

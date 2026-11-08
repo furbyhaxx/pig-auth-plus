@@ -29,7 +29,7 @@ type Shaper struct {
 
 // NewShaper keeps the device identity under stateDir; rules returns the current
 // claude.replacePatterns.
-func NewShaper(stateDir string, env func(string) string, rules func() []config.ReplacePattern) *Shaper {
+func NewShaper(stateDir func() (string, error), env func(string) string, rules func() []config.ReplacePattern) *Shaper {
 	return &Shaper{env: env, rules: rules, version: newVersion(env), identity: newIdentity(stateDir), preflights: map[string]bool{}}
 }
 
