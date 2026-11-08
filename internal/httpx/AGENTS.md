@@ -1,0 +1,1 @@
+Own HTTP for auth, quotas and catalogs: deadlines, typed `StatusError`/`TimeoutError`, `Redact` on every error. Provider inference traffic goes through `internal/wire`, not here. Never put tokens, codes or response bodies into errors without `Redact` and the known secrets.
