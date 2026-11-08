@@ -12,6 +12,8 @@ import (
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
+	"github.com/furbyhaxx/pig-auth-plus/internal/apikey"
+
 	"github.com/furbyhaxx/pig-auth-plus/internal/httpx"
 	"github.com/furbyhaxx/pig-auth-plus/internal/oauthx"
 )
@@ -248,15 +250,7 @@ func (a *Auth) LoginAPIKey(in sdk.AuthInteraction) (*sdk.Credential, error) {
 	}
 	switch method {
 	case "manual":
-		key, err := in.Prompt(map[string]any{"type": "secret", "message": "Enter Anthropic API key:"})
-		if err != nil {
-			return nil, err
-		}
-		key = strings.TrimSpace(key)
-		if key == "" {
-			return nil, &AuthError{Operation: "API key cannot be empty", Endpoint: "manual entry"}
-		}
-		return sdk.NewCredential("type", "api_key", "key", key), nil
+		return apikey.Prompt(in, "Enter Anthropic API key:")
 	case "create":
 	default:
 		return nil, sdk.ErrOAuthCancelled
@@ -288,21 +282,7 @@ func (a *Auth) LoginAPIKey(in sdk.AuthInteraction) (*sdk.Credential, error) {
 
 // ResolveAPIKey prefers the stored key, then ANTHROPIC_API_KEY.
 func (a *Auth) ResolveAPIKey(in sdk.APIKeyAuthInput) (*sdk.AuthResult, error) {
-	if key := in.Credential.String("key"); key != "" {
-		src := "stored API key"
-		return &sdk.AuthResult{Auth: map[string]any{"apiKey": key}, Source: &src}, nil
-	}
-	if in.Ctx.Env != nil {
-		v, err := in.Ctx.Env("ANTHROPIC_API_KEY")
-		if err != nil {
-			return nil, err
-		}
-		if v != nil && *v != "" {
-			src := "ANTHROPIC_API_KEY"
-			return &sdk.AuthResult{Auth: map[string]any{"apiKey": *v}, Source: &src}, nil
-		}
-	}
-	return nil, nil
+	return apikey.Resolve(in, "ANTHROPIC_API_KEY")
 }
 
 // ProviderAuth assembles both login methods.
