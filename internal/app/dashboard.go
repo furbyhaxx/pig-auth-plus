@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
 	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
+	uiproviders "github.com/furbyhaxx/pig-auth-plus/internal/ui/providers"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
 	uitokens "github.com/furbyhaxx/pig-auth-plus/internal/ui/tokens"
 )
@@ -27,11 +29,13 @@ type dashboard struct {
 	a      *App
 	st     *state
 	frame  *frame.Frame
+	provs  *uiproviders.Tab
 	quotas *uiquotas.Tab
 	tokens *uitokens.Tab
 
 	mu       sync.Mutex
 	counting context.CancelFunc
+	rows     []uiproviders.Row
 }
 
 // openDashboard shows the /auth panel on the tab named by section. solo starts the Quotas tab
@@ -42,11 +46,12 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 		ctx.Notify("pig-auth-plus is not active in this session.", "warning")
 		return nil
 	}
-	if section != "quotas" && section != "tokens" {
+	if section != "providers" && section != "quotas" && section != "tokens" {
 		ctx.Notify("The "+section+" tab is not available yet.", "info")
 		return nil
 	}
 	d := &dashboard{a: a, st: st}
+	d.provs = uiproviders.New(d.providerRows, func() { d.rereadProviders(ctx) })
 	d.quotas = uiquotas.New(st.quotas.View, a.display, uiquotas.Actions{
 		Refresh:   d.refresh,
 		Placement: func() { d.async(d.choosePlacement) },
@@ -62,7 +67,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 			h = defaultRows
 		}
 		return frame.Env{Width: w, Rows: h, Theme: ctx.UITheme()}
-	}, section, d.quotas, d.tokens)
+	}, section, d.provs, d.quotas, d.tokens)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()
 	stopTokens := st.tokens.OnChange(func(*tokens.Report, tokens.Reason) {
@@ -71,6 +76,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 	})
 	defer stopTokens()
 	d.count(true)
+	d.rereadProviders(ctx)
 	_, err := ctx.Custom(d.frame, nil)
 	return err
 }
@@ -234,4 +240,21 @@ func (d *dashboard) reset(ctx context.Context, id string) {
 		return
 	}
 	d.notice(res.Text, res.Warn)
+}
+
+func (d *dashboard) providerRows() []uiproviders.Row {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.rows
+}
+
+// rereadProviders refreshes credential state off the render path.
+func (d *dashboard) rereadProviders(host sdk.Context) {
+	d.async(func(context.Context) {
+		rows := d.a.providerRows(host, time.Now())
+		d.mu.Lock()
+		d.rows = rows
+		d.mu.Unlock()
+		d.frame.Invalidate()
+	})
 }

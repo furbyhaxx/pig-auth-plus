@@ -10,6 +10,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
+	uiproviders "github.com/furbyhaxx/pig-auth-plus/internal/ui/providers"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
 	uitokens "github.com/furbyhaxx/pig-auth-plus/internal/ui/tokens"
 )
@@ -171,6 +172,8 @@ func (a *App) textCommand(ctx sdk.Context, st *state, req command.Request) error
 	switch req.Section {
 	case command.SectionQuotas:
 		ctx.Notify(uiquotas.PlainText(st.quotas.View(), a.display(), req.Provider, headlessWidth, time.Now()), "info")
+	case command.SectionProviders:
+		ctx.Notify(uiproviders.PlainText(a.providerRows(ctx, time.Now()), headlessWidth, time.Now()), "info")
 	case command.SectionTokens:
 		ctx.Notify(uitokens.PlainText(st.tokens.Latest(), a.tokenDisplay(), headlessWidth), "info")
 	default:
