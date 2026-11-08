@@ -119,13 +119,26 @@ func (f *Frame) Choose(title string, options []string, done <-chan struct{}) (st
 	}
 }
 
+// ModalTitle is the title of the open choice dialog, or empty when none is open.
+func (f *Frame) ModalTitle() string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.modal == nil {
+		return ""
+	}
+	return f.modal.title
+}
+
 func (f *Frame) env() Env { return f.host() }
 
 const chromeRows = 5 // two borders, title, tab strip, hint row
 
 // View implements sdk.ViewComponent.
-func (f *Frame) View(int) kit.View {
+func (f *Frame) View(width int) kit.View {
 	env := f.env()
+	if width > 0 {
+		env.Width = width
+	}
 	w := max(env.Width, 20)
 	f.mu.Lock()
 	tab, help, m := f.tabs[f.active], f.help, f.modal
@@ -160,7 +173,7 @@ func (f *Frame) modalView(env Env, tab Tab, m *modal) kit.View {
 	return kit.View{
 		Root: kit.NewContainer(
 			kit.NewDynamicBorder("borderAccent"),
-			kit.NewLines(fit([]string{env.Theme.Bold(m.title)}, max(env.Width, 20), 3)),
+			kit.NewLines(fit(boldLines(env.Theme, m.title), max(env.Width, 20), 10)),
 			kit.NewSelectList("modal", items, min(len(items), 8)),
 			kit.NewDynamicBorder("borderAccent"),
 		),
@@ -214,6 +227,15 @@ func (f *Frame) hintRow(env Env, tab Tab, w int) string {
 		}
 	}
 	return tui.TruncateToWidth(" "+hints[0], w, "…", false)
+}
+
+// boldLines splits a multi-line title into separately styled rows; a row must hold no newline.
+func boldLines(t sdk.UITheme, title string) []string {
+	parts := strings.Split(title, "\n")
+	for i, p := range parts {
+		parts[i] = t.Bold(p)
+	}
+	return parts
 }
 
 // fit cuts lines to the width and keeps at most rows of them.

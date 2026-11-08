@@ -49,6 +49,7 @@ func (a *App) startLine(st *state) {
 	lv := &lineView{a: a, st: st}
 	st.line = lv
 	stop := st.quotas.OnChange(lv.refresh)
+	st.settings.Subscribe(func(*config.Snapshot) { lv.refresh() })
 	off, _ := st.host.OnThemeChange(func(sdk.Context, sdk.UITheme) { lv.refresh() })
 	st.group.Go(func(ctx context.Context) {
 		t := time.NewTicker(lineTick)

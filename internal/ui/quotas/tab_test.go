@@ -1,6 +1,7 @@
 package quotas
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -40,7 +41,7 @@ func fixture() []quota.View {
 func newTab(solo string) *Tab {
 	tb := New(fixture, func() Display {
 		return Display{PercentUsed: true, HideSignedOut: true, CreditHealthyUSD: 50, CreditCriticalUSD: 5}
-	}, solo)
+	}, Actions{}, solo)
 	tb.now = func() time.Time { return now }
 	return tb
 }
@@ -91,6 +92,70 @@ func TestErrorAndBackoffAreVisibleAndSanitized(t *testing.T) {
 	}
 }
 
+func TestKeysDispatchActionsForTheSelectedProvider(t *testing.T) {
+	var refreshed, reset []string
+	placement := 0
+	tb := newTab("")
+	tb.actions = Actions{
+		Refresh:   func(id string) { refreshed = append(refreshed, id) },
+		Placement: func() { placement++ },
+		Reset:     func(id string) { reset = append(reset, id) },
+	}
+	tb.views = func() []quota.View {
+		v := fixture()
+		v[3].Source.Resets = nopResets{}
+		return v
+	}
+	env := frame.Env{Width: 80, Rows: 40}
+	tb.Body(env)
+	tb.Key("r")
+	tb.Key("R")
+	tb.Key("p")
+	tb.Key("x") // claude cannot reset: no spend, a notice instead
+	if len(reset) != 0 {
+		t.Fatalf("reset on a provider without credits: %v", reset)
+	}
+	for tb.sel != "codex" {
+		tb.Key("j")
+		tb.Body(env)
+	}
+	tb.Key("x")
+	if want := []string{"claude", ""}; len(refreshed) != 2 || refreshed[0] != want[0] || refreshed[1] != want[1] {
+		t.Fatalf("refreshed = %q", refreshed)
+	}
+	if placement != 1 || len(reset) != 1 || reset[0] != "codex" {
+		t.Fatalf("placement=%d reset=%v", placement, reset)
+	}
+}
+
+func TestSoloTogglesAndNoticeClearsOnNextKey(t *testing.T) {
+	tb := newTab("")
+	env := frame.Env{Width: 80, Rows: 40}
+	tb.Body(env)
+	tb.Key("a")
+	if got := len(tb.Body(env)); got > 8 {
+		t.Fatalf("solo body has %d rows", got)
+	}
+	tb.Key("a")
+	tb.SetNotice("saved", false)
+	if body := strings.Join(tb.Body(env), "\n"); !strings.Contains(body, "saved") {
+		t.Fatal("notice not shown")
+	}
+	tb.Key("j")
+	if body := strings.Join(tb.Body(env), "\n"); strings.Contains(body, "saved") {
+		t.Fatal("notice not cleared by the next key")
+	}
+}
+
+type nopResets struct{}
+
+func (nopResets) List(context.Context, quota.Env) (quota.ResetList, error) {
+	return quota.ResetList{}, nil
+}
+func (nopResets) Consume(context.Context, quota.Env, string) (quota.ResetOutcome, error) {
+	return quota.ResetOutcome{}, nil
+}
+
 func TestSelectionMovesAndScrollsTallProviders(t *testing.T) {
 	tb := newTab("")
 	env := frame.Env{Width: 80, Rows: 4}
@@ -113,7 +178,7 @@ func TestSelectionMovesAndScrollsTallProviders(t *testing.T) {
 }
 
 func TestUsedAndRemainingFollowTheSetting(t *testing.T) {
-	tb := New(fixture, func() Display { return Display{PercentUsed: false, HideSignedOut: true} }, "claude")
+	tb := New(fixture, func() Display { return Display{PercentUsed: false, HideSignedOut: true} }, Actions{}, "claude")
 	tb.now = func() time.Time { return now }
 	body := tui.StripTerminalSequences(strings.Join(tb.Body(frame.Env{Width: 80, Rows: 40}), "\n"))
 	if !strings.Contains(body, "73%") {
