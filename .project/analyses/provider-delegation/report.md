@@ -67,3 +67,13 @@ which streams an arbitrary model object, is not exposed by the Go SDK 0.7.0.
   identity block when the API key is an OAuth token (`ai/anthropic.go` `toClaudeCodeName`,
   `anthSystemBlocks`), so `claude` adds only the billing block, `metadata.user_id`, version
   headers, replace patterns and fingerprint removal.
+
+## Catalog publication
+
+A native provider's `FetchModels` overlay is persisted in the user's model store and listed by
+`--list-models` without a session. A session can read PiG's builtin catalog with
+`ctx.ModelRegistry().GetModelsOfType("chat", "anthropic")` and publish it by calling
+`Refresh({Providers: ["claude"], Force: true})`, which invokes `FetchModels`. The wire provider
+must register every public model id: an unknown id falls back to a generic OpenAI model.
+`sdk.AgentDir()` fails inside the factory under `pig install --validate-only`, so paths resolve on
+first use.
