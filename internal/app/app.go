@@ -45,6 +45,7 @@ func Register(ext *sdk.Extension) {
 	a.providers = ps
 	ext.OnSessionStart(a.start)
 	ext.OnSessionShutdown(a.shutdown)
+	ext.OnEvent(sdk.EventBeforeProviderRequest, a.onProviderRequest)
 }
 
 func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
