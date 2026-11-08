@@ -9,7 +9,8 @@ func TestCompletionsWorkBeforeASession(t *testing.T) {
 		t.Fatalf("%v %v", got, err)
 	}
 	got, _ = a.authCompletions("settings quotas.linePl")
-	if len(got) != 1 || got[0].Value != "quotas.linePlacement" {
+	// The host replaces the whole argument with Value, so it keeps the typed section.
+	if len(got) != 1 || got[0].Value != "settings quotas.linePlacement" || got[0].Label != "quotas.linePlacement" {
 		t.Fatalf("%v", got)
 	}
 	got, _ = a.quotaCompletions("")

@@ -10,13 +10,16 @@ import (
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
+	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
 	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	uiproviders "github.com/furbyhaxx/pig-auth-plus/internal/ui/providers"
 	uiquotas "github.com/furbyhaxx/pig-auth-plus/internal/ui/quotas"
+	uisettings "github.com/furbyhaxx/pig-auth-plus/internal/ui/settings"
 	uitokens "github.com/furbyhaxx/pig-auth-plus/internal/ui/tokens"
+	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
 
 const (
@@ -30,6 +33,7 @@ type dashboard struct {
 	st     *state
 	frame  *frame.Frame
 	provs  *uiproviders.Tab
+	sett   *uisettings.Tab
 	quotas *uiquotas.Tab
 	tokens *uitokens.Tab
 
@@ -40,13 +44,13 @@ type dashboard struct {
 
 // openDashboard shows the /auth panel on the tab named by section. solo starts the Quotas tab
 // on one provider.
-func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
+func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 	st := a.session()
 	if st == nil {
 		ctx.Notify("pig-auth-plus is not active in this session.", "warning")
 		return nil
 	}
-	if section != "providers" && section != "quotas" && section != "tokens" {
+	if section != "providers" && section != "quotas" && section != "tokens" && section != "settings" {
 		ctx.Notify("The "+section+" tab is not available yet.", "info")
 		return nil
 	}
@@ -58,6 +62,10 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 		Reset:     func(id string) { d.async(func(c context.Context) { d.reset(c, id) }) },
 	}, solo)
 	d.tokens = uitokens.New(st.tokens.Latest, a.tokenDisplay, func() { d.count(true) })
+	d.sett = uisettings.New(st.settings.Snapshot, uisettings.Actions{
+		Save:    func(edits []config.Edit) { d.async(func(c context.Context) { d.saveSettings(c, edits) }) },
+		Preview: d.previewTemplate,
+	}, key)
 	d.frame = frame.New(func() frame.Env {
 		w, h := ctx.Width(), ctx.Height()
 		if w <= 0 {
@@ -67,7 +75,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 			h = defaultRows
 		}
 		return frame.Env{Width: w, Rows: h, Theme: ctx.UITheme()}
-	}, section, d.provs, d.quotas, d.tokens)
+	}, section, d.provs, d.quotas, d.tokens, d.sett)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()
 	stopTokens := st.tokens.OnChange(func(*tokens.Report, tokens.Reason) {
@@ -257,4 +265,55 @@ func (d *dashboard) rereadProviders(host sdk.Context) {
 		d.mu.Unlock()
 		d.frame.Invalidate()
 	})
+}
+
+// previewTemplate renders src as the line would show it now, without touching the live line.
+func (d *dashboard) previewTemplate(src string, width int) ([]string, []string) {
+	reg := d.st.quotas.Registry()
+	tpl := line.Parse(src, func(n string) string {
+		if s := reg.Resolve(n); s != nil {
+			return s.ID
+		}
+		return ""
+	})
+	s := d.a.settings()
+	th := uitheme.Theme{T: d.st.host.UITheme()}
+	short := s.AlwaysShortIDs || width < s.CompactWidthCols
+	segs := line.Render(th, tpl, d.st.quotas.View(), lineConfig(s), time.Now().UnixMilli(), short, nil)
+	return line.Pack(th, segs, max(width, 10)), tpl.Unknown
+}
+
+// saveSettings asks for the scope, then writes the staged edits; nothing is written until the
+// scope is confirmed, and a failed save keeps the drafts.
+func (d *dashboard) saveSettings(ctx context.Context, edits []config.Edit) {
+	labels := make([]string, len(scopes))
+	for i, s := range scopes {
+		labels[i] = s.label
+	}
+	pick, ok := d.frame.Choose(fmt.Sprintf("Save %d setting(s) to", len(edits)), labels, ctx.Done())
+	if !ok {
+		return
+	}
+	for _, s := range scopes {
+		if s.label != pick {
+			continue
+		}
+		res, err := d.st.settings.Save(ctx, s.scope, edits)
+		if err != nil {
+			d.sett.SetNotice("Not saved: "+err.Error()+" (the drafts are kept)", true)
+			d.frame.Invalidate()
+			return
+		}
+		keys := make([]string, len(edits))
+		for i, e := range edits {
+			keys[i] = e.Key
+		}
+		d.sett.Saved(keys)
+		msg := fmt.Sprintf("Saved %d setting(s) to %s.", len(edits), s.scope)
+		if len(res.Shadowed) > 0 {
+			msg += " A higher-priority scope still overrides: " + strings.Join(res.Shadowed, ", ") + "."
+		}
+		d.sett.SetNotice(msg, len(res.Shadowed) > 0)
+		d.frame.Invalidate()
+	}
 }
