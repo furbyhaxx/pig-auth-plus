@@ -1,0 +1,32 @@
+
+────────────────────────────────────────────────────────────────────────────────
+ Auth › Providers
+ [Providers] Quotas  Tokens  Models  Settings
+  Claude (claude)                                                    ✓ signed in
+    OAuth login · token valid 7 h 40 min
+  Antigravity (antigravity)                                          ✓ signed in
+    OAuth login · token valid 21 min
+  Synthetic (synthetic)                                              ✓ signed in
+    stored API key
+  ChatGPT (codex)                                                    ✓ signed in
+    OAuth login · token valid 3 days
+    quota only; inference uses PiG's openai-codex
+  xAI (xai)                                                          ✓ signed in
+    OAuth login · token valid 3 h 13 min
+    quota only; needs a Grok billing credential
+  OpenRouter (openrouter)                                            ✓ signed in
+    stored API key
+    quota only
+  DeepSeek (deepseek)                                                ✓ signed in
+    stored API key
+    quota only
+  OpenCode Zen (opencode)                                           ○ signed out
+    PiG builtin; no quota source
+    sign in: /login opencode
+  OpenCode Go (opencode-go)                                         ○ signed out
+    PiG builtin; no quota source
+    sign in: /login opencode-go
+ r reread · tab next · f1 help · escape/ctrl+c close
+or: 17.97$ · ds: 7.91$ · cox: 45% · cl: 5h/? 7d/14% · ag: gem/2% arg/3%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)
+$0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

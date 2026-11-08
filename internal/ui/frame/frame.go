@@ -189,20 +189,50 @@ func (f *Frame) header(env Env, active Tab) []string {
 	if f.anyDirty() {
 		title += t.Fg("warning", " · ▲ unsaved")
 	}
-	var parts []string
-	for _, tab := range f.tabs {
-		label := tab.Title()
+	labels := make([]string, len(f.tabs))
+	cur := 0
+	for i, tab := range f.tabs {
+		labels[i] = t.Fg("muted", " "+tab.Title()+" ")
 		if tab == active {
-			label = t.Bold(t.Fg("accent", "["+label+"]"))
-		} else {
-			label = t.Fg("muted", " "+label+" ")
+			labels[i], cur = t.Bold(t.Fg("accent", "["+tab.Title()+"]")), i
 		}
-		parts = append(parts, label)
 	}
 	return []string{
 		tui.TruncateToWidth(" "+title, w, "…", false),
-		tui.TruncateToWidth(" "+strings.Join(parts, ""), w, "…", false),
+		tabStrip(labels, cur, w),
 	}
+}
+
+// tabStrip joins the labels when they fit; otherwise it keeps the active tab and as many
+// neighbors as fit, marking the cut side with an ellipsis, so the active tab is never lost.
+func tabStrip(labels []string, cur, w int) string {
+	join := func(lo, hi int) string {
+		out := " "
+		if lo > 0 {
+			out += "…"
+		}
+		out += strings.Join(labels[lo:hi+1], "")
+		if hi < len(labels)-1 {
+			out += "…"
+		}
+		return out
+	}
+	lo, hi := cur, cur
+	for {
+		grew := false
+		if lo > 0 && tui.VisibleWidth(join(lo-1, hi)) <= w {
+			lo--
+			grew = true
+		}
+		if hi < len(labels)-1 && tui.VisibleWidth(join(lo, hi+1)) <= w {
+			hi++
+			grew = true
+		}
+		if !grew {
+			break
+		}
+	}
+	return tui.TruncateToWidth(join(lo, hi), w, "…", false)
 }
 
 func (f *Frame) anyDirty() bool {

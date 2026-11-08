@@ -1,0 +1,32 @@
+
+────────────────────────────────────
+ Auth › Settings
+ … Quotas  Tokens  Models [Settings]
+→ dashboard.density
+    "comfortable"  default
+  dashboard.maxBodyRows   0  default
+  dashboard.showProvenance
+    false  default
+  quotas.refreshIntervalSec
+    60  default
+  quotas.refreshOnRequest
+    true  default
+  quotas.providers
+    openrouter, deepseek, codex, cl…
+  quotas.linePlacement
+    "below-editor-first"  user
+  quotas.percentDisplay
+    "used"  user
+  quotas.compactWidthCols
+    100  default
+  quotas.alwaysShortIds
+    false  default
+  quotas.hideSignedOut
+    true  default
+  quotas.creditHealthyUsd   10  user
+  quotas.creditCriticalUsd
+    5  default
+or: 17.97$ · ds: 7.91$ · cox: 45%
+cl: 5h/? 7d/14% · ag: gem/2% arg/3%
+/mnt/Projects/furbyhaxx/pig-auth-...
+$0.000 (sub) 0.0%/425k (auto)  gpt-6

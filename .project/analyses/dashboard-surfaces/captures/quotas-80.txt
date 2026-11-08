@@ -1,0 +1,32 @@
+
+────────────────────────────────────────────────────────────────────────────────
+ Auth › Quotas
+  Providers [Quotas] Tokens  Models  Settings
+→ Claude                                                               ● 36s ago
+    7d weekly                                           █░░░░░░░  14% ↻ 5d 21h
+      drain window 1.9%/h · 1h 1.9%/h · 24h 1.9%/h · empty in 1d 22h
+    7d Fable                                            ░░░░░░░░   0% ↻ 5d 21h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+
+  Antigravity                                                          ● 36s ago
+    Gemini Models (7d)                                  ░░░░░░░░   2% ↻ 5d 18h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Gemini Models (5h)                                  ░░░░░░░░   0% ↻ 3h 44m
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Claude and GPT models (7d)                          ░░░░░░░░   1% ↻ 3d 2h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Claude and GPT models (5h)                          ░░░░░░░░   2% ↻ 3h 44m
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Gemini 4 Argon (7d)                                 ░░░░░░░░   3% ↻ 6d 17h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+
+  Synthetic                                                            ● 36s ago
+    Subscription requests                               ░░░░░░░░   0% ↻ 4h 59m
+    7d plan budget                                      ░░░░░░░░   0% ↻ 3h 0m
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h · resets first
+    1h search requests                                  ░░░░░░░░   0% ↻ 59m
+
+  ChatGPT · pro                                                        ● 36s ago
+or: 17.97$ · ds: 7.91$ · cox: 45% · cl: 5h/? 7d/14% · ag: gem/2% arg/3%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)
+$0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

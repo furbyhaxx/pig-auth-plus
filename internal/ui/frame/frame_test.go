@@ -154,3 +154,18 @@ func TestHelpToggleHidesTheBody(t *testing.T) {
 var _ sdk.ViewComponent = (*Frame)(nil)
 var _ sdk.ViewEventHandler = (*Frame)(nil)
 var _ sdk.RemoteComponentInvalidator = (*Frame)(nil)
+
+func TestTabStripKeepsTheActiveTabAtNarrowWidths(t *testing.T) {
+	labels := []string{" Providers ", " Quotas ", " Tokens ", " Models ", "[Settings]"}
+	for w := 14; w <= 60; w++ {
+		for cur := range labels {
+			got := tabStrip(labels, cur, w)
+			if tui.VisibleWidth(got) > w {
+				t.Fatalf("width %d: %q is %d wide", w, got, tui.VisibleWidth(got))
+			}
+			if !strings.Contains(got, strings.TrimSpace(labels[cur])) {
+				t.Fatalf("width %d, active %d lost: %q", w, cur, got)
+			}
+		}
+	}
+}
