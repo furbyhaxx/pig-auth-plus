@@ -101,3 +101,12 @@ func TestBreakdownGroupsByRole(t *testing.T) {
 		t.Fatalf("%+v", parts)
 	}
 }
+
+func TestContextEstimateInheritsNativeDiagnostics(t *testing.T) {
+	d := Diagnostic{Provider: "claude", Message: "run /login claude"}
+	f := &fakeNative{count: Count{Diagnostics: []Diagnostic{d}}, ok: false}
+	r, _ := engine(f).Context(context.Background(), Input{Provider: "p", Model: "m", LiveSystem: "sys", Messages: conv(t, `{"role":"user","content":"hello"}`)})
+	if r.Tokens.Source != SourceEstimate || len(r.Tokens.Diagnostics) != 1 || r.Tokens.Diagnostics[0] != d {
+		t.Fatalf("%+v", r.Tokens)
+	}
+}

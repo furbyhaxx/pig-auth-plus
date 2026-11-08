@@ -19,7 +19,8 @@ type ToolCounter interface {
 }
 
 // NativeCounter is implemented by counters that count a complete request. It reports false when
-// the request cannot be counted natively, so the engine keeps its labelled estimate.
+// the request cannot be counted natively, so the engine keeps its labelled estimate; the returned
+// count may then carry diagnostics (such as a missing login) that the estimate inherits.
 type NativeCounter interface {
 	Context(ctx context.Context, in NativeInput) (Count, bool)
 }
@@ -174,12 +175,16 @@ func (e *Engine) Context(ctx context.Context, in Input) (Report, bool) {
 	}
 	var counts []Count
 	var native bool
+	var notes []Diagnostic
 	if !anchored {
 		if nc, ok := counter.(NativeCounter); ok {
 			if ni, ok := nativeInput(in); ok {
-				if n, ok := nc.Context(ctx, ni); ok {
+				n, ok := nc.Context(ctx, ni)
+				if ok {
 					counts = append(counts, n)
 					native = true
+				} else {
+					notes = n.Diagnostics
 				}
 			}
 		}
@@ -215,6 +220,9 @@ func (e *Engine) Context(ctx context.Context, in Input) (Report, bool) {
 			}
 			counts = append(counts, n)
 		}
+	}
+	if len(notes) > 0 && !native {
+		counts = append(counts, Count{Source: SourceProvider, Diagnostics: notes})
 	}
 	tailCount := Sum(counts...)
 	total := tailCount
