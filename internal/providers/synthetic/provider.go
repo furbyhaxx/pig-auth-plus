@@ -70,18 +70,17 @@ func (p *Provider) stream(simple bool, model, request map[string]any, opts sdk.P
 			return opts.OnResponse(response, model)
 		})
 	}
-	inner, err := p.Runtime.Stream(wire.Provider{Name: wireID, Config: p.wireConfig()}, simple, model, request, options)
-	if err != nil {
-		return nil, err
-	}
 	id, _ := model["id"].(string)
-	return wire.Relay(signal, inner, func(message map[string]any) map[string]any {
-		mu.Lock()
-		body := payload
-		mu.Unlock()
-		rates, _ := model["cost"].(map[string]any)
-		return finalize(message, id, rates, body, p.Count)
-	}), nil
+	return p.Runtime.Stream(wire.Provider{Name: wireID, Config: p.wireConfig()}, wire.Call{
+		Simple: simple, Model: model, Request: request, Options: options, Signal: signal,
+		Finalize: func(message map[string]any) map[string]any {
+			mu.Lock()
+			body := payload
+			mu.Unlock()
+			rates, _ := model["cost"].(map[string]any)
+			return finalize(message, id, rates, body, p.Count)
+		},
+	})
 }
 
 // wireConfig is the hidden provider configuration for the current catalog.

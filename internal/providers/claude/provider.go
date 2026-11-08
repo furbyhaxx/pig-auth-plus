@@ -68,5 +68,5 @@ func (p *Provider) stream(simple bool, model, request map[string]any, opts sdk.P
 			return opts.OnResponse(response, model)
 		})
 	}
-	return p.Runtime.Stream(wire.Provider{Name: wireID, Config: p.Catalog.wireConfig()}, simple, model, request, options)
+	return p.Runtime.Stream(wire.Provider{Name: wireID, Config: p.Catalog.wireConfig()}, wire.Call{Simple: simple, Model: model, Request: request, Options: options, Signal: signal})
 }

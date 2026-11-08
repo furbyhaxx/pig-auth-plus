@@ -6,12 +6,14 @@
 package wire
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
@@ -49,20 +51,71 @@ func (r *Runtime) Bind(c *sdk.Context) {
 	r.host, r.rt, r.registered = c, nil, nil
 }
 
-// Stream streams model through the wire provider p, with Pi's streamSimple options when simple
-// is set. The model keeps its id; options carry the credential and fetch callback.
-func (r *Runtime) Stream(p Provider, simple bool, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
+// Call is one public-provider stream routed through a wire provider.
+type Call struct {
+	Simple bool
+	// Model and Request are the public provider's; the model keeps its id.
+	Model, Request map[string]any
+	// Options carry the credential and the fetch callback.
+	Options map[string]any
+	// Signal ends the relay; the fetch exchange cancels the inner stream with it.
+	Signal context.Context
+	// Finalize may rewrite the final assistant message; nil keeps it.
+	Finalize func(message map[string]any) map[string]any
+}
+
+// Stream streams c through the wire provider p. History and results carry the public
+// provider's identity; only the wire runtime sees p's name.
+func (r *Runtime) Stream(p Provider, c Call) (*sdk.ModelEventStream, error) {
 	rt, err := r.ensure(p)
 	if err != nil {
 		return nil, err
 	}
-	m := maps.Clone(model)
+	public, _ := c.Model["provider"].(string)
+	publicAPI, _ := c.Model["api"].(string)
+	m := maps.Clone(c.Model)
 	m["provider"] = p.Name
 	delete(m, "api")
-	if simple {
-		return rt.StreamSimple(m, request, options), nil
+	request := adoptHistory(c.Request, public, p.Name, p.Config["api"])
+	var inner *sdk.ModelEventStream
+	if c.Simple {
+		inner = rt.StreamSimple(m, request, c.Options)
+	} else {
+		inner = rt.Stream(m, request, c.Options)
 	}
-	return rt.Stream(m, request, options), nil
+	return Relay(c.Signal, inner, Label{Wire: p.Name, Provider: public, API: publicAPI}, c.Finalize), nil
+}
+
+// adoptHistory relabels the public provider's assistant messages as the wire provider's. PiG
+// keeps thinking blocks and signatures only for messages of the same provider, API and model;
+// without this every earlier turn would lose them, breaking thinking tool loops and cache prefixes.
+func adoptHistory(request map[string]any, public, wireName string, wireAPI any) map[string]any {
+	messages, ok := request["messages"].([]any)
+	if !ok || public == "" {
+		return request
+	}
+	var adopted []any
+	for i, raw := range messages {
+		msg, ok := raw.(map[string]any)
+		if !ok || msg["role"] != "assistant" || msg["provider"] != public {
+			continue
+		}
+		if adopted == nil {
+			adopted = slices.Clone(messages)
+		}
+		relabeled := maps.Clone(msg)
+		relabeled["provider"] = wireName
+		if wireAPI != nil {
+			relabeled["api"] = wireAPI
+		}
+		adopted[i] = relabeled
+	}
+	if adopted == nil {
+		return request
+	}
+	out := maps.Clone(request)
+	out["messages"] = adopted
+	return out
 }
 
 func (r *Runtime) ensure(p Provider) (*sdk.ModelRuntime, error) {
