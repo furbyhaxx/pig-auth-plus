@@ -127,7 +127,7 @@ func (a *Auth) postToken(ctx context.Context, body map[string]string, secrets ..
 
 // login runs the PKCE flow with a pasted code against the Max or Console authorize page.
 func (a *Auth) login(in sdk.AuthInteraction, console bool) (*sdk.Credential, error) {
-	ctx := signal(in)
+	ctx := oauthx.Context(in)
 	pkce := oauthx.NewPKCE()
 	state := oauthx.RandomState()
 	base := a.Endpoints.MaxAuthorize
@@ -181,48 +181,28 @@ func (a *Auth) Refresh(cred *sdk.Credential, ctx context.Context) (*sdk.Credenti
 		ctx = context.Background()
 	}
 	refresh, access := cred.String("refresh"), cred.String("access")
-	delay := a.RetryDelay
-	if delay <= 0 {
-		delay = 500 * time.Millisecond
-	}
-	for attempt := 0; ; attempt++ {
-		if attempt > 0 {
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case <-time.After(delay << (attempt - 1)):
-			}
-		}
-		tokens, err := a.postToken(ctx, map[string]string{"grant_type": "refresh_token", "refresh_token": refresh, "client_id": clientID}, refresh, access)
-		if err == nil {
-			next, err := a.parseTokens(tokens)
-			if err != nil {
-				return nil, err
-			}
-			out := cred.Clone()
-			for _, k := range next.Keys() {
-				v, _ := next.Get(k)
-				out.Set(k, v)
-			}
-			return out, nil
-		}
+	var tokens tokenResponse
+	permanent := func(err error) bool { var ae *AuthError; return errors.As(err, &ae) }
+	err := oauthx.Retry(ctx, a.RetryDelay, permanent, func() (err error) {
+		tokens, err = a.postToken(ctx, map[string]string{"grant_type": "refresh_token", "refresh_token": refresh, "client_id": clientID}, refresh, access)
+		return err
+	})
+	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		if attempt < 2 && retryable(err) {
-			continue
-		}
 		return nil, failure("token refresh failed", a.Endpoints.Token, err)
 	}
-}
-
-func retryable(err error) bool {
-	var se *httpx.StatusError
-	if errors.As(err, &se) {
-		return se.Status >= 500
+	next, err := a.parseTokens(tokens)
+	if err != nil {
+		return nil, err
 	}
-	var ae *AuthError
-	return !errors.As(err, &ae)
+	out := cred.Clone()
+	for _, k := range next.Keys() {
+		v, _ := next.Get(k)
+		out.Set(k, v)
+	}
+	return out, nil
 }
 
 // ToAuth sends the access token as the API key; PiG's Anthropic API recognizes OAuth tokens.
@@ -240,7 +220,7 @@ func ToAuth(cred *sdk.Credential) (map[string]any, error) {
 
 // LoginAPIKey asks for a key or creates one through the Console OAuth flow.
 func (a *Auth) LoginAPIKey(in sdk.AuthInteraction) (*sdk.Credential, error) {
-	ctx := signal(in)
+	ctx := oauthx.Context(in)
 	method, err := in.Prompt(map[string]any{"type": "select", "message": "API key method:", "options": []map[string]any{
 		{"id": "manual", "label": "Manually enter API Key"},
 		{"id": "create", "label": "Create an API Key"},
@@ -298,11 +278,4 @@ func (a *Auth) ProviderAuth() sdk.ProviderAuth {
 		},
 		APIKey: &sdk.APIKeyAuth{Name: "Claude API key", Login: a.LoginAPIKey, Resolve: a.ResolveAPIKey},
 	}
-}
-
-func signal(in sdk.AuthInteraction) context.Context {
-	if in.Signal != nil {
-		return in.Signal
-	}
-	return context.Background()
 }
