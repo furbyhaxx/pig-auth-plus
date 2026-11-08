@@ -59,7 +59,7 @@ func (p Paths) LegacyConfig() string { return filepath.Join(p.AgentDir, "auth-pl
 
 // QuotaCache is the host-shared quota cache.
 func (p Paths) QuotaCache() string {
-	return filepath.Join(p.AgentDir, "cache", "auth-plus", "quotas.json")
+	return filepath.Join(p.AgentDir, "cache", "pig-auth-plus", "quotas.json")
 }
 
 // CodexLegacyAuth is pi-quotas' Codex credential file, read as a fallback.
