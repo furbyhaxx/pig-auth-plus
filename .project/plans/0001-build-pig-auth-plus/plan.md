@@ -26,7 +26,7 @@ by line.
 ## Progress
 
 - Done: M0 foundation (paths, fsx, config, import, session lifecycle, conflict check).
-- Now: M1.1 provider delegation spike.
+- Now: M1.3 antigravity provider (claude and synthetic done).
 - Next: M1.2 claude.
 
 ## M0 Foundation
@@ -94,14 +94,13 @@ and reset flow. Captures at 36/57/80/140.
    compaction and branch changes.
 2. Estimates: prose 4 and JSON 3 characters per token; labelled `estimate`.
 3. Claude count endpoint for complete requests; memoized after auth shaping.
-4. Synthetic real tokens: tokenizer spike (pure-Go byte-level BPE from `tokenizer.json`,
-   cache in `$XDG_CACHE_HOME/pig-auth-plus/tokenizers`, pinned revision, SHA-256); fallback
-   factor table (DeepSeek 0.4208, GLM-4.7-Flash 1.36, gpt-oss-120b 2.44) and characters.
-   The provider writes real `input` and de-duplicated `cacheWrite` into the final message.
+4. Synthetic real tokens: done in M1 (`internal/providers/synthetic/units.go`): measured
+   stream factors per tokenizer repository, character estimate for unknown models
+   (ANA-synthetic-usage-units). Re-measure factors when Synthetic adds models.
 5. Tokens tab and fallback footer percentage with warning/error thresholds.
 
-Done when a live Synthetic DeepSeek session shows persisted `input` within 5% of the
-tokenizer count and `cacheWrite != input`.
+Done when a live Synthetic DeepSeek session shows persisted prompt tokens within 5% of the
+non-streamed count and `cacheWrite != input`.
 
 ## M5 Dashboard
 
