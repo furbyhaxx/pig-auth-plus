@@ -23,10 +23,10 @@ Tail       10,316 · estimate · 0 me…
 Breakdown
   system        8,733 · estimate · 1
   tools         1,583 · estimate · 7
- r recount · tab next · f1 help
+ f1 help · escape/ctrl+c close
 ────────────────────────────────────
-or: 17.97$ · ds: 7.91$ · cox: 45%
+or: 17.97$ · ds: 7.91$ · cox: 46%
 cl: 5h/? 7d/14% · ag: gem/2% arg/3%
-syn: 0% · xai: 34%
+syn: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6

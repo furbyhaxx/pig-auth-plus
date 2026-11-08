@@ -19,11 +19,13 @@ document:
 # Dashboard tabs at four widths
 
 Run: `tui-capture.sh -w "36 57 80 140" -H 32 -c "/auth <tab>" -- -ne -e .` on pig 0.7.0+1.5.0
-against the user's live accounts. Captures: `captures/<tab>-<width>.txt` (20 files).
+against the user's live accounts. Captures: `captures/<tab>-<width>.txt` at 32 rows, and
+`captures/<tab>-57x16.txt` at a 16-row terminal (25 files).
 
 ## Result
 
-- No rendered line exceeds its width (checked by display width over all 20 captures).
+- No rendered line exceeds its width (checked by display width over all 25 captures), and every
+  capture still shows the hint row with help and close, including 36 columns and 16 rows.
 - Identity survives narrow widths: model ids are cut in the middle so the version tail stays
   (`anthropic.claude-sonne…250929-v1:0`), provider rows keep label and id, settings rows move
   the value below the key.
@@ -37,6 +39,8 @@ against the user's live accounts. Captures: `captures/<tab>-<width>.txt` (20 fil
 | `/auth settings quotas.x` completion replaced the whole argument with the bare key, dropping the section word | Completion values carry the typed leading words; `/quota reset <provider>` had the same fault |
 | Models tab stayed on "reading the model catalog…" forever | The catalog reload is started on open; a failed read is shown |
 | Long model ids truncated at the tail, hiding the version | Middle cut |
+| At 16 rows the panel claimed the whole terminal and the hint row and bottom border were pushed off screen | The panel leaves 6 rows for the footer and the quota widget |
+| At 36 columns the tab hints filled the hint row and help and close were dropped | Help and close outrank every tab hint |
 
 ## Not covered
 

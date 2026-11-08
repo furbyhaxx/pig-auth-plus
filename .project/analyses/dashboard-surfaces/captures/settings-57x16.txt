@@ -1,0 +1,16 @@
+
+
+─────────────────────────────────────────────────────────
+ Auth › Settings
+  Providers  Quotas  Tokens  Models [Settings]
+→ dashboard.density                "comfortable"  default
+  dashboard.maxBodyRows                        0  default
+  dashboard.showProvenance                 false  default
+ Dashboard row spacing; compact uses less vertical
+ space.
+ f1 help · escape/ctrl+c close · ←/→ change · enter edit
+─────────────────────────────────────────────────────────
+or: 17.97$ · ds: 7.91$ · cox: 46% · cl: 5h/? 7d/14%
+ag: gem/2% arg/3% · syn: 0% · xai: 35%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)
+$0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

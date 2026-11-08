@@ -169,3 +169,18 @@ func TestTabStripKeepsTheActiveTabAtNarrowWidths(t *testing.T) {
 		}
 	}
 }
+
+func TestHelpAndCloseSurviveTheNarrowestHintRow(t *testing.T) {
+	for _, w := range []int{30, 36, 57} {
+		f := newFrame(w, 20, &fakeTab{id: "a", title: "A"})
+		var hint string
+		for _, row := range lines(f.View(w).Root) {
+			if strings.Contains(row, "f1") {
+				hint = row
+			}
+		}
+		if !strings.Contains(hint, "f1") || !strings.Contains(hint, "close") {
+			t.Fatalf("width %d: help and close must stay in the hint row: %q", w, hint)
+		}
+	}
+}

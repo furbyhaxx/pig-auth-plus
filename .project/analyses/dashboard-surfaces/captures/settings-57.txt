@@ -1,4 +1,5 @@
 
+
 ─────────────────────────────────────────────────────────
  Auth › Settings
   Providers  Quotas  Tokens  Models [Settings]
@@ -21,12 +22,11 @@
   models.aliases                     0 alias(es)  default
   openai.verbosity                            "low"  user
   openai.verbosityProviders
-    openai, openai-codex  default
-  claude.replacePatterns               0 rule(s)  default
-  claude.cacheRetention                      "long"  user
-  claude.cacheRetentionProviders
-    claude, anthropic  default
-  tokens.warningPercent                       70  default
-or: 17.97$ · ds: 7.91$ · cox: 45% · cl: 5h/? 7d/14%
+ Dashboard row spacing; compact uses less vertical
+ space.
+ f1 help · escape/ctrl+c close · ←/→ change · enter edit
+─────────────────────────────────────────────────────────
+or: 17.97$ · ds: 7.91$ · cox: 46% · cl: 5h/? 7d/14%
+ag: gem/2% arg/3% · syn: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

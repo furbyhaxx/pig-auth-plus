@@ -2,13 +2,13 @@
 ────────────────────────────────────
  Auth › Quotas
   Providers [Quotas] Tokens …
-→ Claude                   ● 25s ago
+→ Claude                    ● 3m ago
     7d weekly            █░░░░  14%
-      drain window 1.9%/h · 1h 1.9%…
+      drain window 1.6%/h · 1h 1.6%…
     7d Fable             ░░░░░   0%
       drain window 0.0%/h · 1h 0.0%…
 
-  Antigravity              ● 25s ago
+  Antigravity               ● 8s ago
     Gemini Models (7d)   ░░░░░   2%
       drain window 0.0%/h · 1h 0.0%…
     Gemini Models (5h)   ░░░░░   0%
@@ -20,13 +20,13 @@
     Gemini 4 Argon (7d)  ░░░░░   3%
       drain window 0.0%/h · 1h 0.0%…
 
-  Synthetic                ● 25s ago
+  Synthetic                ● 10s ago
     Subscription reques… ░░░░░   0%
     7d plan budget       ░░░░░   0%
-      drain window 0.0%/h · 1h 0.0%…
-    1h search requests   ░░░░░   0%
-
-or: 17.97$ · ds: 7.91$ · cox: 45%
+ f1 help · escape/ctrl+c close
+────────────────────────────────────
+or: 17.97$ · ds: 7.91$ · cox: 46%
 cl: 5h/? 7d/14% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6

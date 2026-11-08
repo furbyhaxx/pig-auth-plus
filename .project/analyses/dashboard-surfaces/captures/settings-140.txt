@@ -1,3 +1,5 @@
+  pig-auth-plus
+
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Auth › Settings
@@ -22,11 +24,9 @@
   openai.verbosityProviders                                                                                    openai, openai-codex  default
   claude.replacePatterns                                                                                                  0 rule(s)  default
   claude.cacheRetention                                                                                                         "long"  user
-  claude.cacheRetentionProviders                                                                                  claude, anthropic  default
-  tokens.warningPercent                                                                                                          70  default
-  tokens.errorPercent                                                                                                            90  default
  Dashboard row spacing; compact uses less vertical space.
- ←/→ change · enter edit · ctrl+s save · backspace default · tab next · f1 help · escape/ctrl+c close
-openrouter: 17.97$ · deepseek: 7.91$ · codex: 45% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 34%
+ f1 help · escape/ctrl+c close · ←/→ change · enter edit · ctrl+s save · backspace default · tab next
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+openrouter: 17.97$ · deepseek: 7.91$ · codex: 46% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

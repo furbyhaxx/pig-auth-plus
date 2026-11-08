@@ -246,7 +246,9 @@ func (f *Frame) anyDirty() bool {
 
 // hintRow joins the tab's hints with the frame's, dropping from the end until it fits.
 func (f *Frame) hintRow(env Env, tab Tab, w int) string {
-	hints := append(tab.Hints(env), sdk.RawKeyHint("tab", "next"), sdk.RawKeyHint("f1", "help"), sdk.KeyHint("tui.select.cancel", "close"))
+	// Help and close outrank every tab hint: a user who cannot see them is stuck.
+	hints := append([]string{sdk.RawKeyHint("f1", "help"), sdk.KeyHint("tui.select.cancel", "close")}, tab.Hints(env)...)
+	hints = append(hints, sdk.RawKeyHint("tab", "next"))
 	if f.help {
 		hints = []string{sdk.RawKeyHint("f1", "back"), sdk.KeyHint("tui.select.cancel", "back")}
 	}

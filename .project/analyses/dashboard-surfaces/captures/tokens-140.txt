@@ -25,8 +25,8 @@ Tail       10,316 · estimate · 0 messages
 Breakdown
   system        8,733 · estimate · 1
   tools         1,583 · estimate · 7
- r recount · tab next · f1 help · escape/ctrl+c close
+ f1 help · escape/ctrl+c close · r recount · tab next
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-openrouter: 17.97$ · deepseek: 7.91$ · codex: 45% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 34%
+openrouter: 17.97$ · deepseek: 7.91$ · codex: 46% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

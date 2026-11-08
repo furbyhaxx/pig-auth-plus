@@ -21,12 +21,12 @@
     100  default
   quotas.alwaysShortIds
     false  default
-  quotas.hideSignedOut
-    true  default
-  quotas.creditHealthyUsd   10  user
-  quotas.creditCriticalUsd
-    5  default
-or: 17.97$ · ds: 7.91$ · cox: 45%
+ Dashboard row spacing; compact
+ uses less vertical space.
+ f1 help · escape/ctrl+c close
+────────────────────────────────────
+or: 17.97$ · ds: 7.91$ · cox: 46%
 cl: 5h/? 7d/14% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6

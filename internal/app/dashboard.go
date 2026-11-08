@@ -27,6 +27,9 @@ import (
 const (
 	defaultWidth = 80
 	defaultRows  = 24
+	// reservedRows is what the footer and the quota widget keep for themselves; the panel is
+	// drawn above them and its hint row is lost when it claims the whole terminal.
+	reservedRows = 6
 )
 
 // dashboard is one open /auth panel; it lives until the panel closes.
@@ -90,7 +93,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		if h <= 0 {
 			h = defaultRows
 		}
-		return frame.Env{Width: w, Rows: h, Theme: ctx.UITheme()}
+		return frame.Env{Width: w, Rows: max(h-reservedRows, 8), Theme: ctx.UITheme()}
 	}, section, d.provs, d.quotas, d.tokens, d.models, d.sett)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()

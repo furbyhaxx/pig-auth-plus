@@ -1,32 +1,32 @@
+  pig-auth-plus
+
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Auth › Quotas
   Providers [Quotas] Tokens  Models  Settings
-→ Claude                                                                                                                           ● 42s ago
+→ Claude                                                                                                                            ● 4m ago
     7d weekly                                                                                                       █░░░░░░░  14% ↻ 5d 21h
-      drain window 1.9%/h · 1h 1.9%/h · 24h 1.9%/h · empty in 1d 22h
+      drain window 1.6%/h · 1h 1.6%/h · 24h 1.6%/h · empty in 2d 5h
     7d Fable                                                                                                        ░░░░░░░░   0% ↻ 5d 21h
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
 
-  Antigravity                                                                                                                      ● 41s ago
+  Antigravity                                                                                                                      ● 24s ago
     Gemini Models (7d)                                                                                              ░░░░░░░░   2% ↻ 5d 18h
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
-    Gemini Models (5h)                                                                                              ░░░░░░░░   0% ↻ 3h 44m
+    Gemini Models (5h)                                                                                              ░░░░░░░░   0% ↻ 3h 35m
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
-    Claude and GPT models (7d)                                                                                      ░░░░░░░░   1% ↻ 3d 2h
+    Claude and GPT models (7d)                                                                                      ░░░░░░░░   1% ↻ 3d 1h
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
-    Claude and GPT models (5h)                                                                                      ░░░░░░░░   2% ↻ 3h 44m
+    Claude and GPT models (5h)                                                                                      ░░░░░░░░   2% ↻ 3h 36m
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
     Gemini 4 Argon (7d)                                                                                             ░░░░░░░░   3% ↻ 6d 17h
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
 
-  Synthetic                                                                                                                        ● 42s ago
+  Synthetic                                                                                                                        ● 26s ago
     Subscription requests                                                                                           ░░░░░░░░   0% ↻ 4h 59m
-    7d plan budget                                                                                                  ░░░░░░░░   0% ↻ 3h 0m
-      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h · resets first
-    1h search requests                                                                                              ░░░░░░░░   0% ↻ 59m
-
-  ChatGPT · pro                                                                                                                    ● 42s ago
-    Plan (7d window)                                                                                                ████░░░░  45% ↻ 2d 8h
+    7d plan budget                                                                                                  ░░░░░░░░   0% ↻ 2h 52m
+ f1 help · escape/ctrl+c close · r refresh · R refresh all · a solo · p line placement · tab next
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+openrouter: 17.97$ · deepseek: 7.91$ · codex: 46% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

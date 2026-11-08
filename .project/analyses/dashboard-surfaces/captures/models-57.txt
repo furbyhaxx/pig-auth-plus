@@ -1,4 +1,5 @@
 
+
 ─────────────────────────────────────────────────────────
  Auth › Models
   Providers  Quotas  Tokens [Models] Settings
@@ -23,10 +24,9 @@
   anthropic.claude-sonnet-5-5                          1M
   apac.amazon.nova-lite-v1:0                         300k
   apac.amazon.nova-micro-v1:0                        128k
-  apac.amazon.nova-pro-v1:0                          300k
-  apac.anthropic.claude-sonnet-4-20250514-v1:0       200k
-  au.anthropic.claude-haiku-4-5-20251001-v1:0        200k
-  au.anthropic.claude-haiku-5-5                        1M
-or: 17.97$ · ds: 7.91$ · cox: 45% · cl: 5h/? 7d/14%
+ f1 help · escape/ctrl+c close · / search · enter detail
+─────────────────────────────────────────────────────────
+or: 17.97$ · ds: 7.91$ · cox: 46% · cl: 5h/? 7d/14%
+ag: gem/2% arg/3% · syn: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

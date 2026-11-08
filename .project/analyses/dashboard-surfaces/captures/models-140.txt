@@ -1,3 +1,5 @@
+  pig-auth-plus
+
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Auth › Models
@@ -23,10 +25,8 @@
   anthropic.claude-sonnet-5-5                                                                                                             1M
   apac.amazon.nova-lite-v1:0                                                                                                            300k
   apac.amazon.nova-micro-v1:0                                                                                                           128k
-  apac.amazon.nova-pro-v1:0                                                                                                             300k
-  apac.anthropic.claude-sonnet-4-20250514-v1:0                                                                                          200k
-  au.anthropic.claude-haiku-4-5-20251001-v1:0                                                                                           200k
-  au.anthropic.claude-haiku-5-5                                                                                                           1M
-  au.anthropic.claude-opus-4-6-v1                                                                                                         1M
+ f1 help · escape/ctrl+c close · / search · enter detail · tab next
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+openrouter: 17.97$ · deepseek: 7.91$ · codex: 46% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low
