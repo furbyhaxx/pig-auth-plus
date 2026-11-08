@@ -146,6 +146,9 @@ def check(root: Path) -> list[str]:
             for match in PATH_MENTION.finditer(line):
                 target = match.group(0).rstrip("/.")
                 following = line[match.end():match.end() + 1]
+                # A mention inside a longer path (host:/other/repo/.project/...) is not ours.
+                if match.start() > 0 and line[match.start() - 1] == "/":
+                    continue
                 if following in {"<", "{", "*"} or "NNNN" in target or "YYYY" in target:
                     continue
                 if not (root / target).exists():

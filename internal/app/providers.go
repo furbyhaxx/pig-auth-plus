@@ -53,7 +53,7 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 	if err != nil {
 		return nil, fmt.Errorf("synthetic catalog: %w", err)
 	}
-	ps.synthetic = &synthetic.Provider{Catalog: syntheticCatalog, Runtime: ps.runtime}
+	ps.synthetic = &synthetic.Provider{Catalog: syntheticCatalog, Runtime: ps.runtime, Count: synthetic.UnitCounter(syntheticCatalog)}
 	if err := ext.RegisterNativeProvider(ps.synthetic.Native()); err != nil {
 		return nil, fmt.Errorf("synthetic provider: %w", err)
 	}
