@@ -16,6 +16,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/paths"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/session"
+	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 )
 
 // startupTimeout bounds file work during session start.
@@ -28,6 +29,7 @@ type state struct {
 	settings *config.Manager
 	group    *session.Group
 	quotas   *quota.Engine
+	tokens   *tokens.Tracker
 	line     *lineView
 }
 
@@ -52,6 +54,16 @@ func Register(ext *sdk.Extension) {
 	ext.OnEvent(sdk.EventBeforeProviderRequest, a.onProviderRequest)
 	ext.OnEvent(sdk.EventAfterProviderResponse, a.onProviderResponse)
 	ext.OnEvent(sdk.EventTurnEnd, a.onTurnEnd)
+	for event, reason := range map[string]tokens.Reason{
+		sdk.EventModelSelect:         tokens.ReasonModelSelect,
+		sdk.EventThinkingLevelSelect: tokens.ReasonThinkingLevelSelect,
+		sdk.EventMessageEnd:          tokens.ReasonMessageEnd,
+		sdk.EventTurnEnd:             tokens.ReasonTurnEnd,
+		sdk.EventSessionCompact:      tokens.ReasonSessionCompact,
+		sdk.EventSessionTree:         tokens.ReasonSessionTree,
+	} {
+		ext.OnEvent(event, a.tokenEvent(reason))
+	}
 }
 
 func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
@@ -89,6 +101,7 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 	a.cur = st
 	a.mu.Unlock()
 	a.providers.start(ctx)
+	a.startTokens(st)
 	if err := a.startQuotas(st); err != nil {
 		ctx.Notify("pig-auth-plus quotas: "+err.Error(), "warning")
 		return nil, nil
@@ -129,6 +142,9 @@ func (a *App) stop() {
 			st.line.clear(st.line.placement())
 		}
 		st.group.Close()
+		if st.tokens != nil {
+			st.tokens.Close()
+		}
 		if st.quotas != nil {
 			st.quotas.Stop()
 		}
