@@ -1,0 +1,1 @@
+Cross-process `flock` locks (`<path>.lock`, 0600, O_NOFOLLOW, polls until ctx ends) and atomic 0600 writes. Unix only; other platforms return `errors.ErrUnsupported`. Hold the lock across read-modify-write; never write a shared file without it.

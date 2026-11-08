@@ -1,0 +1,1 @@
+Every file location. Agent dir comes from `sdk.AgentDir()` (passed in), XDG bases from env; never hardcode `~/.pig` or `~/.pi`. New file → add an accessor here, not a `filepath.Join` at the call site.
