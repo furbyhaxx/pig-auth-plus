@@ -28,6 +28,7 @@ type state struct {
 	settings *config.Manager
 	group    *session.Group
 	quotas   *quota.Engine
+	line     *lineView
 }
 
 // App holds the current session's state.
@@ -89,7 +90,9 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 	a.providers.start(ctx)
 	if err := a.startQuotas(st); err != nil {
 		ctx.Notify("pig-auth-plus quotas: "+err.Error(), "warning")
+		return nil, nil
 	}
+	a.startLine(st)
 	return nil, nil
 }
 
@@ -121,6 +124,9 @@ func (a *App) stop() {
 	a.cur = nil
 	a.mu.Unlock()
 	if st != nil {
+		if st.line != nil {
+			st.line.clear(st.line.placement())
+		}
 		st.group.Close()
 		if st.quotas != nil {
 			st.quotas.Stop()
