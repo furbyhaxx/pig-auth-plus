@@ -46,6 +46,7 @@ func Register(ext *sdk.Extension) {
 		panic("pig-auth-plus: " + err.Error())
 	}
 	a.providers = ps
+	a.registerCommands(ext)
 	ext.OnSessionStart(a.start)
 	ext.OnSessionShutdown(a.shutdown)
 	ext.OnEvent(sdk.EventBeforeProviderRequest, a.onProviderRequest)
@@ -146,8 +147,16 @@ func detectConflict(ctx sdk.Context) (string, bool) {
 	cmds := make([]session.Command, 0, len(infos))
 	for _, c := range infos {
 		if c.Source == "extension" {
-			cmds = append(cmds, session.Command{Name: c.Name, Source: c.SourceInfo.Source, BaseDir: c.SourceInfo.BaseDir})
+			cmds = append(cmds, session.Command{Name: c.Name, Source: c.SourceInfo.Source, Location: location(c.SourceInfo)})
 		}
 	}
-	return session.Conflict(cmds, own.BaseDir)
+	return session.Conflict(cmds, location(own))
+}
+
+// location identifies where an extension was loaded from: its package root, else its entry path.
+func location(info sdk.SourceInfo) string {
+	if info.BaseDir != "" {
+		return info.BaseDir
+	}
+	return info.Path
 }

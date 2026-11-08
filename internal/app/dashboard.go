@@ -35,6 +35,10 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo string) error {
 		ctx.Notify("pig-auth-plus is not active in this session.", "warning")
 		return nil
 	}
+	if section != "quotas" {
+		ctx.Notify("The "+section+" tab is not available yet.", "info")
+		return nil
+	}
 	d := &dashboard{a: a, st: st}
 	d.quotas = uiquotas.New(st.quotas.View, a.display, uiquotas.Actions{
 		Refresh:   d.refresh,

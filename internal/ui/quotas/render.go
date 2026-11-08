@@ -265,3 +265,25 @@ func drainLine(th line.Theme, m *quota.Metrics, unit string, w int, nowMs int64)
 	}
 	return fitLine(paint(th, "      drain "+strings.Join(parts, " · "), "dim"), w)
 }
+
+type plainTheme struct{}
+
+func (plainTheme) Paint(text string, _ line.Style) string { return text }
+
+// PlainText renders the visible providers as unstyled text for a headless command. It reads
+// cached state only and never fetches.
+func PlainText(views []quota.View, d Display, solo string, width int, now time.Time) string {
+	shown := visible(views, solo, d.HideSignedOut)
+	if len(shown) == 0 {
+		return emptyText(solo)
+	}
+	env := frame.Env{Width: width}
+	var out []string
+	for i, v := range shown {
+		if i > 0 {
+			out = append(out, "")
+		}
+		out = append(out, providerLines(env, plainTheme{}, v, d, false, now)...)
+	}
+	return strings.TrimRight(strings.Join(out, "\n"), "\n")
+}
