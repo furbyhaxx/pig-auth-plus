@@ -1,0 +1,22 @@
+{
+  "credits": [
+    {
+      "id": "RateLimitResetCredit_964ef9f41ca081918e9be9293ca7e29b",
+      "reset_type": "codex_rate_limits",
+      "is_supported_by_plan": true,
+      "status": "available",
+      "granted_at": "2026-10-07T23:17:42.446820Z",
+      "expires_at": "2026-11-06T23:17:42.446820Z",
+      "redeem_started_at": null,
+      "redeemed_at": null,
+      "profile_image_url": "https://openaiassets.blob.core.windows.net/$web/codex/codex-icon-200.png",
+      "profile_user_id": "Codex Team",
+      "title": "Full reset",
+      "description": "Thanks for using Codex! You've been granted one free rate limit reset."
+    }
+  ],
+  "available_count": 1,
+  "total_earned_count": 0,
+  "immediate_reset_purchase_eligible": false,
+  "history_enabled": true
+}

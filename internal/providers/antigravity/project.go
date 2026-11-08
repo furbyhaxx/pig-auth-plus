@@ -92,7 +92,7 @@ func (p *Projects) discover(ctx context.Context, access string) (string, error) 
 	}
 	_, err := httpx.JSON(ctx, httpx.Request{
 		Provider: ID, Method: http.MethodPost, URL: base + "/v1internal:loadCodeAssist",
-		Header: cliHeaders(access), Body: []byte(`{"metadata":{"ideType":"ANTIGRAVITY"}}`), Secrets: []string{access},
+		Header: CLIHeaders(access), Body: []byte(`{"metadata":{"ideType":"ANTIGRAVITY"}}`), Secrets: []string{access},
 	}, &out)
 	if err != nil {
 		var se *httpx.StatusError

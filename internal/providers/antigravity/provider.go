@@ -195,7 +195,7 @@ func (p *Provider) post(signal context.Context, access string, body []byte, time
 		cancel()
 		return nil, err
 	}
-	req.Header = cliHeaders(access)
+	req.Header = CLIHeaders(access)
 	client := p.Client
 	if client == nil {
 		client = wire.Client

@@ -23,7 +23,8 @@ var (
 	versionInOutput = regexp.MustCompile(`(\d+\.\d+\.\d+)`)
 )
 
-func userAgent(version string) string { return "claude-cli/" + version + " (external, cli)" }
+// UserAgent is the Claude Code CLI user agent for version.
+func UserAgent(version string) string { return "claude-cli/" + version + " (external, cli)" }
 
 // isOlder compares numerically: 2.1.99 is older than 2.1.306.
 func isOlder(candidate, baseline string) bool {

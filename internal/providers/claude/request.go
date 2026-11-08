@@ -186,7 +186,7 @@ func shapeHeaders(h http.Header, token, version, sessionID string) {
 	}
 	h.Set("Authorization", "Bearer "+token)
 	h.Set("anthropic-beta", strings.Join(betas, ","))
-	h.Set("User-Agent", userAgent(version))
+	h.Set("User-Agent", UserAgent(version))
 	h.Set("x-app", "cli")
 	h.Set("x-claude-code-session-id", sessionID)
 	h.Del("x-api-key")

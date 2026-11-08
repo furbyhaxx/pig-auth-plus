@@ -1,0 +1,56 @@
+{
+	"groups": [
+		{
+			"buckets": [
+				{
+					"bucketId": "gemini-weekly",
+					"displayName": "Weekly Limit Remaining",
+					"window": "weekly",
+					"resetTime": "2026-10-28T12:19:09Z",
+					"remainingFraction": 1
+				},
+				{
+					"bucketId": "gemini-5h",
+					"displayName": "Five Hour Limit Remaining",
+					"window": "5h",
+					"resetTime": "2026-10-21T17:19:09Z",
+					"remainingFraction": 1
+				}
+			],
+			"displayName": "Gemini Models",
+			"description": "Models within this group: Gemini Flash, Gemini Pro"
+		},
+		{
+			"buckets": [
+				{
+					"bucketId": "3p-weekly",
+					"window": "weekly",
+					"resetTime": "2026-10-28T12:19:09Z",
+					"remainingFraction": 1
+				},
+				{
+					"bucketId": "3p-5h",
+					"window": "5h",
+					"resetTime": "2026-10-21T17:19:09Z",
+					"remainingFraction": 1
+				}
+			],
+			"displayName": "Claude and GPT models",
+			"description": "Models within this group: Claude Opus, Claude Sonnet, GPT-OSS"
+		},
+		{
+			"buckets": [
+				{
+					"bucketId": "gemini-argon-wtu-weekly",
+					"displayName": "Gemini 4 Argon Weekly Limit",
+					"window": "weekly",
+					"resetTime": "2026-10-26T13:39:05Z",
+					"remainingFraction": 0,
+					"description": "You have hit your weekly limit, it refreshes in 5 days, 1 hour."
+				}
+			],
+			"displayName": "Gemini 4 Argon"
+		}
+	],
+	"description": "Within each group, models share a weekly limit and a 5-hour limit."
+}

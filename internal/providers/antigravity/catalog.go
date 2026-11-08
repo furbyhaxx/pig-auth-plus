@@ -122,7 +122,7 @@ func (f Fetcher) Fetch(ctx context.Context, access string) ([]map[string]any, er
 	body, _ := json.Marshal(map[string]string{"project": project})
 	_, data, err := httpx.Do(ctx, httpx.Request{
 		Provider: ID, Method: http.MethodPost, URL: base + "/v1internal:fetchAvailableModels",
-		Header: cliHeaders(access), Body: body, Timeout: 15 * time.Second, Secrets: []string{access, project},
+		Header: CLIHeaders(access), Body: body, Timeout: 15 * time.Second, Secrets: []string{access, project},
 	})
 	if err != nil {
 		var se *httpx.StatusError

@@ -23,8 +23,8 @@ func userAgent() string {
 	return fmt.Sprintf("antigravity/cli/%s (aidev_client; os_type=%s; arch=%s; cl=%s; auth_method=consumer)", agyVersion, runtime.GOOS, runtime.GOARCH, agyChangeList)
 }
 
-// cliHeaders are the CLI's JSON request headers.
-func cliHeaders(access string) http.Header {
+// CLIHeaders are the CLI's JSON request headers.
+func CLIHeaders(access string) http.Header {
 	h := http.Header{"User-Agent": {userAgent()}, "Content-Type": {"application/json"}}
 	if access != "" {
 		h.Set("Authorization", "Bearer "+access)
