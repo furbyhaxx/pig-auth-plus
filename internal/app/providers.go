@@ -10,13 +10,15 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/paths"
 	"github.com/furbyhaxx/pig-auth-plus/internal/providers/claude"
+	"github.com/furbyhaxx/pig-auth-plus/internal/providers/synthetic"
 	"github.com/furbyhaxx/pig-auth-plus/internal/wire"
 )
 
 // providers are registered once per process; sessions bind the wire runtime and refresh catalogs.
 type providers struct {
-	runtime *wire.Runtime
-	claude  *claude.Provider
+	runtime   *wire.Runtime
+	claude    *claude.Provider
+	synthetic *synthetic.Provider
 }
 
 func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
@@ -47,6 +49,14 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 	if err := ext.RegisterNativeProvider(native); err != nil {
 		return nil, fmt.Errorf("claude provider: %w", err)
 	}
+	syntheticCatalog, err := synthetic.NewCatalog()
+	if err != nil {
+		return nil, fmt.Errorf("synthetic catalog: %w", err)
+	}
+	ps.synthetic = &synthetic.Provider{Catalog: syntheticCatalog, Runtime: ps.runtime}
+	if err := ext.RegisterNativeProvider(ps.synthetic.Native()); err != nil {
+		return nil, fmt.Errorf("synthetic provider: %w", err)
+	}
 	return ps, nil
 }
 
@@ -54,12 +64,11 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 func (ps *providers) start(ctx sdk.Context) {
 	ps.runtime.Bind(&ctx)
 	anthropic, err := ctx.ModelRegistry().GetModelsOfType("chat", "anthropic")
-	if err != nil || !ps.claude.Catalog.Update(anthropic) {
-		return
-	}
-	force := true
-	if _, err := ctx.ModelRegistry().Refresh(sdk.ModelsRefreshOptions{Providers: []string{claude.ProviderID}, Force: &force}); err != nil {
-		ctx.Notify("pig-auth-plus: claude catalog refresh: "+err.Error(), "warning")
+	if err == nil && ps.claude.Catalog.Update(anthropic) {
+		force := true
+		if _, err := ctx.ModelRegistry().Refresh(sdk.ModelsRefreshOptions{Providers: []string{claude.ProviderID}, Force: &force}); err != nil {
+			ctx.Notify("pig-auth-plus: claude catalog refresh: "+err.Error(), "warning")
+		}
 	}
 	if w := ps.claude.Shaper.VersionWarning(); w != "" {
 		ctx.Notify(w, "warning")
