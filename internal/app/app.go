@@ -36,6 +36,7 @@ type state struct {
 
 // App holds the current session's state.
 type App struct {
+	early     []sdk.VirtualModel
 	mu        sync.Mutex
 	cur       *state
 	providers *providers
@@ -49,6 +50,7 @@ func Register(ext *sdk.Extension) {
 		panic("pig-auth-plus: " + err.Error())
 	}
 	a.providers = ps
+	a.early = registerEarlyAliases(ext)
 	a.registerCommands(ext)
 	ext.OnSessionStart(a.start)
 	ext.OnSessionShutdown(a.shutdown)
@@ -109,7 +111,7 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 		return nil, nil
 	}
 	a.startLine(st)
-	a.startAliases(st)
+	a.startAliases(st, a.early)
 	return nil, nil
 }
 

@@ -68,6 +68,11 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 	}, solo)
 	d.tokens = uitokens.New(st.tokens.Latest, a.tokenDisplay, func() { d.count(true) })
 	d.models = uimodels.New(d.catalogRows, d.catalogError, uimodels.Actions{
+		Alias: d.aliasDefinition,
+		SaveAlias: func(old *uimodels.Model, a uimodels.Alias) {
+			d.async(func(c context.Context) { d.saveAlias(c, old, a) })
+		},
+		RemoveAlias: func(m uimodels.Model) { d.async(func(c context.Context) { d.removeAlias(c, m) }) },
 		SaveOverride: func(m uimodels.Model, ops []modelsfile.Op) {
 			d.async(func(c context.Context) { d.saveOverride(c, ctx, m, ops) })
 		},
@@ -395,4 +400,91 @@ func (d *dashboard) saveOverride(ctx context.Context, host sdk.Context, m uimode
 	d.rereadCatalog(host)
 	d.models.SetNotice(msg, warn)
 	d.frame.Invalidate()
+}
+
+func (d *dashboard) aliasDefinition(m uimodels.Model) (uimodels.Alias, bool) {
+	for _, a := range d.a.settings().Aliases {
+		if a.Provider == m.Provider && a.ID == m.ID {
+			return uimodels.Alias{Provider: a.Provider, Source: a.Source, ID: a.ID, Name: a.Name, ContextWindow: a.ContextWindow, MaxTokens: a.MaxTokens}, true
+		}
+	}
+	return uimodels.Alias{}, false
+}
+
+// chooseScope asks where a models.aliases change is saved.
+func (d *dashboard) chooseScope(ctx context.Context, title string) (config.Scope, bool) {
+	labels := make([]string, len(scopes))
+	for i, s := range scopes {
+		labels[i] = s.label
+	}
+	pick, ok := d.frame.Choose(title, labels, ctx.Done())
+	if !ok {
+		return 0, false
+	}
+	for _, s := range scopes {
+		if s.label == pick {
+			return s.scope, true
+		}
+	}
+	return 0, false
+}
+
+// saveAliases writes the whole alias list; a higher scope's list replaces a lower one, so the
+// list written is the effective one with the change applied.
+func (d *dashboard) saveAliases(ctx context.Context, scope config.Scope, list []config.Alias, done string) bool {
+	res, err := d.st.settings.Save(ctx, scope, []config.Edit{{Key: "models.aliases", Value: list}})
+	if err != nil {
+		d.models.SetNotice("Alias not saved: "+err.Error()+" (the form is kept)", true)
+		d.frame.Invalidate()
+		return false
+	}
+	msg := fmt.Sprintf("%s (%s).", done, scope)
+	if len(res.Shadowed) > 0 {
+		msg += " A higher-priority scope still overrides models.aliases."
+	}
+	d.models.SetNotice(msg, len(res.Shadowed) > 0)
+	d.rereadCatalog(d.st.host)
+	d.frame.Invalidate()
+	return true
+}
+
+func (d *dashboard) saveAlias(ctx context.Context, old *uimodels.Model, a uimodels.Alias) {
+	scope, ok := d.chooseScope(ctx, "Save alias "+a.Provider+"/"+a.ID+" to")
+	if !ok {
+		return
+	}
+	next := config.Alias{Provider: a.Provider, Source: a.Source, ID: a.ID, Name: a.Name, ContextWindow: a.ContextWindow, MaxTokens: a.MaxTokens}
+	var list []config.Alias
+	replaced := false
+	for _, e := range d.a.settings().Aliases {
+		if old != nil && e.Provider == old.Provider && e.ID == old.ID {
+			list, replaced = append(list, next), true
+			continue
+		}
+		list = append(list, e)
+	}
+	if !replaced {
+		list = append(list, next)
+	}
+	if d.saveAliases(ctx, scope, list, "Alias "+a.Provider+"/"+a.ID+" saved") {
+		d.models.AliasSaved()
+	}
+}
+
+func (d *dashboard) removeAlias(ctx context.Context, m uimodels.Model) {
+	pick, ok := d.frame.Choose("Remove alias "+m.Key()+"?", []string{"Keep it", "Remove it"}, ctx.Done())
+	if !ok || pick != "Remove it" {
+		return
+	}
+	scope, ok := d.chooseScope(ctx, "Remove from")
+	if !ok {
+		return
+	}
+	var list []config.Alias
+	for _, e := range d.a.settings().Aliases {
+		if e.Provider != m.Provider || e.ID != m.ID {
+			list = append(list, e)
+		}
+	}
+	d.saveAliases(ctx, scope, list, "Alias "+m.Key()+" removed")
 }

@@ -104,24 +104,62 @@ func num(v any) int64 {
 type Host interface {
 	Register(sdk.VirtualModel) error
 	Unregister(provider, id string)
-	// Physical lists the models the host lists itself, without any alias this package registered.
+	// Physical lists the models the host lists. It may include aliases this package registered.
 	Physical() ([]map[string]any, error)
-	// Find returns the physical model a request is routed to.
-	Find(provider, id string) (map[string]any, error)
 }
+
+// Finder returns the physical model a request is routed to, or nil when the catalog lacks it.
+type Finder func(ctx sdk.Context, provider, id string) (map[string]any, error)
 
 // Registry keeps the registered aliases in step with the configuration. It is safe for
 // concurrent use.
 type Registry struct {
 	host Host
+	find Finder
 
 	mu         sync.Mutex
 	registered map[string]Resolved
 }
 
-// NewRegistry creates an empty registry over host.
-func NewRegistry(host Host) *Registry {
-	return &Registry{host: host, registered: map[string]Resolved{}}
+// NewRegistry creates an empty registry over host; find resolves a route's source model from
+// the request's own context.
+func NewRegistry(host Host, find Finder) *Registry {
+	return &Registry{host: host, find: find, registered: map[string]Resolved{}}
+}
+
+// Early builds the virtual models to register while the extension loads, before the host
+// resolves --model and restores a session. Nothing is known about the catalog yet, so limits
+// are those configured, else unknown until the first sync replaces the registration.
+func Early(aliases []config.Alias, find Finder) []sdk.VirtualModel {
+	r := &Registry{find: find}
+	var out []sdk.VirtualModel
+	seen := map[string]bool{}
+	for _, a := range aliases {
+		key := a.Provider + "/" + a.ID
+		if a.Provider == "" || a.ID == "" || a.Source == "" || a.ID == a.Source || seen[key] {
+			continue
+		}
+		seen[key] = true
+		v := Resolved{Provider: a.Provider, ID: a.ID, Source: a.Source, Name: a.Name,
+			ContextWindow: int(a.ContextWindow), MaxTokens: int(a.MaxTokens),
+			Levels: sdk.GetSupportedThinkingLevels(map[string]any{"reasoning": true})}
+		if v.Name == "" {
+			v.Name = a.Source + " (" + a.ID + ")"
+		}
+		out = append(out, sdk.VirtualModel{Provider: v.Provider, ID: v.ID, Name: v.Name, ThinkingLevels: v.Levels,
+			ContextWindow: v.ContextWindow, MaxTokens: v.MaxTokens, Route: r.route(v)})
+	}
+	return out
+}
+
+// Seed records aliases that were registered before the registry existed, so the host listing
+// them is not mistaken for a collision.
+func (r *Registry) Seed(models []sdk.VirtualModel) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, m := range models {
+		r.registered[m.Provider+"/"+m.ID] = Resolved{Provider: m.Provider, ID: m.ID, Name: m.Name, Levels: m.ThinkingLevels}
+	}
 }
 
 // Registered lists the aliases currently registered, ordered by provider and id.
@@ -185,8 +223,8 @@ func (r *Registry) Sync(aliases []config.Alias) (problems []string, err error) {
 
 // route sends every request to the source model with the thinking level the user selected.
 func (r *Registry) route(v Resolved) sdk.ModelRouteFunc {
-	return func(_ sdk.Context, req sdk.ModelRouteRequest) (sdk.ModelRoute, error) {
-		src, err := r.host.Find(v.Provider, v.Source)
+	return func(ctx sdk.Context, req sdk.ModelRouteRequest) (sdk.ModelRoute, error) {
+		src, err := r.find(ctx, v.Provider, v.Source)
 		if err != nil {
 			return sdk.ModelRoute{}, fmt.Errorf("alias %s/%s: %w", v.Provider, v.ID, err)
 		}

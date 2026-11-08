@@ -29,6 +29,7 @@ type Tab struct {
 	top    int
 	detail *Model
 	ov     *override
+	al     *aliasForm
 	notice string
 	warn   bool
 	dtop   int
@@ -43,6 +44,13 @@ type Actions struct {
 	// SaveOverride writes the staged operations for a model; it runs off the panel's queue and
 	// the owner calls [Tab.OverrideSaved] on success.
 	SaveOverride func(m Model, ops []modelsfile.Op)
+	// Alias returns the stored definition of an alias model.
+	Alias func(m Model) (Alias, bool)
+	// SaveAlias stores an alias; old is the alias being edited, nil for a new one. It runs off
+	// the panel's queue and the owner calls [Tab.AliasSaved] on success.
+	SaveAlias func(old *Model, a Alias)
+	// RemoveAlias deletes an alias after the owner confirms it.
+	RemoveAlias func(m Model)
 }
 
 // New builds the tab; models returns the cached catalog, nil while it is loading, and failed
@@ -67,6 +75,14 @@ func (t *Tab) OverrideSaved() {
 	t.mu.Unlock()
 }
 
+// AliasSaved closes the alias form after the alias was stored.
+func (t *Tab) AliasSaved() {
+	t.mu.Lock()
+	t.al = nil
+	t.detail = nil
+	t.mu.Unlock()
+}
+
 // ID implements frame.Tab.
 func (t *Tab) ID() string { return "models" }
 
@@ -77,13 +93,13 @@ func (t *Tab) Title() string { return "Models" }
 func (t *Tab) Dirty() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return t.ov != nil && t.ov.dirty()
+	return (t.ov != nil && t.ov.dirty()) || (t.al != nil && t.al.dirty())
 }
 
 // Discard implements frame.Tab.
 func (t *Tab) Discard() {
 	t.mu.Lock()
-	t.ov, t.notice = nil, ""
+	t.ov, t.al, t.notice = nil, nil, ""
 	t.mu.Unlock()
 }
 
@@ -121,8 +137,13 @@ func (t *Tab) Body(env frame.Env) []string {
 	defer t.mu.Unlock()
 	t.height = env.Rows
 	t.refreshOpen()
-	if t.ov != nil {
-		lines := t.ov.lines(th, env.Width)
+	if t.ov != nil || t.al != nil {
+		var lines []string
+		if t.ov != nil {
+			lines = t.ov.lines(th, env.Width)
+		} else {
+			lines = t.al.lines(th, env.Width)
+		}
 		return append(lines[:min(len(lines), max(env.Rows-len(t.noticeLines(th, env.Width)), 1))], t.noticeLines(th, env.Width)...)
 	}
 	if t.detail != nil {
@@ -223,6 +244,21 @@ func (t *Tab) Key(data string) bool {
 		}
 		return true
 	}
+	if t.al != nil {
+		if t.al.key(data, func(a Alias) {
+			var old *Model
+			if !t.al.isNew {
+				m := *t.detail
+				old = &m
+			}
+			if t.actions.SaveAlias != nil {
+				t.actions.SaveAlias(old, a)
+			}
+		}) {
+			t.al = nil
+		}
+		return true
+	}
 	if t.typing {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"):
@@ -251,6 +287,14 @@ func (t *Tab) Key(data string) bool {
 				t.notice, t.warn = "An alias takes its limits and prices from the alias editor, not from overrides.", false
 			} else {
 				t.ov = newOverride(*t.detail)
+			}
+		case data == "a":
+			t.openAlias()
+		case data == "d":
+			if t.detail.AliasOf == "" {
+				t.notice, t.warn = "Only an alias can be removed here; Backspace in the override editor removes overrides.", false
+			} else if t.actions.RemoveAlias != nil {
+				t.actions.RemoveAlias(*t.detail)
 			}
 		case kb.Matches(data, "tui.select.down"):
 			t.dtop = max(0, min(t.dtop+1, t.dlast-t.height))
@@ -295,6 +339,33 @@ func (t *Tab) Key(data string) bool {
 	return true
 }
 
+// openAlias opens the alias form for the detail model: a new alias of it, or its own definition
+// when it is an alias. The caller holds t.mu.
+func (t *Tab) openAlias() {
+	m := *t.detail
+	taken := func(id string) bool {
+		for _, o := range t.models() {
+			if o.Provider == m.Provider && o.ID == id {
+				return true
+			}
+		}
+		return false
+	}
+	if m.AliasOf == "" {
+		t.al = newAliasForm(Alias{Provider: m.Provider, Source: m.ID}, true, taken)
+		return
+	}
+	if t.actions.Alias == nil {
+		return
+	}
+	a, ok := t.actions.Alias(m)
+	if !ok {
+		t.notice, t.warn = "This alias is not defined in the settings and cannot be edited here.", true
+		return
+	}
+	t.al = newAliasForm(a, false, taken)
+}
+
 // Hints implements frame.Tab.
 func (t *Tab) Hints(frame.Env) []string {
 	t.mu.Lock()
@@ -304,8 +375,13 @@ func (t *Tab) Hints(frame.Env) []string {
 		return []string{sdk.KeyHint("tui.select.confirm", "keep filter"), sdk.KeyHint("tui.select.cancel", "clear")}
 	case t.ov != nil:
 		return t.ov.hints()
+	case t.al != nil:
+		return t.al.hints()
 	case t.detail != nil:
-		return []string{sdk.RawKeyHint("o", "override"), sdk.KeyHint("tui.select.cancel", "back")}
+		if t.detail.AliasOf != "" {
+			return []string{sdk.RawKeyHint("a", "edit alias"), sdk.RawKeyHint("d", "remove alias"), sdk.KeyHint("tui.select.cancel", "back")}
+		}
+		return []string{sdk.RawKeyHint("o", "override"), sdk.RawKeyHint("a", "new alias"), sdk.KeyHint("tui.select.cancel", "back")}
 	}
 	return []string{sdk.RawKeyHint("/", "search"), sdk.KeyHint("tui.select.confirm", "detail")}
 }
@@ -316,6 +392,9 @@ func (t *Tab) Help(frame.Env) []string {
 	defer t.mu.Unlock()
 	if t.ov != nil {
 		return strings.Split(overrideHelp, "\n")
+	}
+	if t.al != nil {
+		return strings.Split(aliasHelp, "\n")
 	}
 	return strings.Split(helpText, "\n")
 }

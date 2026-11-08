@@ -53,7 +53,7 @@ func (h *fakeHost) Physical() ([]map[string]any, error) {
 	return out, nil
 }
 
-func (h *fakeHost) Find(p, id string) (map[string]any, error) {
+func (h *fakeHost) find(_ sdk.Context, p, id string) (map[string]any, error) {
 	for _, m := range h.physical {
 		if m["provider"] == p && m["id"] == id {
 			return m, nil
@@ -99,7 +99,7 @@ func TestPlanRejectsBadAliases(t *testing.T) {
 
 func TestSyncRegistersReplacesAndRemoves(t *testing.T) {
 	h := newHost(model("claude", "opus", 1000, true))
-	r := NewRegistry(h)
+	r := NewRegistry(h, h.find)
 	cfg := []config.Alias{{Provider: "claude", Source: "opus", ID: "fast"}}
 	if problems, err := r.Sync(cfg); err != nil || len(problems) != 0 || h.registered["claude/fast"].ID != "fast" {
 		t.Fatalf("%v %v", problems, err)
@@ -121,7 +121,7 @@ func TestSyncRegistersReplacesAndRemoves(t *testing.T) {
 
 func TestSyncKeepsAliasesWhenCatalogUnreadable(t *testing.T) {
 	h := newHost(model("claude", "opus", 1000, false))
-	r := NewRegistry(h)
+	r := NewRegistry(h, h.find)
 	r.Sync([]config.Alias{{Provider: "claude", Source: "opus", ID: "fast"}})
 	h.failList = true
 	if _, err := r.Sync(nil); err == nil {
@@ -135,7 +135,7 @@ func TestSyncKeepsAliasesWhenCatalogUnreadable(t *testing.T) {
 func TestRegistrationRefusalIsReported(t *testing.T) {
 	h := newHost(model("claude", "opus", 1000, false))
 	h.failReg = true
-	r := NewRegistry(h)
+	r := NewRegistry(h, h.find)
 	problems, _ := r.Sync([]config.Alias{{Provider: "claude", Source: "opus", ID: "fast"}})
 	if len(problems) != 1 || !strings.Contains(problems[0], "refused") || len(r.Registered()) != 0 {
 		t.Fatalf("%v", problems)
@@ -145,7 +145,7 @@ func TestRegistrationRefusalIsReported(t *testing.T) {
 func TestRouteSendsRequestToSourceWithClampedLevel(t *testing.T) {
 	src := model("claude", "opus", 1000, true)
 	h := newHost(src)
-	r := NewRegistry(h)
+	r := NewRegistry(h, h.find)
 	r.Sync([]config.Alias{{Provider: "claude", Source: "opus", ID: "fast"}})
 	route, err := h.registered["claude/fast"].Route(sdk.Context{}, sdk.ModelRouteRequest{ThinkingLevel: "xhigh"})
 	if err != nil || route.Model["id"] != "opus" || route.ThinkingLevel != "high" {
@@ -159,10 +159,33 @@ func TestRouteSendsRequestToSourceWithClampedLevel(t *testing.T) {
 
 func TestCloseUnregistersAll(t *testing.T) {
 	h := newHost(model("claude", "opus", 1000, false))
-	r := NewRegistry(h)
+	r := NewRegistry(h, h.find)
 	r.Sync([]config.Alias{{Provider: "claude", Source: "opus", ID: "a"}, {Provider: "claude", Source: "opus", ID: "b"}})
 	r.Close()
 	if len(h.registered) != 0 {
 		t.Fatal("Close must unregister every alias")
+	}
+}
+
+func TestEarlyAliasesSurviveFirstSyncAndRoute(t *testing.T) {
+	h := newHost(model("claude", "opus", 1000, true))
+	cfg := []config.Alias{{Provider: "claude", Source: "opus", ID: "fast"}, {Provider: "claude", Source: "claude", ID: "claude"}}
+	early := Early(cfg, h.find)
+	if len(early) != 1 || early[0].ID != "fast" || len(early[0].ThinkingLevels) == 0 {
+		t.Fatalf("%+v", early)
+	}
+	route, err := early[0].Route(sdk.Context{}, sdk.ModelRouteRequest{ThinkingLevel: "low"})
+	if err != nil || route.Model["id"] != "opus" {
+		t.Fatalf("%+v %v", route, err)
+	}
+	// The host already lists the early alias when the session starts.
+	h.registered["claude/fast"] = early[0]
+	r := NewRegistry(h, h.find)
+	r.Seed(early)
+	if problems, err := r.Sync(cfg[:1]); err != nil || len(problems) != 0 {
+		t.Fatalf("an early alias must not collide with itself: %v %v", problems, err)
+	}
+	if got := r.Registered(); len(got) != 1 || got[0].ContextWindow != 1000 {
+		t.Fatalf("the first sync must replace the early registration with full data: %+v", got)
 	}
 }

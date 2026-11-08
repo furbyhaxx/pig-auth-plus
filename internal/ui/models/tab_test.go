@@ -1,12 +1,12 @@
 package models
 
 import (
-	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"strings"
 	"testing"
 
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
+	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 )
 
@@ -190,5 +190,98 @@ func TestOverrideRemovalOnlyForOverriddenFields(t *testing.T) {
 	tb.Key("\x13")
 	if len(saved) != 1 || !saved[0].Remove || saved[0].Path[0] != "contextWindow" {
 		t.Fatalf("got %+v", saved)
+	}
+}
+
+func typeIn(tb *Tab, s string) {
+	for _, c := range s {
+		tb.Key(string(c))
+	}
+}
+
+func openDetail(t *testing.T, tb *Tab, key string) {
+	t.Helper()
+	tb.Key("/")
+	typeIn(tb, key)
+	tb.Key("\r")
+	tb.Key("\r")
+	if tb.detail == nil || tb.detail.Key() != key {
+		t.Fatalf("detail is %+v", tb.detail)
+	}
+}
+
+func TestNewAliasIsValidatedThenSaved(t *testing.T) {
+	var saved Alias
+	var old *Model
+	tb := New(catalog, func() string { return "" }, Actions{SaveAlias: func(o *Model, a Alias) { old, saved = o, a }})
+	openDetail(t, tb, "claude/claude-opus-5-5")
+	tb.Key("a")
+	tb.Key("\x13")
+	if saved.ID != "" || !strings.Contains(tb.al.err, "needs an id") {
+		t.Fatalf("an empty id must be refused: %q", tb.al.err)
+	}
+	tb.Key("\r")
+	typeIn(tb, "fast") // taken by the catalog's alias
+	tb.Key("\r")
+	tb.Key("\x13")
+	if !strings.Contains(tb.al.err, "already names a model") {
+		t.Fatalf("collision must be refused: %q", tb.al.err)
+	}
+	tb.Key("\r")
+	tb.Key("\x15")
+	typeIn(tb, "opus-lite")
+	tb.Key("\r")
+	tb.Key("\x1b[B")
+	tb.Key("\x1b[B")
+	tb.Key("\r")
+	typeIn(tb, "300000")
+	tb.Key("\r")
+	tb.Key("\x13")
+	if old != nil || saved.ID != "opus-lite" || saved.Source != "claude-opus-5-5" || saved.Provider != "claude" || saved.ContextWindow != 300000 || saved.MaxTokens != 0 {
+		t.Fatalf("old=%v saved=%+v", old, saved)
+	}
+}
+
+func TestEditingAnAliasKeepsItsIdentityAndDirtyEscAsks(t *testing.T) {
+	var old *Model
+	tb := New(catalog, func() string { return "" }, Actions{
+		Alias: func(m Model) (Alias, bool) {
+			return Alias{Provider: "claude", Source: "claude-haiku-5-5", ID: "fast"}, true
+		},
+		SaveAlias: func(o *Model, a Alias) { old = o },
+	})
+	openDetail(t, tb, "claude/fast")
+	tb.Key("a")
+	if tb.al == nil || tb.al.isNew {
+		t.Fatal("an alias opens its own definition")
+	}
+	tb.Key("\x1b[B")
+	tb.Key("\r")
+	typeIn(tb, "Quick")
+	tb.Key("\r")
+	if !tb.Dirty() {
+		t.Fatal("a changed form is a draft")
+	}
+	tb.Key("\x1b")
+	if tb.al == nil {
+		t.Fatal("the first Esc must keep the draft")
+	}
+	tb.Key("\x13")
+	if old == nil || old.Key() != "claude/fast" {
+		t.Fatalf("the saved alias must name the entry it replaces: %v", old)
+	}
+}
+
+func TestAliasFormFitsAllWidths(t *testing.T) {
+	for _, w := range []int{36, 57, 80, 140} {
+		tb := New(catalog, func() string { return "" }, Actions{})
+		openDetail(t, tb, "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash-1017")
+		tb.Key("a")
+		tb.Key("\x13")
+		for _, row := range tb.Body(frame.Env{Width: w, Rows: 20}) {
+			if tui.VisibleWidth(row) > w {
+				t.Fatalf("width %d: %q", w, row)
+			}
+		}
 	}
 }

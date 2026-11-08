@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"os"
 	"strings"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/alias"
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
+	"github.com/furbyhaxx/pig-auth-plus/internal/paths"
 )
 
 // aliasHost adapts the SDK context to the alias registry.
@@ -19,8 +21,34 @@ func (h aliasHost) Unregister(provider, id string)    { h.ctx.UnregisterVirtualM
 func (h aliasHost) Physical() ([]map[string]any, error) {
 	return h.ctx.ModelRegistry().GetAll()
 }
-func (h aliasHost) Find(provider, id string) (map[string]any, error) {
-	return h.ctx.ModelRegistry().Find(provider, id)
+
+func findModel(ctx sdk.Context, provider, id string) (map[string]any, error) {
+	return ctx.ModelRegistry().Find(provider, id)
+}
+
+// registerEarlyAliases declares the user file's aliases while the extension loads, so that
+// --model and session restore, which run before session start, already know them.
+func registerEarlyAliases(ext *sdk.Extension) []sdk.VirtualModel {
+	dir, err := sdk.AgentDir()
+	if err != nil {
+		return nil
+	}
+	p, err := paths.Resolve(dir, os.Getenv)
+	if err != nil {
+		return nil
+	}
+	m := config.NewManager(p.UserConfig())
+	if err := m.Load(); err != nil {
+		return nil
+	}
+	early := alias.Early(m.Snapshot().Aliases, findModel)
+	var ok []sdk.VirtualModel
+	for _, v := range early {
+		if ext.RegisterVirtualModel(v) == nil {
+			ok = append(ok, v)
+		}
+	}
+	return ok
 }
 
 // aliasSync keeps registered aliases in step with settings and reports problems once.
@@ -32,9 +60,10 @@ type aliasSync struct {
 	reported string
 }
 
-func (a *App) startAliases(st *state) {
-	as := &aliasSync{reg: alias.NewRegistry(aliasHost{st.host}), notify: func(m string) { st.host.Notify(m, "warning") }}
+func (a *App) startAliases(st *state, early []sdk.VirtualModel) {
+	as := &aliasSync{reg: alias.NewRegistry(aliasHost{st.host}, findModel), notify: func(m string) { st.host.Notify(m, "warning") }}
 	st.aliases = as
+	as.reg.Seed(early)
 	run := func(s config.Settings) {
 		st.group.Go(func(context.Context) { as.sync(s.Aliases) })
 	}
