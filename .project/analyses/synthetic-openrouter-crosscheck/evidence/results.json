@@ -1,0 +1,1170 @@
+{
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|short": {
+  "synthetic": {
+   "input": 16,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 16
+  },
+  "openrouter": {
+   "prompt_tokens": 37,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 38,
+  "ratio": 1.027
+ },
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|prose": {
+  "synthetic": {
+   "input": 1587,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1587
+  },
+  "openrouter": {
+   "prompt_tokens": 3770,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 3768,
+  "ratio": 0.9995
+ },
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|json": {
+  "synthetic": {
+   "input": 1797,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1797
+  },
+  "openrouter": {
+   "prompt_tokens": 4267,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 4266,
+  "ratio": 0.9998
+ },
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|tools": {
+  "synthetic": {
+   "input": 331,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 331
+  },
+  "openrouter": {
+   "prompt_tokens": 786,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 786,
+  "ratio": 1.0
+ },
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|session": {
+  "synthetic": {
+   "input": 1165,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1165
+  },
+  "openrouter": {
+   "prompt_tokens": 2765,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 2766,
+  "ratio": 1.0004
+ },
+ "syn:large:text|short": {
+  "synthetic": {
+   "input": 16,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 16
+  },
+  "openrouter": {
+   "prompt_tokens": 37,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 38,
+  "ratio": 1.027
+ },
+ "syn:large:text|prose": {
+  "synthetic": {
+   "input": 25,
+   "cacheRead": 1563,
+   "cacheWrite": 0,
+   "reported": 1588
+  },
+  "openrouter": {
+   "prompt_tokens": 3770,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 3770,
+  "ratio": 1.0
+ },
+ "syn:large:text|json": {
+  "synthetic": {
+   "input": 19,
+   "cacheRead": 1779,
+   "cacheWrite": 0,
+   "reported": 1798
+  },
+  "openrouter": {
+   "prompt_tokens": 4267,
+   "provider": "Particle AI",
+   "cached": 4096
+  },
+  "factor": 0.4212,
+  "ours": 4269,
+  "ratio": 1.0005
+ },
+ "syn:large:text|tools": {
+  "synthetic": {
+   "input": 8,
+   "cacheRead": 324,
+   "cacheWrite": 0,
+   "reported": 332
+  },
+  "openrouter": {
+   "prompt_tokens": 786,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 788,
+  "ratio": 1.0025
+ },
+ "syn:large:text|session": {
+  "synthetic": {
+   "input": 33,
+   "cacheRead": 1132,
+   "cacheWrite": 0,
+   "reported": 1165
+  },
+  "openrouter": {
+   "prompt_tokens": 2765,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 2766,
+  "ratio": 1.0004
+ },
+ "hf:moonshotai/Kimi-K3|short": {
+  "synthetic": {
+   "input": 13,
+   "cacheRead": 27,
+   "cacheWrite": 0,
+   "reported": 40
+  },
+  "openrouter": {
+   "prompt_tokens": 92,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 95,
+  "ratio": 1.0326
+ },
+ "hf:moonshotai/Kimi-K3|prose": {
+  "synthetic": {
+   "input": 1499,
+   "cacheRead": 27,
+   "cacheWrite": 0,
+   "reported": 1526
+  },
+  "openrouter": {
+   "prompt_tokens": 3623,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3625,
+  "ratio": 1.0006
+ },
+ "hf:moonshotai/Kimi-K3|json": {
+  "synthetic": {
+   "input": 1579,
+   "cacheRead": 27,
+   "cacheWrite": 0,
+   "reported": 1606
+  },
+  "openrouter": {
+   "prompt_tokens": 3814,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3815,
+  "ratio": 1.0003
+ },
+ "hf:moonshotai/Kimi-K3|tools": {
+  "synthetic": {
+   "input": 239,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 239
+  },
+  "openrouter": {
+   "prompt_tokens": 566,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 568,
+  "ratio": 1.0035
+ },
+ "hf:moonshotai/Kimi-K3|session": {
+  "synthetic": {
+   "input": 843,
+   "cacheRead": 216,
+   "cacheWrite": 0,
+   "reported": 1059
+  },
+  "openrouter": {
+   "prompt_tokens": 2512,
+   "provider": "Relace",
+   "cached": 512
+  },
+  "factor": 0.421,
+  "ours": 2515,
+  "ratio": 1.0012
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|short": {
+  "synthetic": {
+   "input": 41,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 41
+  },
+  "openrouter": {
+   "prompt_tokens": 92,
+   "provider": "Wafer",
+   "cached": 64
+  },
+  "factor": 0.4207,
+  "ours": 97,
+  "ratio": 1.0543
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|prose": {
+  "synthetic": {
+   "input": 1527,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1527
+  },
+  "openrouter": {
+   "prompt_tokens": 3623,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.4207,
+  "ours": 3630,
+  "ratio": 1.0019
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|json": {
+  "synthetic": {
+   "input": 1608,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1608
+  },
+  "openrouter": {
+   "prompt_tokens": 3814,
+   "provider": "Wafer",
+   "cached": 64
+  },
+  "factor": 0.4207,
+  "ours": 3822,
+  "ratio": 1.0021
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|tools": {
+  "synthetic": {
+   "input": 240,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 240
+  },
+  "openrouter": {
+   "prompt_tokens": 566,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.4207,
+  "ours": 570,
+  "ratio": 1.0071
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|session": {
+  "synthetic": {
+   "input": 1060,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1060
+  },
+  "openrouter": {
+   "prompt_tokens": 2512,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.4207,
+  "ours": 2520,
+  "ratio": 1.0032
+ },
+ "hf:zai-org/GLM-5.3|short": {
+  "synthetic": {
+   "input": 8,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 8
+  },
+  "openrouter": {
+   "prompt_tokens": 19,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 19,
+  "ratio": 1.0
+ },
+ "hf:zai-org/GLM-5.3|prose": {
+  "synthetic": {
+   "input": 1515,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1515
+  },
+  "openrouter": {
+   "prompt_tokens": 3598,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3599,
+  "ratio": 1.0003
+ },
+ "hf:zai-org/GLM-5.3|json": {
+  "synthetic": {
+   "input": 1584,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1584
+  },
+  "openrouter": {
+   "prompt_tokens": 3763,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3762,
+  "ratio": 0.9997
+ },
+ "hf:zai-org/GLM-5.3|tools": {
+  "synthetic": {
+   "input": 274,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 274
+  },
+  "openrouter": {
+   "prompt_tokens": 650,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 651,
+  "ratio": 1.0015
+ },
+ "hf:zai-org/GLM-5.3|session": {
+  "synthetic": {
+   "input": 804,
+   "cacheRead": 270,
+   "cacheWrite": 0,
+   "reported": 1074
+  },
+  "openrouter": {
+   "prompt_tokens": 2549,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 2551,
+  "ratio": 1.0008
+ },
+ "hf:zai-org/GLM-5.3-Flash|short": {
+  "synthetic": {
+   "input": 8,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 8
+  },
+  "openrouter": {
+   "prompt_tokens": 19,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 19,
+  "ratio": 1.0
+ },
+ "hf:zai-org/GLM-5.3-Flash|prose": {
+  "synthetic": {
+   "input": 1515,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1515
+  },
+  "openrouter": {
+   "prompt_tokens": 3598,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3599,
+  "ratio": 1.0003
+ },
+ "hf:zai-org/GLM-5.3-Flash|json": {
+  "synthetic": {
+   "input": 1584,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1584
+  },
+  "openrouter": {
+   "prompt_tokens": 3763,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 3762,
+  "ratio": 0.9997
+ },
+ "hf:zai-org/GLM-5.3-Flash|tools": {
+  "synthetic": {
+   "input": 274,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 274
+  },
+  "openrouter": {
+   "prompt_tokens": 650,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 651,
+  "ratio": 1.0015
+ },
+ "hf:zai-org/GLM-5.3-Flash|session": {
+  "synthetic": {
+   "input": 804,
+   "cacheRead": 270,
+   "cacheWrite": 0,
+   "reported": 1074
+  },
+  "openrouter": {
+   "prompt_tokens": 2549,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 2551,
+  "ratio": 1.0008
+ },
+ "hf:zai-org/GLM-4.7-Flash|short": {
+  "synthetic": {
+   "input": 17,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 17
+  },
+  "openrouter": {
+   "prompt_tokens": 12,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 13,
+  "ratio": 1.0833
+ },
+ "hf:zai-org/GLM-4.7-Flash|prose": {
+  "synthetic": {
+   "input": 4871,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 4871
+  },
+  "openrouter": {
+   "prompt_tokens": 3591,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 3592,
+  "ratio": 1.0003
+ },
+ "hf:zai-org/GLM-4.7-Flash|json": {
+  "synthetic": {
+   "input": 5095,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 5095
+  },
+  "openrouter": {
+   "prompt_tokens": 3756,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 3757,
+  "ratio": 1.0003
+ },
+ "hf:zai-org/GLM-4.7-Flash|tools": {
+  "synthetic": {
+   "input": 968,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 968
+  },
+  "openrouter": {
+   "prompt_tokens": 713,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 714,
+  "ratio": 1.0014
+ },
+ "hf:zai-org/GLM-4.7-Flash|session": {
+  "synthetic": {
+   "input": 2683,
+   "cacheRead": 955,
+   "cacheWrite": 0,
+   "reported": 3638
+  },
+  "openrouter": {
+   "prompt_tokens": 2682,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 2683,
+  "ratio": 1.0004
+ },
+ "hf:openai/gpt-oss-120b|short": {
+  "synthetic": {
+   "input": 25,
+   "cacheRead": 157,
+   "cacheWrite": 0,
+   "reported": 182
+  },
+  "openrouter": {
+   "prompt_tokens": 74,
+   "provider": "PrimeIntellect",
+   "cached": 64
+  },
+  "factor": 2.443,
+  "ours": 74,
+  "ratio": 1.0
+ },
+ "hf:openai/gpt-oss-120b|prose": {
+  "synthetic": {
+   "input": 8731,
+   "cacheRead": 157,
+   "cacheWrite": 0,
+   "reported": 8888
+  },
+  "openrouter": {
+   "prompt_tokens": 3640,
+   "provider": "PrimeIntellect",
+   "cached": 64
+  },
+  "factor": 2.443,
+  "ours": 3638,
+  "ratio": 0.9995
+ },
+ "hf:openai/gpt-oss-120b|json": {
+  "synthetic": {
+   "input": 9397,
+   "cacheRead": 157,
+   "cacheWrite": 0,
+   "reported": 9554
+  },
+  "openrouter": {
+   "prompt_tokens": 3913,
+   "provider": "PrimeIntellect",
+   "cached": 64
+  },
+  "factor": 2.443,
+  "ours": 3911,
+  "ratio": 0.9995
+ },
+ "hf:openai/gpt-oss-120b|tools": {
+  "synthetic": {
+   "input": 760,
+   "cacheRead": 118,
+   "cacheWrite": 0,
+   "reported": 878
+  },
+  "openrouter": {
+   "prompt_tokens": 359,
+   "provider": "PrimeIntellect",
+   "cached": 64
+  },
+  "factor": 2.443,
+  "ours": 359,
+  "ratio": 1.0
+ },
+ "hf:openai/gpt-oss-120b|session": {
+  "synthetic": {
+   "input": 5396,
+   "cacheRead": 157,
+   "cacheWrite": 0,
+   "reported": 5553
+  },
+  "openrouter": {
+   "prompt_tokens": 2275,
+   "provider": "PrimeIntellect",
+   "cached": 80
+  },
+  "factor": 2.443,
+  "ours": 2273,
+  "ratio": 0.9991
+ },
+ "hf:Qwen/Qwen3.8-27B|short": {
+  "synthetic": {
+   "input": 56,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 56
+  },
+  "openrouter": {
+   "prompt_tokens": 59,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 60,
+  "ratio": 1.0169
+ },
+ "hf:Qwen/Qwen3.8-27B|prose": {
+  "synthetic": {
+   "input": 3576,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 3576
+  },
+  "openrouter": {
+   "prompt_tokens": 3808,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 3807,
+  "ratio": 0.9997
+ },
+ "hf:Qwen/Qwen3.8-27B|json": {
+  "synthetic": {
+   "input": 3905,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 3905
+  },
+  "openrouter": {
+   "prompt_tokens": 4158,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 4158,
+  "ratio": 1.0
+ },
+ "hf:Qwen/Qwen3.8-27B|tools": {
+  "synthetic": {
+   "input": 884,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 884
+  },
+  "openrouter": {
+   "prompt_tokens": 904,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 941,
+  "ratio": 1.0409
+ },
+ "hf:Qwen/Qwen3.8-27B|session": {
+  "synthetic": {
+   "input": 1923,
+   "cacheRead": 842,
+   "cacheWrite": 0,
+   "reported": 2765
+  },
+  "openrouter": {
+   "prompt_tokens": 2906,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 2944,
+  "ratio": 1.0131
+ },
+ "syn:small:text|short": {
+  "synthetic": {
+   "input": 17,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 17
+  },
+  "openrouter": {
+   "prompt_tokens": 12,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 13,
+  "ratio": 1.0833
+ },
+ "syn:small:text|prose": {
+  "synthetic": {
+   "input": 4871,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 4871
+  },
+  "openrouter": {
+   "prompt_tokens": 3591,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 3592,
+  "ratio": 1.0003
+ },
+ "syn:small:text|json": {
+  "synthetic": {
+   "input": 5095,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 5095
+  },
+  "openrouter": {
+   "prompt_tokens": 3756,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 3757,
+  "ratio": 1.0003
+ },
+ "syn:small:text|tools": {
+  "synthetic": {
+   "input": 968,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 968
+  },
+  "openrouter": {
+   "prompt_tokens": 713,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 714,
+  "ratio": 1.0014
+ },
+ "syn:small:text|session": {
+  "synthetic": {
+   "input": 2683,
+   "cacheRead": 955,
+   "cacheWrite": 0,
+   "reported": 3638
+  },
+  "openrouter": {
+   "prompt_tokens": 2682,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 2683,
+  "ratio": 1.0004
+ },
+ "syn:large:vision|short": {
+  "synthetic": {
+   "input": 13,
+   "cacheRead": 27,
+   "cacheWrite": 0,
+   "reported": 40
+  },
+  "openrouter": {
+   "prompt_tokens": 92,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 95,
+  "ratio": 1.0326
+ },
+ "syn:large:vision|prose": {
+  "synthetic": {
+   "input": 17,
+   "cacheRead": 1509,
+   "cacheWrite": 0,
+   "reported": 1526
+  },
+  "openrouter": {
+   "prompt_tokens": 3623,
+   "provider": "Relace",
+   "cached": 3584
+  },
+  "factor": 0.421,
+  "ours": 3625,
+  "ratio": 1.0006
+ },
+ "syn:large:vision|json": {
+  "synthetic": {
+   "input": 17,
+   "cacheRead": 1590,
+   "cacheWrite": 0,
+   "reported": 1607
+  },
+  "openrouter": {
+   "prompt_tokens": 3814,
+   "provider": "Relace",
+   "cached": 3584
+  },
+  "factor": 0.421,
+  "ours": 3817,
+  "ratio": 1.0008
+ },
+ "syn:large:vision|tools": {
+  "synthetic": {
+   "input": 24,
+   "cacheRead": 216,
+   "cacheWrite": 0,
+   "reported": 240
+  },
+  "openrouter": {
+   "prompt_tokens": 566,
+   "provider": "Relace",
+   "cached": 512
+  },
+  "factor": 0.421,
+  "ours": 570,
+  "ratio": 1.0071
+ },
+ "syn:large:vision|session": {
+  "synthetic": {
+   "input": 8,
+   "cacheRead": 1051,
+   "cacheWrite": 0,
+   "reported": 1059
+  },
+  "openrouter": {
+   "prompt_tokens": 2485,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 2515,
+  "ratio": 1.0121
+ },
+ "syn:small:vision|short": {
+  "synthetic": {
+   "input": 16,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 16
+  },
+  "openrouter": {
+   "prompt_tokens": 37,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 38,
+  "ratio": 1.027
+ },
+ "syn:small:vision|prose": {
+  "synthetic": {
+   "input": 25,
+   "cacheRead": 1563,
+   "cacheWrite": 0,
+   "reported": 1588
+  },
+  "openrouter": {
+   "prompt_tokens": 3770,
+   "provider": "Particle AI",
+   "cached": 3584
+  },
+  "factor": 0.4212,
+  "ours": 3770,
+  "ratio": 1.0
+ },
+ "syn:small:vision|json": {
+  "synthetic": {
+   "input": 19,
+   "cacheRead": 1779,
+   "cacheWrite": 0,
+   "reported": 1798
+  },
+  "openrouter": {
+   "prompt_tokens": 4267,
+   "provider": "Particle AI",
+   "cached": 4096
+  },
+  "factor": 0.4212,
+  "ours": 4269,
+  "ratio": 1.0005
+ },
+ "syn:small:vision|tools": {
+  "synthetic": {
+   "input": 8,
+   "cacheRead": 324,
+   "cacheWrite": 0,
+   "reported": 332
+  },
+  "openrouter": {
+   "prompt_tokens": 786,
+   "provider": "Particle AI",
+   "cached": 768
+  },
+  "factor": 0.4212,
+  "ours": 788,
+  "ratio": 1.0025
+ },
+ "syn:small:vision|session": {
+  "synthetic": {
+   "input": 1165,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 1165
+  },
+  "openrouter": {
+   "prompt_tokens": 2765,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 2766,
+  "ratio": 1.0004
+ },
+ "infinite:small:vision|short": {
+  "synthetic": {
+   "input": 16,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 16
+  },
+  "openrouter": {
+   "prompt_tokens": 37,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 38,
+  "ratio": 1.027
+ },
+ "infinite:small:vision|prose": {
+  "synthetic": {
+   "input": 25,
+   "cacheRead": 1563,
+   "cacheWrite": 0,
+   "reported": 1588
+  },
+  "openrouter": {
+   "prompt_tokens": 3770,
+   "provider": "Particle AI",
+   "cached": 3584
+  },
+  "factor": 0.4212,
+  "ours": 3770,
+  "ratio": 1.0
+ },
+ "infinite:small:vision|json": {
+  "synthetic": {
+   "input": 19,
+   "cacheRead": 1779,
+   "cacheWrite": 0,
+   "reported": 1798
+  },
+  "openrouter": {
+   "prompt_tokens": 4267,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 4269,
+  "ratio": 1.0005
+ },
+ "infinite:small:vision|tools": {
+  "synthetic": {
+   "input": 331,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 331
+  },
+  "openrouter": {
+   "prompt_tokens": 786,
+   "provider": "Particle AI",
+   "cached": 768
+  },
+  "factor": 0.4212,
+  "ours": 786,
+  "ratio": 1.0
+ },
+ "infinite:small:vision|session": {
+  "synthetic": {
+   "input": 33,
+   "cacheRead": 1132,
+   "cacheWrite": 0,
+   "reported": 1165
+  },
+  "openrouter": {
+   "prompt_tokens": 2765,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 2766,
+  "ratio": 1.0004
+ },
+ "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017|large": {
+  "synthetic": {
+   "input": 9594,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 9594
+  },
+  "openrouter": {
+   "prompt_tokens": 22790,
+   "provider": "Particle AI",
+   "cached": 0
+  },
+  "factor": 0.4212,
+  "ours": 22778,
+  "ratio": 0.9995
+ },
+ "hf:moonshotai/Kimi-K3|large": {
+  "synthetic": {
+   "input": 9176,
+   "cacheRead": 27,
+   "cacheWrite": 0,
+   "reported": 9203
+  },
+  "openrouter": {
+   "prompt_tokens": 21862,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 21860,
+  "ratio": 0.9999
+ },
+ "hf:moonshotai/Kimi-K3.1-Pro|large": {
+  "synthetic": {
+   "input": 9205,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 9205
+  },
+  "openrouter": {
+   "prompt_tokens": 21862,
+   "provider": "Wafer",
+   "cached": 64
+  },
+  "factor": 0.4207,
+  "ours": 21880,
+  "ratio": 1.0008
+ },
+ "hf:zai-org/GLM-5.3|large": {
+  "synthetic": {
+   "input": 9296,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 9296
+  },
+  "openrouter": {
+   "prompt_tokens": 22084,
+   "provider": "Wafer",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 22081,
+  "ratio": 0.9999
+ },
+ "hf:zai-org/GLM-5.3-Flash|large": {
+  "synthetic": {
+   "input": 9296,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 9296
+  },
+  "openrouter": {
+   "prompt_tokens": 22084,
+   "provider": "Relace",
+   "cached": 0
+  },
+  "factor": 0.421,
+  "ours": 22081,
+  "ratio": 0.9999
+ },
+ "hf:zai-org/GLM-4.7-Flash|large": {
+  "synthetic": {
+   "input": 29944,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 29944
+  },
+  "openrouter": {
+   "prompt_tokens": 22077,
+   "provider": "Cloudflare",
+   "cached": 0
+  },
+  "factor": 1.356,
+  "ours": 22083,
+  "ratio": 1.0003
+ },
+ "hf:openai/gpt-oss-120b|large": {
+  "synthetic": {
+   "input": 53714,
+   "cacheRead": 157,
+   "cacheWrite": 0,
+   "reported": 53871
+  },
+  "openrouter": {
+   "prompt_tokens": 22065,
+   "provider": "PrimeIntellect",
+   "cached": 48
+  },
+  "factor": 2.443,
+  "ours": 22051,
+  "ratio": 0.9994
+ },
+ "hf:Qwen/Qwen3.8-27B|large": {
+  "synthetic": {
+   "input": 21939,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "reported": 21939
+  },
+  "openrouter": {
+   "prompt_tokens": 23364,
+   "provider": "PrimeIntellect",
+   "cached": 0
+  },
+  "factor": 0.9392,
+  "ours": 23359,
+  "ratio": 0.9998
+ }
+}
