@@ -10,6 +10,8 @@ import (
 // refresh stays PiG's.
 type Auth struct {
 	Token string
+	// AccountID is a provider account claim the token itself does not carry; optional.
+	AccountID string
 }
 
 // Env is what the engine hands a source's fetch.
