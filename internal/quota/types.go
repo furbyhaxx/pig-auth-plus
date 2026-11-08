@@ -36,13 +36,13 @@ type Balance struct {
 	Detail   string `json:"detail,omitempty"`
 }
 
-// Source says where a snapshot came from.
-type Source string
+// Origin says where a snapshot came from.
+type Origin string
 
-// Snapshot sources.
+// Snapshot origins.
 const (
-	FromEndpoint Source = "endpoint"
-	FromHeaders  Source = "headers"
+	FromEndpoint Origin = "endpoint"
+	FromHeaders  Origin = "headers"
 )
 
 // Snapshot is one provider's quota at one point in time.
@@ -50,7 +50,7 @@ type Snapshot struct {
 	// Provider is the PiG provider id.
 	Provider  string `json:"provider"`
 	FetchedAt int64  `json:"fetchedAt"`
-	Source    Source `json:"source"`
+	Source    Origin `json:"source"`
 	// Tier is a plan badge such as "max 20x"; never an account or project identifier.
 	Tier    string   `json:"tier,omitempty"`
 	Credits *Balance `json:"credits,omitempty"`
