@@ -57,7 +57,7 @@ web-search tool, the dedicated `/quota codex login` flow, project-scope settings
 | Codex quota credential: PiG `openai-codex` login, then read-only fallback to `<agentDir>/quotas-codex-auth.json` | PiG ships the Codex OAuth flow |
 | Aliases are PiG virtual models under the source provider | PiG has native virtual models |
 | Bus channel names and payload shapes stay `pi-auth-plus:v1:*` | Existing consumers keep working; payload defects fixed (absent vs `null`, reused values) |
-| OpenCode anonymous Zen is a gated spike, not a commitment | It never worked under PiG; needs a live probe |
+| OpenCode anonymous Zen is out of scope; keyed `opencode` and `opencode-go` stay PiG builtins | Live probe 2026-11-08: Zen answers 429 `FreeUsageLimitError` to the CLI identity (user agent, client, `ses_` id, env block, key `public`) from curl and from Go `net/http`; Zen gates anonymous access on the client, so no header set reproduces it |
 | Per-session state lives in one session-owned struct, never keyed on event or context identity | pi-auth-plus pig-host root cause 2–4 |
 | Request bodies are shaped as bytes, whoever serialized them | pi-auth-plus pig-host root cause 1 |
 

@@ -67,7 +67,7 @@ keys, comments, malformed files and concurrent saves.
    interleaved reasoning folding; usage correction (see M4.4).
 5. **hooks**: `openai.verbosity` and `claude.cacheRetention` via `before_provider_request`,
    applied to the physical request only.
-6. **OpenCode anonymous spike** (optional): live probe from Go; ship only if it returns 200.
+6. **OpenCode anonymous spike**: done, negative (429 from curl and Go with the full CLI identity); dropped, see SPEC-0001.
 
 Done per provider: `--list-models`, `--model`, `/login`, `/logout`, session restore and a live
 streamed turn with a tool call, captured with secrets redacted.
