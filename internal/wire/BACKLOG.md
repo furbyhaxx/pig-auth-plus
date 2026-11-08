@@ -1,0 +1,1 @@
+- B-0001 drift P3 — PiG Go SDK loses system prompt section order in provider streams → .project/backlog/B-0001-sdk-section-order.md

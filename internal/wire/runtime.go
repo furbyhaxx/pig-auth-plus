@@ -73,10 +73,11 @@ func (r *Runtime) Stream(p Provider, c Call) (*sdk.ModelEventStream, error) {
 	}
 	public, _ := c.Model["provider"].(string)
 	publicAPI, _ := c.Model["api"].(string)
+	request := r.Ordered(c.Request)
 	m := maps.Clone(c.Model)
 	m["provider"] = p.Name
 	delete(m, "api")
-	request := adoptHistory(c.Request, public, p.Name, p.Config["api"])
+	request = adoptHistory(request, public, p.Name, p.Config["api"])
 	var inner *sdk.ModelEventStream
 	if c.Simple {
 		inner = rt.StreamSimple(m, request, c.Options)
@@ -116,6 +117,19 @@ func adoptHistory(request map[string]any, public, wireName string, wireAPI any) 
 	out := maps.Clone(request)
 	out["messages"] = adopted
 	return out
+}
+
+// Ordered restores the system prompt section order of request from the session's composed
+// prompt; without a session, sections keep name order.
+func (r *Runtime) Ordered(request map[string]any) map[string]any {
+	r.mu.Lock()
+	host := r.host
+	r.mu.Unlock()
+	prompt := ""
+	if host != nil {
+		prompt, _ = host.GetSystemPrompt()
+	}
+	return OrderSections(request, prompt)
 }
 
 func (r *Runtime) ensure(p Provider) (*sdk.ModelRuntime, error) {
