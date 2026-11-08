@@ -1,0 +1,1 @@
+One-time carry-overs from pi-auth-plus; each records a marker in `paths.Migrations()` and never rewrites legacy files. Failed imports write no marker so they retry. Settings without a counterpart here (models.rules, models.groups, synthetic.webSearch, rulesScope, hiddenDefault) are reported as skipped.

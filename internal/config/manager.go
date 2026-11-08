@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/fsx"
@@ -51,6 +52,7 @@ type Edit struct {
 type SaveResult struct {
 	// Shadowed lists saved keys that a higher-priority scope still overrides.
 	Shadowed []string
+	written  []string
 }
 
 // Manager owns the layers of one session. It is safe for concurrent use.
@@ -119,7 +121,7 @@ func (m *Manager) Save(ctx context.Context, scope Scope, edits []Edit) (SaveResu
 	case ScopeSession:
 		return m.saveSession(normalized)
 	case ScopeUser:
-		return m.saveUser(ctx, normalized)
+		return m.saveUser(ctx, normalized, false)
 	}
 	return SaveResult{}, fmt.Errorf("cannot save to the %s scope", scope)
 }
@@ -163,7 +165,18 @@ func (m *Manager) saveSession(edits []edit) (SaveResult, error) {
 	return SaveResult{}, nil
 }
 
-func (m *Manager) saveUser(ctx context.Context, edits []edit) (SaveResult, error) {
+// FillUnset saves edits to the user file, skipping keys the file already sets. It returns
+// the keys it wrote.
+func (m *Manager) FillUnset(ctx context.Context, edits []Edit) ([]string, error) {
+	normalized, err := normalizeEdits(edits)
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.saveUser(ctx, normalized, true)
+	return res.written, err
+}
+
+func (m *Manager) saveUser(ctx context.Context, edits []edit, onlyUnset bool) (SaveResult, error) {
 	unlock, err := fsx.Lock(ctx, m.path)
 	if err != nil {
 		return SaveResult{}, err
@@ -176,6 +189,12 @@ func (m *Manager) saveUser(ctx context.Context, edits []edit) (SaveResult, error
 	doc, err := parseDocument(m.path, data)
 	if err != nil {
 		return SaveResult{}, err
+	}
+	if onlyUnset {
+		edits = slices.DeleteFunc(slices.Clone(edits), func(e edit) bool { return doc.ast.First(strings.Split(e.key, ".")...) != nil })
+		if len(edits) == 0 {
+			return SaveResult{}, nil
+		}
 	}
 	user := maps.Clone(doc.values)
 	applyEdits(user, edits)
@@ -197,6 +216,7 @@ func (m *Manager) saveUser(ctx context.Context, edits []edit) (SaveResult, error
 	}
 	var result SaveResult
 	for _, e := range edits {
+		result.written = append(result.written, e.key)
 		if _, ok := session[e.key]; ok {
 			result.Shadowed = append(result.Shadowed, e.key)
 		}
