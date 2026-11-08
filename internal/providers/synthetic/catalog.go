@@ -16,6 +16,7 @@ import (
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
+	"github.com/furbyhaxx/pig-auth-plus/internal/catalog"
 	"github.com/furbyhaxx/pig-auth-plus/internal/httpx"
 )
 
@@ -172,78 +173,29 @@ func ParseCatalog(data []byte) ([]map[string]any, map[string]string, error) {
 	return models, repos, nil
 }
 
-// Refresh restores the stored catalog, then fetches a new one when the network is allowed and
-// the stored one is missing, stale or a refresh is forced. A restored catalog replaces the
-// bundled one rather than overlaying it, so retired models disappear.
+// Refresh restores, refetches after the TTL and persists the catalog with its repositories.
 func (c *Catalog) Refresh(r sdk.RefreshModelsContext, fetch func(context.Context) ([]map[string]any, map[string]string, error), now time.Time) error {
-	ctx := r.Signal
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	restored := parseStored(r.Stored)
-	if restored != nil {
-		published, err := r.Publish(sdk.ModelsPublication{Update: func() error { c.replace(restored, nil); return nil }})
-		if err != nil || !published {
-			return err
-		}
-	}
-	if !r.AllowNetwork || ctx.Err() != nil {
-		return nil
-	}
-	force := r.Force != nil && *r.Force
-	if restored != nil && !force && storedFresh(r.Stored, now) {
-		return nil
-	}
-	models, repos, err := fetch(ctx)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil
-		}
-		return err
-	}
-	persist, err := json.Marshal(map[string]any{"models": models, "checkedAt": now.UnixMilli()})
-	if err != nil {
-		return err
-	}
-	_, err = r.Publish(sdk.ModelsPublication{Persist: persist, Update: func() error { c.replace(models, repos); return nil }})
-	return err
-}
-
-// parseStored keeps only stored models this provider can serve; nil means none usable.
-func parseStored(stored map[string]any) []map[string]any {
-	list, _ := stored["models"].([]any)
-	out := []map[string]any{}
-	for _, entry := range list {
-		m, ok := entry.(map[string]any)
-		if !ok || m["provider"] != ProviderID {
-			continue
-		}
-		if id, _ := m["id"].(string); strings.TrimSpace(id) == "" {
-			continue
-		}
-		out = append(out, m)
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
-}
-
-// storedFresh reports whether the stored catalog was checked within the TTL.
-func storedFresh(stored map[string]any, now time.Time) bool {
-	var at float64
-	switch v := stored["checkedAt"].(type) {
-	case float64:
-		at = v
-	case json.Number:
-		at, _ = v.Float64()
-	case int64:
-		at = float64(v)
-	default:
-		return false
-	}
-	age := now.Sub(time.UnixMilli(int64(at)))
-	return age >= 0 && age < catalogTTL
+	return catalog.Refresh{
+		Provider: ProviderID, TTL: catalogTTL, Now: now,
+		Fetch: func(ctx context.Context) (catalog.List, error) {
+			models, repos, err := fetch(ctx)
+			extra := map[string]any{}
+			for id, repo := range repos {
+				extra[id] = repo
+			}
+			return catalog.List{Models: models, Extra: map[string]any{"repos": extra}}, err
+		},
+		Apply: func(l catalog.List) {
+			repos := map[string]string{}
+			stored, _ := l.Extra["repos"].(map[string]any)
+			for id, v := range stored {
+				if repo, ok := v.(string); ok {
+					repos[id] = repo
+				}
+			}
+			c.replace(l.Models, repos)
+		},
+	}.Run(r)
 }
 
 func positive(n json.Number) (int, bool) {

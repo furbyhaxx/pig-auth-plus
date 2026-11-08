@@ -1,0 +1,229 @@
+{
+	"models": {
+		"chat_20706": {
+			"maxTokens": 16384,
+			"model": "MODEL_CHAT_20706"
+		},
+		"gemini-2.5-flash": {
+			"displayName": "Gemini 3.5 Flash Lite",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_GOOGLE_GEMINI_2_5_FLASH",
+			"thinkingLevel": 1
+		},
+		"gemini-3.8-flash-tiered": {
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M322",
+			"thinkingBudget": -1
+		},
+		"gemini-2.5-pro": {
+			"displayName": "Gemini 2.5 Pro",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_GOOGLE_GEMINI_2_5_PRO",
+			"thinkingBudget": 1024
+		},
+		"gemini-4-argon-high": {
+			"displayName": "Gemini 4 Argon (High)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M417",
+			"thinkingLevel": 3,
+			"thinkingBudget": -1
+		},
+		"tab_flash_lite_preview": {
+			"maxTokens": 16384,
+			"maxOutputTokens": 4096,
+			"model": "MODEL_PLACEHOLDER_M19"
+		},
+		"gemini-4-argon-medium": {
+			"displayName": "Gemini 4 Argon (Medium)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M418",
+			"thinkingLevel": 2,
+			"thinkingBudget": -1
+		},
+		"claude-sonnet-5-5-low": {
+			"displayName": "Claude Sonnet 5.5 (Low)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M403",
+			"thinkingLevel": 1,
+			"supportsAdaptiveThinking": true
+		},
+		"claude-opus-5-5-medium": {
+			"displayName": "Claude Opus 5.5 (Medium)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M401",
+			"thinkingLevel": 2,
+			"supportsAdaptiveThinking": true
+		},
+		"gemini-3.1-flash-lite": {
+			"displayName": "Gemini 3.1 Flash Lite",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_PLACEHOLDER_M50",
+			"thinkingLevel": 1
+		},
+		"gemini-3.5-flash-lite": {
+			"displayName": "Gemini 3.5 Flash Lite",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_PLACEHOLDER_M198",
+			"thinkingLevel": 1
+		},
+		"claude-sonnet-5-5-medium": {
+			"displayName": "Claude Sonnet 5.5 (Medium)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M404",
+			"thinkingLevel": 2,
+			"supportsAdaptiveThinking": true
+		},
+		"gemini-3.8-flash-high": {
+			"displayName": "Gemini 3.8 Flash (High)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M318",
+			"thinkingBudget": -1
+		},
+		"gemini-3.8-flash-medium": {
+			"displayName": "Gemini 3.8 Flash (Medium)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M319",
+			"thinkingBudget": 4000
+		},
+		"gemini-2.5-flash-thinking": {
+			"displayName": "Gemini 3.5 Flash Lite",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_GOOGLE_GEMINI_2_5_FLASH_THINKING",
+			"thinkingLevel": 1
+		},
+		"claude-sonnet-5-5-high": {
+			"displayName": "Claude Sonnet 5.5 (High)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M405",
+			"thinkingLevel": 3,
+			"supportsAdaptiveThinking": true
+		},
+		"chat_23310": {
+			"maxTokens": 32768,
+			"model": "MODEL_CHAT_23310"
+		},
+		"gemini-2.5-flash-lite": {
+			"displayName": "Gemini 3.5 Flash Lite",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65535,
+			"model": "MODEL_GOOGLE_GEMINI_2_5_FLASH_LITE",
+			"thinkingLevel": 1
+		},
+		"claude-opus-5-5-low": {
+			"displayName": "Claude Opus 5.5 (Low)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M400",
+			"thinkingLevel": 1,
+			"supportsAdaptiveThinking": true
+		},
+		"gemini-3.1-flash-image": {
+			"displayName": "Gemini 3.1 Flash Image",
+			"supportsImages": true,
+			"maxTokens": 65536,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M21"
+		},
+		"tab_jump_flash_lite_preview": {
+			"maxTokens": 16384,
+			"maxOutputTokens": 4096,
+			"model": "MODEL_PLACEHOLDER_M28"
+		},
+		"gemini-4-argon-low": {
+			"displayName": "Gemini 4 Argon (Low)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M419",
+			"thinkingLevel": 1,
+			"thinkingBudget": -1
+		},
+		"claude-opus-5-5-high": {
+			"displayName": "Claude Opus 5.5 (High)",
+			"supportsImages": true,
+			"maxTokens": 1000000,
+			"maxOutputTokens": 128000,
+			"model": "MODEL_PLACEHOLDER_M402",
+			"thinkingLevel": 3,
+			"supportsAdaptiveThinking": true
+		},
+		"gemini-3.8-flash-low": {
+			"displayName": "Gemini 3.8 Flash (Low)",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M320",
+			"thinkingBudget": 1000
+		},
+		"gpt-oss-120b-medium": {
+			"displayName": "GPT-OSS 120B (Medium)",
+			"maxTokens": 131072,
+			"maxOutputTokens": 32768,
+			"model": "MODEL_OPENAI_GPT_OSS_120B_MEDIUM",
+			"thinkingBudget": 8192
+		},
+		"gemini-3-flash": {
+			"displayName": "Gemini 3 Flash",
+			"supportsImages": true,
+			"maxTokens": 1048576,
+			"maxOutputTokens": 65536,
+			"model": "MODEL_PLACEHOLDER_M18",
+			"thinkingBudget": -1
+		}
+	},
+	"agentModelSorts": [
+		{
+			"displayName": "Recommended",
+			"groups": [
+				{
+					"modelIds": [
+						"gemini-4-argon-medium",
+						"gemini-4-argon-high",
+						"gemini-4-argon-low",
+						"gemini-3.8-flash-high",
+						"gemini-3.8-flash-medium",
+						"gemini-3.8-flash-low",
+						"claude-opus-5-5-low",
+						"claude-opus-5-5-medium",
+						"claude-opus-5-5-high",
+						"claude-sonnet-5-5-low",
+						"claude-sonnet-5-5-medium",
+						"claude-sonnet-5-5-high",
+						"gpt-oss-120b-medium"
+					]
+				}
+			]
+		}
+	],
+	"defaultAgentModelId": "gemini-4-argon-medium"
+}

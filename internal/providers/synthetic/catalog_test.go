@@ -3,7 +3,6 @@ package synthetic
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
@@ -57,52 +56,29 @@ func TestBundledCatalogParses(t *testing.T) {
 	}
 }
 
-type publisher struct{ persisted []json.RawMessage }
-
-func (p *publisher) publish(pub sdk.ModelsPublication) (bool, error) {
-	if pub.Persist != nil {
-		p.persisted = append(p.persisted, pub.Persist)
-	}
-	return true, pub.Update()
-}
-
-func TestRefreshHonorsTTLAndReplaces(t *testing.T) {
+func TestRefreshPersistsRepositoriesForRestoredAliases(t *testing.T) {
 	now := time.UnixMilli(10_000_000_000)
-	stored := map[string]any{"checkedAt": float64(now.Add(-time.Hour).UnixMilli()), "models": []any{
-		map[string]any{"id": "kept", "provider": ProviderID},
-		map[string]any{"id": "foreign", "provider": "other"},
-	}}
-	fetches := 0
+	var persisted json.RawMessage
+	publish := func(pub sdk.ModelsPublication) (bool, error) {
+		if pub.Persist != nil {
+			persisted = pub.Persist
+		}
+		return true, pub.Update()
+	}
 	fetch := func(context.Context) ([]map[string]any, map[string]string, error) {
-		fetches++
-		return []map[string]any{{"id": "fresh", "provider": ProviderID}}, map[string]string{"fresh": "o/r"}, nil
+		return []map[string]any{{"id": "syn:new", "provider": ProviderID}}, map[string]string{"syn:new": "o/r"}, nil
 	}
 	c, _ := NewCatalog()
-	p := &publisher{}
-	if err := c.Refresh(sdk.RefreshModelsContext{Stored: stored, AllowNetwork: true, Publish: p.publish}, fetch, now); err != nil {
+	if err := c.Refresh(sdk.RefreshModelsContext{AllowNetwork: true, Publish: publish}, fetch, now); err != nil {
 		t.Fatal(err)
 	}
-	if fetches != 0 || len(c.Models()) != 1 || c.Models()[0]["id"] != "kept" {
-		t.Fatalf("fresh stored catalog: fetches=%d models=%v", fetches, c.Models())
-	}
-	force := true
-	if err := c.Refresh(sdk.RefreshModelsContext{Stored: stored, AllowNetwork: true, Force: &force, Publish: p.publish}, fetch, now); err != nil {
+	var stored map[string]any
+	_ = json.Unmarshal(persisted, &stored)
+	restarted, _ := NewCatalog()
+	if err := restarted.Refresh(sdk.RefreshModelsContext{Stored: stored, Publish: publish}, nil, now); err != nil {
 		t.Fatal(err)
 	}
-	if fetches != 1 || c.Models()[0]["id"] != "fresh" || c.Repo("fresh") != "o/r" || len(p.persisted) != 1 {
-		t.Fatalf("forced refresh: fetches=%d models=%v persisted=%d", fetches, c.Models(), len(p.persisted))
-	}
-	stale := map[string]any{"checkedAt": float64(now.Add(-5 * time.Hour).UnixMilli()), "models": stored["models"]}
-	if err := c.Refresh(sdk.RefreshModelsContext{Stored: stale, AllowNetwork: false, Publish: p.publish}, fetch, now); err != nil || fetches != 1 {
-		t.Fatalf("offline refresh fetched: %v %d", err, fetches)
-	}
-	failing := func(context.Context) ([]map[string]any, map[string]string, error) {
-		return nil, nil, errors.New("down")
-	}
-	if err := c.Refresh(sdk.RefreshModelsContext{Stored: stale, AllowNetwork: true, Publish: p.publish}, failing, now); err == nil {
-		t.Fatal("fetch failure not reported")
-	}
-	if c.Models()[0]["id"] != "kept" {
-		t.Fatalf("failed refresh must keep the restored catalog: %v", c.Models())
+	if restarted.Repo("syn:new") != "o/r" {
+		t.Fatalf("restored alias lost its repository: %q", restarted.Repo("syn:new"))
 	}
 }

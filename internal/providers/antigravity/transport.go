@@ -31,3 +31,6 @@ func cliHeaders(access string) http.Header {
 	}
 	return h
 }
+
+// API is the provider's own API id; requests run on PiG's google-generative-ai behind it.
+const API = "auth-plus-antigravity"
