@@ -6,7 +6,7 @@ and line; per-model context token counts; one `/auth` dashboard. Login stays in 
 
 ## Layout
 - `extension.go` — `Extension()` factory, package `authplus`. Registration and wiring only.
-- `internal/` — feature packages; each gets its own AGENTS.md when created. Families never import each other; engines reach families only through registries.
+- `internal/` — feature packages, each with its own AGENTS.md: `providers/{claude,antigravity,synthetic}` (inference), `wire` (private runtime on PiG builtin APIs), `quota` + `quota/sources`, `line` (template), `tokens`, `bus`, `config`, `alias`, `modelsfile`, `hooks`, `resetflow`, `migrate`, `ui/*` (dashboard tabs), `app` (SDK wiring). Providers never import each other.
 - `docs/` — human-facing product docs. New command, setting or provider → update `README.md` and the matching doc in the same change.
 - `.project/` — development artifacts; never in `docs/`; committed. Load skill `dot-project` before writing, revising or deleting one. Only what currently applies or is planned stays; superseded artifacts are deleted with `Artifact-*` commit trailers, never archived. Do not read deleted artifacts from git history unless asked. Open work: `BACKLOG.md` pointers + `.project/backlog/`; live claims: project-scope `tasks`. Never put drift/TODOs in AGENTS.md.
 - `scripts/check_artifacts.py` — `.project` structure check (from skill `dot-project`).

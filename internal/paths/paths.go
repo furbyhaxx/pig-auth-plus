@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// App is the directory name under the XDG state and cache bases.
+// App is the directory name under the XDG state base.
 const App = "pig-auth-plus"
 
 // Paths holds resolved absolute locations. Construct with [Resolve] or literally in tests.
@@ -16,14 +16,12 @@ type Paths struct {
 	AgentDir string
 	// StateDir holds one-time migration markers and device identities.
 	StateDir string
-	// CacheDir holds downloaded artifacts such as tokenizers.
-	CacheDir string
 }
 
 // Env reads one environment variable; tests replace it.
 type Env func(string) string
 
-// Resolve builds Paths from the host-reported agent directory and the XDG environment.
+// Resolve builds Paths from the host-reported agent directory and the XDG state base.
 func Resolve(agentDir string, env Env) (Paths, error) {
 	if agentDir == "" {
 		return Paths{}, errors.New("host did not report an agent directory")
@@ -39,7 +37,6 @@ func Resolve(agentDir string, env Env) (Paths, error) {
 	return Paths{
 		AgentDir: agentDir,
 		StateDir: filepath.Join(xdg(env, "XDG_STATE_HOME", home, ".local/state"), App),
-		CacheDir: filepath.Join(xdg(env, "XDG_CACHE_HOME", home, ".cache"), App),
 	}, nil
 }
 
@@ -70,9 +67,6 @@ func (p Paths) Models() string { return filepath.Join(p.AgentDir, "models.json")
 
 // Migrations is the completed one-time import marker file.
 func (p Paths) Migrations() string { return filepath.Join(p.StateDir, "migrations.json") }
-
-// Tokenizers is the tokenizer artifact cache.
-func (p Paths) Tokenizers() string { return filepath.Join(p.CacheDir, "tokenizers") }
 
 // Wire is the private directory of the provider wire runtime; it never holds user credentials.
 func (p Paths) Wire() string { return filepath.Join(p.StateDir, "wire") }
