@@ -185,3 +185,14 @@ func TestUsedAndRemainingFollowTheSetting(t *testing.T) {
 		t.Fatalf("remaining 73%% missing:\n%s", body)
 	}
 }
+
+func TestSiblingWindowsStayDistinctWhenTheLabelIsCut(t *testing.T) {
+	a := fitLabel("Claude and GPT models (7d)", 18)
+	b := fitLabel("Claude and GPT models (5h)", 18)
+	if a == b || !strings.HasSuffix(a, "(7d)") || !strings.HasSuffix(b, "(5h)") {
+		t.Fatalf("%q vs %q", a, b)
+	}
+	if w := tui.VisibleWidth(a); w > 18 {
+		t.Fatalf("width %d", w)
+	}
+}

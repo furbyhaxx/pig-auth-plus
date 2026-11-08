@@ -213,7 +213,7 @@ func windowLine(th line.Theme, win quota.Window, d Display, w int, nowMs int64) 
 	if showReset {
 		labelW = w - fixed - resetW
 	}
-	label = tui.TruncateToWidth(label, labelW-1, "…", true)
+	label = fitLabel(label, labelW-1)
 	row := "    " + label + " " + bar(th, win.Used, cells) + " " + pctCol
 	if showReset && reset != "" {
 		row += " " + paint(th, reset, "muted")
@@ -286,4 +286,22 @@ func PlainText(views []quota.View, d Display, solo string, width int, now time.T
 		out = append(out, providerLines(env, plainTheme{}, v, d, false, now)...)
 	}
 	return strings.TrimRight(strings.Join(out, "\n"), "\n")
+}
+
+// fitLabel cuts the middle of a long label so a trailing period such as "(7d)", which tells
+// sibling windows apart, survives.
+func fitLabel(label string, width int) string {
+	if tui.VisibleWidth(label) <= width {
+		return tui.TruncateToWidth(label, width, "…", true)
+	}
+	i := strings.LastIndex(label, " (")
+	if i < 0 || !strings.HasSuffix(label, ")") {
+		return tui.TruncateToWidth(label, width, "…", false)
+	}
+	suffix := label[i:]
+	room := width - tui.VisibleWidth(suffix)
+	if room < 3 {
+		return tui.TruncateToWidth(label, width, "…", false)
+	}
+	return tui.TruncateToWidth(label[:i], room, "…", false) + suffix
 }

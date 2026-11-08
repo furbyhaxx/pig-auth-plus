@@ -1,0 +1,16 @@
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mQuotas
+ [1m[38;5;5m[Quotas][0m
+[38;5;5m→ [1m[39mClaude[0m                                                                [2m● 2m ago
+[0m    7d weekly                                           [38;2;51;127;0m█[2m[39m░░░░░░░[0m  13% [2m↻ 5d 22h[0m
+[2m      drain window 4.5%/h · 1h 4.5%/h · 24h 4.5%/h · empty in 19h 16m[0m
+    7d Fable                                            [2m░░░░░░░░[0m   0% [2m↻ 5d 22h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mAntigravity[0m                                                          [2m● 10s ago
+[0m    Gemini Models (7d)                                  [2m░░░░░░░░[0m   2% [2m↻ 5d 19h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Gemini Models (5h)                                  [2m░░░░░░░░[0m   1% [2m↻ 4h 27m[0m
+[2mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;106;127;0m7.91$[2m[39m · cox: [0m[38;2;120;128;0m44%[2m[39m · cl: 5h/? 7d/[0m[38;2;68;127;0m13%[2m[39m · ag: gem/[0m[38;2;26;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[39m
+[2m/mnt/Projects/furbyhaxx/pig-auth-plus (dev)[0m

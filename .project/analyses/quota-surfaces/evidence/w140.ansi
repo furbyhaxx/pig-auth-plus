@@ -1,0 +1,40 @@
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mQuotas
+ [1m[38;5;5m[Quotas][0m
+[38;5;5m→ [1m[39mClaude[0m                                                                                                                            [2m● 2m ago
+[0m    7d weekly                                                                                                       [38;2;51;127;0m█[2m[39m░░░░░░░[0m  13% [2m↻ 5d 22h[0m
+[2m      drain window 4.5%/h · 1h 4.5%/h · 24h 4.5%/h · empty in 19h 16m[0m
+    7d Fable                                                                                                        [2m░░░░░░░░[0m   0% [2m↻ 5d 22h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mAntigravity[0m                                                                                                                       [2m● 0s ago
+[0m    Gemini Models (7d)                                                                                              [2m░░░░░░░░[0m   2% [2m↻ 5d 19h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Gemini Models (5h)                                                                                              [2m░░░░░░░░[0m   1% [2m↻ 4h 27m[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Claude and GPT models (7d)                                                                                      [2m░░░░░░░░[0m   1% [2m↻ 3d 2h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Claude and GPT models (5h)                                                                                      [2m░░░░░░░░[0m   2% [2m↻ 4h 27m[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Gemini 4 Argon (7d)                                                                                             [2m░░░░░░░░[0m   3% [2m↻ 6d 18h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mSynthetic[0m                                                                                                                         [2m● 1s ago
+[0m    Subscription requests                                                                                           [2m░░░░░░░░[0m   0% [2m↻ 4h 59m[0m
+    7d plan budget                                                                                                  [2m░░░░░░░░[0m   1% [2m↻ 22m[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h · resets first[0m
+    1h search requests                                                                                              [2m░░░░░░░░[0m   0% [2m↻ 59m[0m
+
+  [1mChatGPT[0;2m · pro[0m                                                                                                                     [2m● 2s ago
+[0m    Plan (7d window)                                                                                                [38;2;92;127;0m█[38;2;102;127;0m█[38;2;111;127;0m█[38;2;120;128;0m█[2m[39m░░░░[0m  44% [2m↻ 2d 9h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+[2m    reset credits: 0[0m
+
+  [1mxAI[0;2m · unified[0m                                                                                                                     [2m● 1s ago
+[0m    7d weekly quota                                                                                                 [38;2;77;127;0m█[38;2;89;127;0m█[2m[39m░░░░░░[0m  30% [2m↻ 1d 16h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mOpenRouter[0m                                                                                                                        [2m● 2s ago
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)[0m
+[2m$0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

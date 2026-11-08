@@ -1,0 +1,16 @@
+
+────────────────────────────────────────────────────────────────────────────────
+ Auth › Quotas
+ [Quotas]
+→ Claude                                                                ● 2m ago
+    7d weekly                                           █░░░░░░░  13% ↻ 5d 22h
+      drain window 4.5%/h · 1h 4.5%/h · 24h 4.5%/h · empty in 19h 16m
+    7d Fable                                            ░░░░░░░░   0% ↻ 5d 22h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+
+  Antigravity                                                          ● 10s ago
+    Gemini Models (7d)                                  ░░░░░░░░   2% ↻ 5d 19h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Gemini Models (5h)                                  ░░░░░░░░   1% ↻ 4h 27m
+or: 17.97$ · ds: 7.91$ · cox: 44% · cl: 5h/? 7d/13% · ag: gem/2% arg/3%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)

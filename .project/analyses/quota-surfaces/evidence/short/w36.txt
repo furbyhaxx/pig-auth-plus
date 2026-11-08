@@ -1,0 +1,16 @@
+
+────────────────────────────────────
+ Auth › Quotas
+ [Quotas]
+→ Claude                    ● 2m ago
+    7d weekly            █░░░░  13%
+      drain window 4.5%/h · 1h 4.5%…
+    7d Fable             ░░░░░   0%
+      drain window 0.0%/h · 1h 0.0%…
+
+  Antigravity               ● 5s ago
+    Gemini Models (7d)   ░░░░░   2%
+      drain window 0.0%/h · 1h 0.0%…
+or: 17.97$ · ds: 7.91$ · cox: 44%
+cl: 5h/? 7d/13% · ag: gem/2% arg/3%
+/mnt/Projects/furbyhaxx/pig-auth-...
