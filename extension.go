@@ -1,0 +1,15 @@
+// Package authplus is the pig-auth-plus factory: registration and wiring only.
+// Feature logic lives in internal/ as plain functions over plain data.
+package authplus
+
+import (
+	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
+)
+
+// name is the extension identity; it must equal the selecting directory or Package member.
+const name = "pig-auth-plus"
+
+// Extension is the conventional Go factory PiG builds, packs and can fuse into a Piglet Binary.
+func Extension() *sdk.Extension {
+	return sdk.New(name)
+}
