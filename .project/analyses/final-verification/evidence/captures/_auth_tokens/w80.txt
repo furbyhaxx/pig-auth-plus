@@ -1,0 +1,30 @@
+
+[Context]
+  ~/.pig/agent/APPEND_SYSTEM.md
+
+[Skills]
+  accordion-context-folding, accordion-context-recall, accordion-task-lists,
+agents-md, dot-project, extending-pig, golang, models-dev, online-research,
+python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
+
+[Extensions]
+  pig-auth-plus
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Auth › Tokens
+  Providers  Quotas [Tokens] Models  Settings
+Total      9,354 tokens · estimate · 2% of 524,288
+Context    synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash-1017
+Pi         0 · delta +9,354
+Anchor     none; counted from the full context
+Tail       9,354 · estimate · 0 messages
+Breakdown
+  system        7,771 · estimate · 1
+  tools         1,583 · estimate · 7
+ f1 help · escape/ctrl+c close · r recount · tab next
+────────────────────────────────────────────────────────────────────────────────
+or: 17.97$ · ds: 7.88$ · cox: 47% · cl: 5h/? 7d/15% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)      (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

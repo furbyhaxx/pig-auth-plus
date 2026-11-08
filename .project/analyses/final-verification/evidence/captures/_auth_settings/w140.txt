@@ -1,0 +1,30 @@
+  pig-auth-plus
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Auth › Settings
+  Providers  Quotas  Tokens  Models [Settings]
+→ dashboard.density                                                                                                   "comfortable"  default
+  dashboard.maxBodyRows                                                                                                           0  default
+  dashboard.showProvenance                                                                                                    false  default
+  quotas.refreshIntervalSec                                                                                                      60  default
+  quotas.refreshOnRequest                                                                                                      true  default
+  quotas.providers                                                    openrouter, deepseek, codex, claude, antigravity, synthetic, xai  user
+  quotas.linePlacement                                                                                            "below-editor-first"  user
+  quotas.percentDisplay                                                                                                         "used"  user
+  quotas.compactWidthCols                                                                                                       100  default
+  quotas.alwaysShortIds                                                                                                       false  default
+  quotas.hideSignedOut                                                                                                         true  default
+  quotas.creditHealthyUsd                                                                                                           10  user
+  quotas.creditCriticalUsd                                                                                                        5  default
+  quotas.lineTemplate
+    "{openrouter:id}: {openrouter:credits-remaining} · {deepseek:id}: {deepseek:credits-remaining} · {codex:id}: {codex:window-7d-used-perc…
+  models.aliases                                                                                                        0 alias(es)  default
+  openai.verbosity                                                                                                               "low"  user
+  openai.verbosityProviders                                                                                    openai, openai-codex  default
+ Dashboard row spacing; compact uses less vertical space.
+ f1 help · escape/ctrl+c close · ←/→ change · enter edit · ctrl+s save · backspace default · tab next
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+openrouter: 17.97$ · deepseek: 7.88$ · codex: 47% · claude: 5h/? 7d/15% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)                                                                  (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

@@ -1,0 +1,30 @@
+[2m  ~/.pig/agent/APPEND_SYSTEM.md[0m
+
+[38;5;3m[Skills][39m
+[2m  accordion-context-folding, accordion-context-recall,
+accordion-task-lists, agents-md, dot-project,
+extending-pig, golang, models-dev, online-research,
+python, reddit-cli, rust, skill-creator,
+systematic-debugging, toml, typescript[0m
+
+[38;5;3m[Extensions][39m
+[2m  pig-auth-plus[0m
+
+
+[38;5;5m─────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mTokens
+ [2m Providers  Quotas [0;1m[38;5;5m[Tokens][0;2m Models  Settings [0m
+[2mTotal      [0;1m9,354[0m tokens · estimate · 2% of 524,288
+[2mContext    [0msynthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash-…
+[2mPi         [0m0 · delta +9,354
+[2mAnchor     none; counted from the full context[0m
+[2mTail       [0m9,354 · estimate · 0 messages
+[2mBreakdown  [0m
+  system        7,771 · estimate · 1
+  tools         1,583 · estimate · 7
+ [2mf1 help · escape/ctrl+c close · r recount · tab next[0m
+[38;5;5m─────────────────────────────────────────────────────────
+[2m[39mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;107;127;0m7.88$[2m[39m · cox: [0m[38;2;124;128;0m47%[2m[39m · cl: 5h/? 7d/[0m[38;2;73;127;0m15%[39m
+[2mag: gem/[0m[38;2;22;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[2m[39m · syn: [0m[38;2;0;128;0m0%[2m[39m · xai: [0m[38;2;108;127;0m35%[39m
+[2m/tmp/papfinal[0m
+[2m0.0%/524k (auto)  hf:deepseek-ai/DeepSeek-V4.1-Flash-1017

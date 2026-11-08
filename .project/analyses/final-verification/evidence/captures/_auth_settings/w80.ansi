@@ -1,0 +1,30 @@
+
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mSettings
+ [2m Providers  Quotas  Tokens  Models [0;1m[38;5;5m[Settings][0m
+[38;5;5m→ [1m[39mdashboard.density[0m                                       "comfortable"  [2mdefault
+[0m  dashboard.maxBodyRows                                               0  [2mdefault
+[0m  dashboard.showProvenance                                        false  [2mdefault
+[0m  quotas.refreshIntervalSec                                          60  [2mdefault
+[0m  quotas.refreshOnRequest                                          true  [2mdefault
+[0m  quotas.providers
+    openrouter, deepseek, codex, claude, antigravity, synthetic, xai  [2muser[0m
+  quotas.linePlacement                                "below-editor-first"  [2muser
+[0m  quotas.percentDisplay                                             "used"  [2muser
+[0m  quotas.compactWidthCols                                           100  [2mdefault
+[0m  quotas.alwaysShortIds                                           false  [2mdefault
+[0m  quotas.hideSignedOut                                             true  [2mdefault
+[0m  quotas.creditHealthyUsd                                               10  [2muser
+[0m  quotas.creditCriticalUsd                                            5  [2mdefault
+[0m  quotas.lineTemplate
+    "{openrouter:id}: {openrouter:credits-remaining} · {deepseek:id}: {deepseek…
+  models.aliases                                            0 alias(es)  [2mdefault
+[0m  openai.verbosity                                                   "low"  [2muser
+[0m [2mDashboard row spacing; compact uses less vertical space.[0m
+ [2mf1 help · escape/ctrl+c close · ←/→ change · enter edit · ctrl+s save[0m
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[2m[39mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;107;127;0m7.88$[2m[39m · cox: [0m[38;2;124;128;0m47%[2m[39m · cl: 5h/? 7d/[0m[38;2;73;127;0m15%[2m[39m · ag: gem/[0m[38;2;22;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[39m
+[2msyn: [0m[38;2;0;128;0m0%[2m[39m · xai: [0m[38;2;108;127;0m35%[39m
+[2m/tmp/papfinal[0m
+[2m0.0%/524k (auto)      (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

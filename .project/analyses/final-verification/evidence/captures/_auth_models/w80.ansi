@@ -1,0 +1,30 @@
+
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mModels
+ [2m Providers  Quotas  Tokens [0;1m[38;5;5m[Models][0;2m Settings [0m
+ [1mamazon-bedrock[0m
+[38;5;5m→ [1m[39mamazon.nova-2-lite-v1:0[0m                                                     [2m1M
+[0m  amazon.nova-lite-v1:0                                                     [2m300k
+[0m  amazon.nova-micro-v1:0                                                    [2m128k
+[0m  amazon.nova-pro-v1:0                                                      [2m300k
+[0m  anthropic.claude-fable-5                                                    [2m1M
+[0m  anthropic.claude-fable-5-1                                                  [2m1M
+[0m  anthropic.claude-haiku-4-5-20251001-v1:0                                  [2m200k
+[0m  anthropic.claude-haiku-5-5                                                  [2m1M
+[0m  anthropic.claude-opus-4-1-20250805-v1:0                                   [2m200k
+[0m  anthropic.claude-opus-4-5-20251101-v1:0                                   [2m200k
+[0m  anthropic.claude-opus-4-6-v1                                                [2m1M
+[0m  anthropic.claude-opus-4-7                                                   [2m1M
+[0m  anthropic.claude-opus-4-8                                                   [2m1M
+[0m  anthropic.claude-opus-5-5                                                   [2m1M
+[0m  anthropic.claude-sonnet-4-5-20250929-v1:0                                 [2m200k
+[0m  anthropic.claude-sonnet-4-6                                                 [2m1M
+[0m  anthropic.claude-sonnet-5                                                   [2m1M
+[0m  anthropic.claude-sonnet-5-5                                                 [2m1M
+[0m [2mf1 help · escape/ctrl+c close · / search · enter detail · tab next[0m
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[2m[39mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;107;127;0m7.88$[2m[39m · cox: [0m[38;2;124;128;0m47%[2m[39m · cl: 5h/? 7d/[0m[38;2;73;127;0m15%[2m[39m · ag: gem/[0m[38;2;22;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[39m
+[2msyn: [0m[38;2;0;128;0m0%[2m[39m · xai: [0m[38;2;108;127;0m35%[39m
+[2m/tmp/papfinal[0m
+[2m0.0%/524k (auto)      (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

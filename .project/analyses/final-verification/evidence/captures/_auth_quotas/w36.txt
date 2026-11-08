@@ -1,0 +1,30 @@
+
+────────────────────────────────────
+ Auth › Quotas
+  Providers [Quotas] Tokens …
+→ Claude                   ● 47s ago
+    7d weekly            █░░░░  15%
+      drain window 2.1%/h · 1h 2.1%…
+    7d Fable             ░░░░░   0%
+      drain window 0.0%/h · 1h 0.0%…
+
+  Antigravity               ● 1m ago
+    Gemini Models (7d)   ░░░░░   2%
+      drain window 0.0%/h · 1h 0.0%…
+    Gemini Models (5h)   ░░░░░   0%
+      drain window 0.0%/h · 1h 0.0%…
+    Claude and GPT… (7d) ░░░░░   1%
+      drain window 0.0%/h · 1h 0.0%…
+    Claude and GPT… (5h) ░░░░░   2%
+      drain window 0.0%/h · 1h 0.0%…
+    Gemini 4 Argon (7d)  ░░░░░   3%
+      drain window 0.0%/h · 1h 0.0%…
+
+  Synthetic                ● 36s ago
+ f1 help · escape/ctrl+c close
+────────────────────────────────────
+or: 17.97$ · ds: 7.88$ · cox: 47%
+cl: 5h/? 7d/15% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)  hf:deepseek-ai/Dee

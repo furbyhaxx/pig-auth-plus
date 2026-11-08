@@ -1,0 +1,30 @@
+
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mProviders
+ [1m[38;5;5m[Providers][0;2m Quotas  Tokens  Models  Settings [0m
+  [1mClaude[0;2m (claude)[0m                                                    [38;5;2m✓ signed in
+[2m[39m    OAuth login · token valid 7 h 16 min
+[0m  [1mAntigravity[0;2m (antigravity)[0m                                          [38;5;2m✓ signed in
+[2m[39m    OAuth login · token valid 52 min[0m
+  [1mSynthetic[0;2m (synthetic)[0m                                              [38;5;2m✓ signed in
+[2m[39m    stored API key[0m
+  [1mChatGPT[0;2m (codex)[0m                                                    [38;5;2m✓ signed in
+[2m[39m    OAuth login · token valid 3 days[0m
+[2m    quota only; inference uses PiG's openai-codex[0m
+  [1mxAI[0;2m (xai)[0m                                                          [38;5;2m✓ signed in
+[2m[39m    OAuth login · token valid 2 h 49 min
+    quota only; needs a Grok billing credential[0m
+  [1mOpenRouter[0;2m (openrouter)[0m                                            [38;5;2m✓ signed in
+[2m[39m    stored API key[0m
+[2m    quota only[0m
+  [1mDeepSeek[0;2m (deepseek)[0m                                                [38;5;2m✓ signed in
+[2m[39m    stored API key[0m
+[2m    quota only[0m
+  [1mOpenCode Zen[0;2m (opencode)[0m                                           [38;5;3m○ signed out
+[39m [2mf1 help · escape/ctrl+c close · r reread · tab next[0m
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[2m[39mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;107;127;0m7.88$[2m[39m · cox: [0m[38;2;124;128;0m47%[2m[39m · cl: 5h/? 7d/[0m[38;2;73;127;0m15%[2m[39m · ag: gem/[0m[38;2;22;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[39m
+[2msyn: [0m[38;2;0;128;0m0%[2m[39m · xai: [0m[38;2;108;127;0m35%[39m
+[2m/tmp/papfinal[0m
+[2m0.0%/524k (auto)      (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

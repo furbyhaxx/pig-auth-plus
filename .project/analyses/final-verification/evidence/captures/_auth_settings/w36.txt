@@ -1,0 +1,30 @@
+
+────────────────────────────────────
+ Auth › Settings
+ … Quotas  Tokens  Models [Settings]
+→ dashboard.density
+    "comfortable"  default
+  dashboard.maxBodyRows   0  default
+  dashboard.showProvenance
+    false  default
+  quotas.refreshIntervalSec
+    60  default
+  quotas.refreshOnRequest
+    true  default
+  quotas.providers
+    openrouter, deepseek, codex, cl…
+  quotas.linePlacement
+    "below-editor-first"  user
+  quotas.percentDisplay
+    "used"  user
+  quotas.compactWidthCols
+    100  default
+ Dashboard row spacing; compact
+ uses less vertical space.
+ f1 help · escape/ctrl+c close
+────────────────────────────────────
+or: 17.97$ · ds: 7.88$ · cox: 47%
+cl: 5h/? 7d/15% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)  hf:deepseek-ai/Dee

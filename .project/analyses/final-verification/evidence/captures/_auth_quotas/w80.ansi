@@ -1,0 +1,30 @@
+
+
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;5;5mAuth[0;2m › [0mQuotas
+ [2m Providers [0;1m[38;5;5m[Quotas][0;2m Tokens  Models  Settings [0m
+[38;5;5m→ [1m[39mClaude[0m                                                               [2m● 58s ago
+[0m    7d weekly                                           [38;2;55;127;0m█[2m[39m░░░░░░░[0m  15% [2m↻ 5d 21h[0m
+[2m      drain window 2.1%/h · 1h 2.1%/h · 24h 2.1%/h · empty in 1d 15h[0m
+    7d Fable                                            [2m░░░░░░░░[0m   0% [2m↻ 5d 21h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mAntigravity[0m                                                           [2m● 7s ago
+[0m    Gemini Models (7d)                                  [2m░░░░░░░░[0m   2% [2m↻ 5d 18h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h · resets first[0m
+    Gemini Models (5h)                                  [2m░░░░░░░░[0m   0% [2m↻ 3h 20m[0m
+[2m      drain window 0.1%/h · 1h 0.1%/h · 24h 0.1%/h · resets first[0m
+    Claude and GPT models (7d)                          [2m░░░░░░░░[0m   1% [2m↻ 3d 1h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Claude and GPT models (5h)                          [2m░░░░░░░░[0m   2% [2m↻ 3h 20m[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+    Gemini 4 Argon (7d)                                 [2m░░░░░░░░[0m   3% [2m↻ 6d 17h[0m
+[2m      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h[0m
+
+  [1mSynthetic[0m                                                            [2m● 47s ago
+[0m [2mf1 help · escape/ctrl+c close · r refresh · R refresh all · a solo[0m
+[38;5;5m────────────────────────────────────────────────────────────────────────────────
+[2m[39mor: [0m[38;2;0;128;0m17.97$[2m[39m · ds: [0m[38;2;107;127;0m7.88$[2m[39m · cox: [0m[38;2;124;128;0m47%[2m[39m · cl: 5h/? 7d/[0m[38;2;73;127;0m15%[2m[39m · ag: gem/[0m[38;2;22;128;0m2%[2m[39m arg/[0m[38;2;29;128;0m3%[39m
+[2msyn: [0m[38;2;0;128;0m0%[2m[39m · xai: [0m[38;2;108;127;0m35%[39m
+[2m/tmp/papfinal[0m
+[2m0.0%/524k (auto)      (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

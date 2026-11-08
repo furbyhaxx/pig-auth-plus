@@ -1,0 +1,30 @@
+  pig-auth-plus
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Auth › Quotas
+  Providers [Quotas] Tokens  Models  Settings
+→ Claude                                                                                                                            ● 1m ago
+    7d weekly                                                                                                       █░░░░░░░  15% ↻ 5d 21h
+      drain window 2.1%/h · 1h 2.1%/h · 24h 2.1%/h · empty in 1d 15h
+    7d Fable                                                                                                        ░░░░░░░░   0% ↻ 5d 21h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+
+  Antigravity                                                                                                                      ● 12s ago
+    Gemini Models (7d)                                                                                              ░░░░░░░░   2% ↻ 5d 18h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h · resets first
+    Gemini Models (5h)                                                                                              ░░░░░░░░   0% ↻ 3h 20m
+      drain window 0.1%/h · 1h 0.1%/h · 24h 0.1%/h · resets first
+    Claude and GPT models (7d)                                                                                      ░░░░░░░░   1% ↻ 3d 1h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Claude and GPT models (5h)                                                                                      ░░░░░░░░   2% ↻ 3h 20m
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+    Gemini 4 Argon (7d)                                                                                             ░░░░░░░░   3% ↻ 6d 17h
+      drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
+
+  Synthetic                                                                                                                        ● 52s ago
+ f1 help · escape/ctrl+c close · r refresh · R refresh all · a solo · p line placement · tab next
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+openrouter: 17.97$ · deepseek: 7.88$ · codex: 47% · claude: 5h/? 7d/15% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)                                                                  (synthetic) hf:deepseek-ai/DeepSeek-V4.1-Flash-1017 • high

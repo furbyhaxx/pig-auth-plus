@@ -1,0 +1,30 @@
+
+────────────────────────────────────
+ Auth › Providers
+ [Providers] Quotas  Tokens …
+  Claude (claude)        ✓ signed in
+    OAuth login · token valid 7 h 1…
+  Antigravity (antigravity)
+    ✓ signed in
+    OAuth login · token valid 53 min
+  Synthetic (synthetic)  ✓ signed in
+    stored API key
+  ChatGPT (codex)        ✓ signed in
+    OAuth login · token valid 3 days
+    quota only; inference uses PiG'…
+  xAI (xai)              ✓ signed in
+    OAuth login · token valid 2 h 4…
+    quota only; needs a Grok billin…
+  OpenRouter (openrouter)
+    ✓ signed in
+    stored API key
+    quota only
+  DeepSeek (deepseek)    ✓ signed in
+    stored API key
+ f1 help · escape/ctrl+c close
+────────────────────────────────────
+or: 17.97$ · ds: 7.88$ · cox: 47%
+cl: 5h/? 7d/15% · ag: gem/2% arg/3%
+syn: 0% · xai: 35%
+/tmp/papfinal
+0.0%/524k (auto)  hf:deepseek-ai/Dee
