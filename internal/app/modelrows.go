@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
+	"github.com/furbyhaxx/pig-auth-plus/internal/fsx"
+	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	uimodels "github.com/furbyhaxx/pig-auth-plus/internal/ui/models"
 )
 
@@ -13,6 +15,12 @@ func (a *App) catalogRows(host sdk.Context) ([]uimodels.Model, error) {
 	all, err := host.ModelRegistry().GetAll()
 	if err != nil {
 		return nil, err
+	}
+	var overrides map[string]map[string]map[string]any
+	if st := a.session(); st != nil {
+		if data, err := fsx.ReadOptional(st.paths.Models()); err == nil {
+			overrides, _ = modelsfile.ReadAll(data)
+		}
 	}
 	aliases := map[string]string{}
 	for _, al := range a.settings().Aliases {
@@ -38,6 +46,7 @@ func (a *App) catalogRows(host sdk.Context) ([]uimodels.Model, error) {
 			row.Cost = uimodels.Cost{Input: fnum(c["input"]), Output: fnum(c["output"]), CacheRead: fnum(c["cacheRead"]), CacheWrite: fnum(c["cacheWrite"])}
 		}
 		row.AliasOf = aliases[row.Provider+"/"+row.ID]
+		row.Overridden = modelsfile.Keys(overrides[row.Provider][row.ID])
 		out = append(out, row)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Key() < out[j].Key() })

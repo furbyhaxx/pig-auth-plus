@@ -11,6 +11,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
+	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/resetflow"
 	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
@@ -66,7 +67,11 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		Reset:     func(id string) { d.async(func(c context.Context) { d.reset(c, id) }) },
 	}, solo)
 	d.tokens = uitokens.New(st.tokens.Latest, a.tokenDisplay, func() { d.count(true) })
-	d.models = uimodels.New(d.catalogRows, d.catalogError)
+	d.models = uimodels.New(d.catalogRows, d.catalogError, uimodels.Actions{
+		SaveOverride: func(m uimodels.Model, ops []modelsfile.Op) {
+			d.async(func(c context.Context) { d.saveOverride(c, ctx, m, ops) })
+		},
+	})
 	d.sett = uisettings.New(st.settings.Snapshot, uisettings.Actions{
 		Save:    func(edits []config.Edit) { d.async(func(c context.Context) { d.saveSettings(c, edits) }) },
 		Preview: d.previewTemplate,
@@ -366,4 +371,28 @@ func (d *dashboard) catalogError() string {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	return d.catalogErr
+}
+
+// saveOverride writes a model's staged override fields in one locked update, then asks the host
+// to reread its catalog without network access. A failed write keeps the drafts.
+func (d *dashboard) saveOverride(ctx context.Context, host sdk.Context, m uimodels.Model, ops []modelsfile.Op) {
+	if err := modelsfile.Update(ctx, d.st.paths.Models(), m.Provider, m.ID, ops); err != nil {
+		d.models.SetNotice("Override not saved: "+err.Error()+" (the staged fields are kept)", true)
+		d.frame.Invalidate()
+		return
+	}
+	d.models.OverrideSaved()
+	no := false
+	msg := "Saved " + fmt.Sprint(len(ops)) + " field(s) to models.json."
+	warn := false
+	if res, err := host.ModelRegistry().Refresh(sdk.ModelsRefreshOptions{AllowNetwork: &no}); err != nil {
+		msg, warn = msg+" PiG could not reload the catalog: "+err.Error(), true
+	} else if len(res.Errors) > 0 {
+		msg, warn = msg+" The catalog reload reported errors for some providers.", true
+	} else {
+		msg += " The catalog was reloaded; a selected model picks the change up after you reselect it."
+	}
+	d.rereadCatalog(host)
+	d.models.SetNotice(msg, warn)
+	d.frame.Invalidate()
 }

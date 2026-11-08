@@ -10,6 +10,7 @@ import (
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
+	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
@@ -17,8 +18,9 @@ import (
 // Tab implements frame.Tab over a model list the owner supplies; it reads no host state while
 // rendering.
 type Tab struct {
-	models func() []Model
-	failed func() string
+	models  func() []Model
+	failed  func() string
+	actions Actions
 
 	mu     sync.Mutex
 	query  string
@@ -26,6 +28,9 @@ type Tab struct {
 	sel    string // key of the selected model
 	top    int
 	detail *Model
+	ov     *override
+	notice string
+	warn   bool
 	dtop   int
 	dlast  int
 	height int
@@ -33,10 +38,33 @@ type Tab struct {
 
 var _ frame.Tab = (*Tab)(nil)
 
+// Actions are the tab's connections to the owner.
+type Actions struct {
+	// SaveOverride writes the staged operations for a model; it runs off the panel's queue and
+	// the owner calls [Tab.OverrideSaved] on success.
+	SaveOverride func(m Model, ops []modelsfile.Op)
+}
+
 // New builds the tab; models returns the cached catalog, nil while it is loading, and failed
 // the reason the catalog could not be read, when it could not.
-func New(models func() []Model, failed func() string) *Tab {
-	return &Tab{models: models, failed: failed}
+func New(models func() []Model, failed func() string, actions Actions) *Tab {
+	return &Tab{models: models, failed: failed, actions: actions}
+}
+
+// SetNotice shows feedback until the next key.
+func (t *Tab) SetNotice(text string, warn bool) {
+	t.mu.Lock()
+	t.notice, t.warn = text, warn
+	t.mu.Unlock()
+}
+
+// OverrideSaved drops the staged override changes after the file was written.
+func (t *Tab) OverrideSaved() {
+	t.mu.Lock()
+	if t.ov != nil {
+		t.ov.changes, t.ov.leave = map[string]staged{}, false
+	}
+	t.mu.Unlock()
 }
 
 // ID implements frame.Tab.
@@ -46,10 +74,18 @@ func (t *Tab) ID() string { return "models" }
 func (t *Tab) Title() string { return "Models" }
 
 // Dirty implements frame.Tab; browsing stages nothing.
-func (t *Tab) Dirty() bool { return false }
+func (t *Tab) Dirty() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.ov != nil && t.ov.dirty()
+}
 
 // Discard implements frame.Tab.
-func (t *Tab) Discard() {}
+func (t *Tab) Discard() {
+	t.mu.Lock()
+	t.ov, t.notice = nil, ""
+	t.mu.Unlock()
+}
 
 // shown is the catalog filtered by the query, ordered by provider then id.
 func (t *Tab) shown() []Model {
@@ -84,8 +120,14 @@ func (t *Tab) Body(env frame.Env) []string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.height = env.Rows
+	t.refreshOpen()
+	if t.ov != nil {
+		lines := t.ov.lines(th, env.Width)
+		return append(lines[:min(len(lines), max(env.Rows-len(t.noticeLines(th, env.Width)), 1))], t.noticeLines(th, env.Width)...)
+	}
 	if t.detail != nil {
 		lines := detailLines(th, *t.detail, env.Width)
+		lines = append(lines, t.noticeLines(th, env.Width)...)
 		t.dlast = len(lines)
 		t.dtop = max(0, min(t.dtop, len(lines)-env.Rows))
 		end := min(t.dtop+env.Rows, len(lines))
@@ -127,6 +169,29 @@ func (t *Tab) Body(env frame.Env) []string {
 	return append(append([]string(nil), lines[t.top:end]...), foot...)
 }
 
+// refreshOpen swaps the open detail and a clean editor over to the latest catalog entry, so a
+// saved override shows its effect. Staged changes keep the entry they were made against.
+func (t *Tab) refreshOpen() {
+	find := func(key string) (Model, bool) {
+		for _, m := range t.models() {
+			if m.Key() == key {
+				return m, true
+			}
+		}
+		return Model{}, false
+	}
+	if t.detail != nil {
+		if m, ok := find(t.detail.Key()); ok {
+			t.detail = &m
+		}
+	}
+	if t.ov != nil && !t.ov.dirty() {
+		if m, ok := find(t.ov.model.Key()); ok {
+			t.ov.model = m
+		}
+	}
+}
+
 // Selected is the model under the cursor, when the list is showing.
 func (t *Tab) Selected() (Model, bool) {
 	t.mu.Lock()
@@ -146,6 +211,18 @@ func (t *Tab) Key(data string) bool {
 	kb := tui.GetKeybindings()
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.notice = ""
+	if t.ov != nil {
+		if t.ov.key(data, func(ops []modelsfile.Op) {
+			m := t.ov.model
+			if t.actions.SaveOverride != nil {
+				t.actions.SaveOverride(m, ops)
+			}
+		}) {
+			t.ov = nil
+		}
+		return true
+	}
 	if t.typing {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"):
@@ -169,6 +246,12 @@ func (t *Tab) Key(data string) bool {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"), tui.MatchesKey(data, "left"):
 			t.detail, t.dtop = nil, 0
+		case data == "o":
+			if t.detail.AliasOf != "" {
+				t.notice, t.warn = "An alias takes its limits and prices from the alias editor, not from overrides.", false
+			} else {
+				t.ov = newOverride(*t.detail)
+			}
 		case kb.Matches(data, "tui.select.down"):
 			t.dtop = max(0, min(t.dtop+1, t.dlast-t.height))
 		case kb.Matches(data, "tui.select.up"):
@@ -219,14 +302,42 @@ func (t *Tab) Hints(frame.Env) []string {
 	switch {
 	case t.typing:
 		return []string{sdk.KeyHint("tui.select.confirm", "keep filter"), sdk.KeyHint("tui.select.cancel", "clear")}
+	case t.ov != nil:
+		return t.ov.hints()
 	case t.detail != nil:
-		return []string{sdk.KeyHint("tui.select.cancel", "back")}
+		return []string{sdk.RawKeyHint("o", "override"), sdk.KeyHint("tui.select.cancel", "back")}
 	}
 	return []string{sdk.RawKeyHint("/", "search"), sdk.KeyHint("tui.select.confirm", "detail")}
 }
 
 // Help implements frame.Tab.
-func (t *Tab) Help(frame.Env) []string { return strings.Split(helpText, "\n") }
+func (t *Tab) Help(frame.Env) []string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.ov != nil {
+		return strings.Split(overrideHelp, "\n")
+	}
+	return strings.Split(helpText, "\n")
+}
+
+func (t *Tab) noticeLines(th line.Theme, width int) []string {
+	if t.notice == "" {
+		return nil
+	}
+	token, glyph := "muted", "· "
+	if t.warn {
+		token, glyph = "warning", "▲ "
+	}
+	var out []string
+	for i, l := range tui.WrapTextWithAnsi(line.Plain(t.notice), max(width-4, 10)) {
+		p := "  "
+		if i == 0 {
+			p = glyph
+		}
+		out = append(out, " "+paint(th, p+l, token))
+	}
+	return out
+}
 
 const helpText = ` Models
  Every model PiG can list, grouped by provider, with its context window on the right.

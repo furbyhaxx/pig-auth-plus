@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"strings"
 	"testing"
 
@@ -20,7 +21,7 @@ func catalog() []Model {
 
 func TestEveryRowFitsAtAllWidths(t *testing.T) {
 	for _, w := range []int{36, 57, 80, 140} {
-		tb := New(catalog, func() string { return "" })
+		tb := New(catalog, func() string { return "" }, Actions{})
 		for _, row := range tb.Body(frame.Env{Width: w, Rows: 20}) {
 			if tui.VisibleWidth(row) > w {
 				t.Fatalf("list width %d: %q", w, row)
@@ -37,7 +38,7 @@ func TestEveryRowFitsAtAllWidths(t *testing.T) {
 }
 
 func TestSearchNarrowsAcrossProviderIDAndName(t *testing.T) {
-	tb := New(catalog, func() string { return "" })
+	tb := New(catalog, func() string { return "" }, Actions{})
 	tb.Key("/")
 	for _, c := range "synthetic deepseek" {
 		tb.Key(string(c))
@@ -54,7 +55,7 @@ func TestSearchNarrowsAcrossProviderIDAndName(t *testing.T) {
 }
 
 func TestDetailShowsLimitsPricesAndAliasOrigin(t *testing.T) {
-	tb := New(catalog, func() string { return "" })
+	tb := New(catalog, func() string { return "" }, Actions{})
 	tb.Key("\r") // claude-opus-5-5
 	body := strings.Join(tb.Body(frame.Env{Width: 80, Rows: 20}), "\n")
 	for _, want := range []string{"claude/claude-opus-5-5", "425k", "yes", "text, image", "in $5", "out $25"} {
@@ -72,7 +73,7 @@ func TestDetailShowsLimitsPricesAndAliasOrigin(t *testing.T) {
 }
 
 func TestUntrustedNamesAreStripped(t *testing.T) {
-	tb := New(catalog, func() string { return "" })
+	tb := New(catalog, func() string { return "" }, Actions{})
 	tb.Key("/")
 	tb.Key("d")
 	tb.Key("\r")
@@ -90,7 +91,7 @@ func TestPlainTextCountsPerProvider(t *testing.T) {
 }
 
 func TestFailureIsShownNotEndlessLoading(t *testing.T) {
-	tb := New(func() []Model { return nil }, func() string { return "host unavailable" })
+	tb := New(func() []Model { return nil }, func() string { return "host unavailable" }, Actions{})
 	body := strings.Join(tb.Body(frame.Env{Width: 80, Rows: 10}), "\n")
 	if !strings.Contains(body, "could not be read: host unavailable") {
 		t.Fatal(body)
@@ -99,9 +100,95 @@ func TestFailureIsShownNotEndlessLoading(t *testing.T) {
 
 func TestLongIDsKeepTheirTail(t *testing.T) {
 	long := []Model{{Provider: "bedrock", ID: "anthropic.claude-haiku-4-5-20251001-v1:0", ContextWindow: 200000}}
-	tb := New(func() []Model { return long }, func() string { return "" })
+	tb := New(func() []Model { return long }, func() string { return "" }, Actions{})
 	body := strings.Join(tb.Body(frame.Env{Width: 36, Rows: 10}), "\n")
 	if !strings.Contains(body, "v1:0") {
 		t.Fatalf("the distinguishing tail was cut:\n%s", body)
+	}
+}
+
+func overrideTab(t *testing.T, saved *[]modelsfile.Op) *Tab {
+	t.Helper()
+	m := Model{Provider: "claude", ID: "claude-opus-5", Name: "Opus 5", ContextWindow: 1_000_000, MaxTokens: 64000, Input: []string{"text"}}
+	tb := New(func() []Model { return []Model{m} }, func() string { return "" }, Actions{
+		SaveOverride: func(_ Model, ops []modelsfile.Op) { *saved = ops },
+	})
+	tb.Body(frame.Env{Width: 80, Rows: 20})
+	tb.Key("\r") // detail
+	tb.Key("o")
+	if tb.ov == nil {
+		t.Fatal("o must open the override editor")
+	}
+	return tb
+}
+
+func TestOverrideStagesAndSavesInOneWrite(t *testing.T) {
+	var saved []modelsfile.Op
+	tb := overrideTab(t, &saved)
+	tb.Key("\x1b[B") // context window
+	tb.Key("\r")
+	tb.Key("\x15")
+	for _, c := range "425000" {
+		tb.Key(string(c))
+	}
+	tb.Key("\r")
+	for range 5 {
+		tb.Key("\x1b[B") // price in
+	}
+	tb.Key("\r")
+	tb.Key("\x15")
+	for _, c := range "2.5" {
+		tb.Key(string(c))
+	}
+	tb.Key("\r")
+	if !tb.Dirty() {
+		t.Fatal("staged fields must count as unsaved")
+	}
+	tb.Key("\x13")
+	if len(saved) != 2 || saved[0].Path[0] != "contextWindow" || saved[0].Value != int64(425000) || saved[1].Value != 2.5 {
+		t.Fatalf("got %+v", saved)
+	}
+}
+
+func TestOverrideRejectsInvalidNumbersAndAsksBeforeDiscarding(t *testing.T) {
+	var saved []modelsfile.Op
+	tb := overrideTab(t, &saved)
+	tb.Key("\x1b[B")
+	tb.Key("\r")
+	tb.Key("\x15")
+	tb.Key("x")
+	tb.Key("\r")
+	if !tb.ov.editing || len(tb.ov.changes) != 0 {
+		t.Fatal("a non-number must keep the editor open and stage nothing")
+	}
+	tb.Key("\x1b") // leave the input
+	tb.Key(" ")    // not on a toggle; stage via backspace instead
+	tb.Key("\x1b[B")
+	tb.Key("\x1b[B") // input types
+	tb.Key(" ")
+	if !tb.Dirty() {
+		t.Fatal("toggling image input must stage a change")
+	}
+	tb.Key("\x1b")
+	if tb.ov == nil {
+		t.Fatal("the first Esc must not discard staged fields")
+	}
+	tb.Key("\x1b")
+	if tb.ov != nil || tb.Dirty() {
+		t.Fatal("the second Esc discards")
+	}
+}
+
+func TestOverrideRemovalOnlyForOverriddenFields(t *testing.T) {
+	var saved []modelsfile.Op
+	tb := overrideTab(t, &saved)
+	tb.ov.model.Overridden = []string{"contextWindow"}
+	tb.Key("\x1b[B")
+	tb.Key("\x7f")
+	tb.Key("\x1b[B")
+	tb.Key("\x7f") // maxTokens is not overridden: nothing to remove
+	tb.Key("\x13")
+	if len(saved) != 1 || !saved[0].Remove || saved[0].Path[0] != "contextWindow" {
+		t.Fatalf("got %+v", saved)
 	}
 }

@@ -42,6 +42,48 @@ func Read(data []byte, provider, model string) (map[string]any, error) {
 	return doc.Providers[provider].ModelOverrides[model], nil
 }
 
+// ReadAll returns every model override as provider -> model -> decoded override.
+func ReadAll(data []byte) (map[string]map[string]map[string]any, error) {
+	plain, _, err := stripped(data)
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes.TrimSpace(plain)) == 0 {
+		return nil, nil
+	}
+	var doc struct {
+		Providers map[string]struct {
+			ModelOverrides map[string]map[string]any `json:"modelOverrides"`
+		} `json:"providers"`
+	}
+	if err := json.Unmarshal(plain, &doc); err != nil {
+		return nil, fmt.Errorf("models.json: %w", err)
+	}
+	out := map[string]map[string]map[string]any{}
+	for p, v := range doc.Providers {
+		if len(v.ModelOverrides) > 0 {
+			out[p] = v.ModelOverrides
+		}
+	}
+	return out, nil
+}
+
+// Keys lists the dotted paths an override sets, sorted: "name", "cost.input".
+func Keys(override map[string]any) []string {
+	var out []string
+	for k, v := range override {
+		if sub, ok := v.(map[string]any); ok {
+			for _, sk := range Keys(sub) {
+				out = append(out, k+"."+sk)
+			}
+			continue
+		}
+		out = append(out, k)
+	}
+	slices.Sort(out)
+	return out
+}
+
 // Apply returns data with ops applied to providers.<provider>.modelOverrides.<model>. Missing
 // objects are created; objects left empty by removals are pruned back to the provider.
 func Apply(data []byte, provider, model string, ops []Op) ([]byte, error) {

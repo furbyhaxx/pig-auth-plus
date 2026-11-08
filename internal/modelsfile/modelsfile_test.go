@@ -173,3 +173,16 @@ func TestEmptyObjectsExpandOverLines(t *testing.T) {
 		t.Fatalf("got\n%s\nwant\n%s", out, want)
 	}
 }
+
+func TestReadAllAndKeys(t *testing.T) {
+	all, err := ReadAll([]byte(`{"providers":{"p":{"modelOverrides":{"m":{"name":"x","cost":{"input":1,"output":2}}}},"q":{}}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := Keys(all["p"]["m"]); strings.Join(got, ",") != "cost.input,cost.output,name" {
+		t.Fatalf("%v", got)
+	}
+	if _, ok := all["q"]; ok {
+		t.Fatal("a provider without overrides must not appear")
+	}
+}
