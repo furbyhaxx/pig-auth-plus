@@ -73,3 +73,6 @@ func (p Paths) Migrations() string { return filepath.Join(p.StateDir, "migration
 
 // Tokenizers is the tokenizer artifact cache.
 func (p Paths) Tokenizers() string { return filepath.Join(p.CacheDir, "tokenizers") }
+
+// Wire is the private directory of the provider wire runtime; it never holds user credentials.
+func (p Paths) Wire() string { return filepath.Join(p.StateDir, "wire") }
