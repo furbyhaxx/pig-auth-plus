@@ -30,6 +30,7 @@ type Runtime struct {
 	dir string
 
 	mu         sync.Mutex
+	host       *sdk.Context
 	rt         *sdk.ModelRuntime
 	registered map[string]string
 }
@@ -39,18 +40,18 @@ func NewRuntime(dir string) *Runtime {
 	return &Runtime{dir: dir}
 }
 
-// Reset drops the runtime; the next stream creates a new one. Call it when the session ends.
-func (r *Runtime) Reset() {
+// Bind attaches the session's retained Context; native provider streams receive none. A nil
+// Context unbinds at session end. Either way the next stream creates a new runtime.
+func (r *Runtime) Bind(c *sdk.Context) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.rt = nil
-	r.registered = nil
+	r.host, r.rt, r.registered = c, nil, nil
 }
 
 // StreamSimple streams model through the wire provider p. The model keeps its id; options carry
 // the credential and fetch callback.
-func (r *Runtime) StreamSimple(c sdk.Context, p Provider, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
-	rt, err := r.ensure(c, p)
+func (r *Runtime) StreamSimple(p Provider, model, request, options map[string]any) (*sdk.ModelEventStream, error) {
+	rt, err := r.ensure(p)
 	if err != nil {
 		return nil, err
 	}
@@ -60,15 +61,18 @@ func (r *Runtime) StreamSimple(c sdk.Context, p Provider, model, request, option
 	return rt.StreamSimple(m, request, options), nil
 }
 
-func (r *Runtime) ensure(c sdk.Context, p Provider) (*sdk.ModelRuntime, error) {
+func (r *Runtime) ensure(p Provider) (*sdk.ModelRuntime, error) {
 	fingerprint, err := json.Marshal(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("wire provider %s: %w", p.Name, err)
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.host == nil {
+		return nil, errors.New("no active session")
+	}
 	if r.rt == nil {
-		rt, err := r.create(c)
+		rt, err := r.create(*r.host)
 		if err != nil {
 			return nil, err
 		}

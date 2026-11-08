@@ -23,7 +23,11 @@ Spike source: `evidence/spike-extension.go.txt` (run with
 
 ## Working route: private ModelRuntime with a wire provider
 
-1. The public provider is registered with `RegisterProvider(id, {api: <own>, streamSimple, models})`.
+1. The public provider is registered natively: `sdk.CreateProvider` (with `Auth` for API-key and
+   OAuth login methods) plus `Extension.RegisterNativeProvider`. Its stream function has no
+   `sdk.Context`, so it uses the Context retained from `session_start` (a retained Context stays
+   valid until the session is replaced). The Pi-style `RegisterProvider(id, {streamSimple})`
+   form works the same way but offers only OAuth login.
 2. Its `streamSimple` lazily creates one private `sdk.ModelRuntimeCreate(ctx, {NoModelsFile: true,
    RefreshOnCreate: false, AuthPath: <private file>})` and registers a provider `wire` there with
    `api: "anthropic-messages"` (or another builtin API), a base URL and the same model ids.
@@ -32,8 +36,13 @@ Spike source: `evidence/spike-extension.go.txt` (run with
 Observed: the builtin serializer built the full Anthropic body (`/v1/messages?beta=true`, cache
 control, system blocks), the `fetch` callback received method, URL, headers and body, and the
 faked SSE response streamed back as the final answer (`spike-ok`). A tool-use turn followed by a
-second request worked with the runtime created once and reused across requests. The private
-runtime's models never appear in `--list-models`.
+second request worked with the runtime created once and reused across requests. The private runtime's models never appear in `--list-models`. A second spike repeated this with the
+native form (`/tmp` spike, same fake SSE): the transcript arrives as `{messages}` (system prompt
+and tools ride inside PiG 1.5 messages), options carry `apiKey`, `sessionId`, `timeoutMs`,
+`maxRetryDelayMs` and a `Signal`.
+
+The inner stream has no abort handle; cancel it by cancelling the fetch request, so the fetch
+must join `ProviderStreamOptions.Signal` into the request context.
 
 ## Failing routes
 

@@ -2,6 +2,7 @@ package wire
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -25,6 +26,9 @@ var Client = &http.Client{Transport: &http.Transport{
 
 // Exchange shapes one provider request and response. Nil members leave that side unchanged.
 type Exchange struct {
+	// Signal is the provider request's cancellation; it aborts the HTTP exchange, which is the
+	// only way to stop the inner wire stream.
+	Signal context.Context
 	// Request receives the host-built request with its body buffered in Body; it may replace
 	// the URL, headers and body.
 	Request func(r *Request) error
@@ -57,6 +61,15 @@ func Fetch(client *http.Client, x Exchange) sdk.ModelFetchFunc {
 			}
 		}
 		out := req.HTTP
+		cancel := func() {}
+		if x.Signal != nil {
+			var ctx context.Context
+			ctx, cancel = context.WithCancel(out.Context())
+			stop := context.AfterFunc(x.Signal, cancel)
+			release := cancel
+			cancel = func() { stop(); release() }
+			out = out.WithContext(ctx)
+		}
 		out.Body = io.NopCloser(bytes.NewReader(req.Body))
 		out.ContentLength = int64(len(req.Body))
 		out.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(req.Body)), nil }
@@ -66,8 +79,10 @@ func Fetch(client *http.Client, x Exchange) sdk.ModelFetchFunc {
 		out.Header.Del("Content-Length")
 		resp, err := client.Do(out)
 		if err != nil {
+			cancel()
 			return nil, err
 		}
+		resp.Body = &cancelBody{ReadCloser: resp.Body, cancel: cancel}
 		if x.Response != nil {
 			wrapped, err := x.Response(resp)
 			if err != nil {
@@ -78,4 +93,16 @@ func Fetch(client *http.Client, x Exchange) sdk.ModelFetchFunc {
 		}
 		return resp, nil
 	}
+}
+
+// cancelBody releases the exchange's cancellation when the host closes the body.
+type cancelBody struct {
+	io.ReadCloser
+	cancel func()
+}
+
+func (b *cancelBody) Close() error {
+	err := b.ReadCloser.Close()
+	b.cancel()
+	return err
 }

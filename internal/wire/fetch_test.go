@@ -3,11 +3,13 @@ package wire
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestFetchShapesRequestAndDecodesGzip(t *testing.T) {
@@ -51,5 +53,44 @@ func TestFetchShapesRequestAndDecodesGzip(t *testing.T) {
 	}
 	if string(got) != "data: ok\n\ndata: tail\n\n" {
 		t.Fatalf("response = %q", got)
+	}
+}
+
+func TestFetchSignalAbortsStreamingBody(t *testing.T) {
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: first\n\n"))
+		w.(http.Flusher).Flush()
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	defer srv.Close()
+	defer close(release)
+
+	signal, abort := context.WithCancel(context.Background())
+	fetch := Fetch(srv.Client(), Exchange{Signal: signal})
+	req, _ := http.NewRequest(http.MethodPost, srv.URL, nil)
+	resp, err := fetch(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	buf := make([]byte, 64)
+	if _, err := resp.Body.Read(buf); err != nil {
+		t.Fatal(err)
+	}
+	abort()
+	done := make(chan error, 1)
+	go func() { _, err := io.ReadAll(resp.Body); done <- err }()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("body ended cleanly after the signal was cancelled")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("signal did not abort the streaming body")
 	}
 }
