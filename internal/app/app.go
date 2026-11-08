@@ -31,6 +31,7 @@ type state struct {
 	quotas   *quota.Engine
 	tokens   *tokens.Tracker
 	line     *lineView
+	aliases  *aliasSync
 }
 
 // App holds the current session's state.
@@ -54,6 +55,7 @@ func Register(ext *sdk.Extension) {
 	ext.OnEvent(sdk.EventBeforeProviderRequest, a.onProviderRequest)
 	ext.OnEvent(sdk.EventAfterProviderResponse, a.onProviderResponse)
 	ext.OnEvent(sdk.EventTurnEnd, a.onTurnEnd)
+	ext.OnEvent(sdk.EventModelSelect, a.resyncAliases)
 	for event, reason := range map[string]tokens.Reason{
 		sdk.EventModelSelect:         tokens.ReasonModelSelect,
 		sdk.EventThinkingLevelSelect: tokens.ReasonThinkingLevelSelect,
@@ -107,6 +109,7 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 		return nil, nil
 	}
 	a.startLine(st)
+	a.startAliases(st)
 	return nil, nil
 }
 
@@ -142,6 +145,9 @@ func (a *App) stop() {
 			st.line.clear(st.line.placement())
 		}
 		st.group.Close()
+		if st.aliases != nil {
+			st.aliases.reg.Close()
+		}
 		if st.tokens != nil {
 			st.tokens.Close()
 		}
@@ -175,4 +181,16 @@ func location(info sdk.SourceInfo) string {
 		return info.BaseDir
 	}
 	return info.Path
+}
+
+// resyncAliases retries aliases whose source model appeared after the last sync, such as a
+// refreshed provider catalog.
+func (a *App) resyncAliases(sdk.Context, map[string]any) (any, error) {
+	st := a.session()
+	if st == nil || st.aliases == nil {
+		return nil, nil
+	}
+	aliases := st.settings.Snapshot().Aliases
+	st.group.Go(func(context.Context) { st.aliases.sync(aliases) })
+	return nil, nil
 }
