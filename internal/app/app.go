@@ -14,6 +14,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/migrate"
 	"github.com/furbyhaxx/pig-auth-plus/internal/paths"
+	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/session"
 )
 
@@ -26,6 +27,7 @@ type state struct {
 	paths    paths.Paths
 	settings *config.Manager
 	group    *session.Group
+	quotas   *quota.Engine
 }
 
 // App holds the current session's state.
@@ -46,6 +48,8 @@ func Register(ext *sdk.Extension) {
 	ext.OnSessionStart(a.start)
 	ext.OnSessionShutdown(a.shutdown)
 	ext.OnEvent(sdk.EventBeforeProviderRequest, a.onProviderRequest)
+	ext.OnEvent(sdk.EventAfterProviderResponse, a.onProviderResponse)
+	ext.OnEvent(sdk.EventTurnEnd, a.onTurnEnd)
 }
 
 func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
@@ -83,7 +87,16 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 	a.cur = st
 	a.mu.Unlock()
 	a.providers.start(ctx)
+	if err := a.startQuotas(st); err != nil {
+		ctx.Notify("pig-auth-plus quotas: "+err.Error(), "warning")
+	}
 	return nil, nil
+}
+
+func (a *App) session() *state {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.cur
 }
 
 // settings is the current session's resolved settings, or the built-in defaults between sessions.
@@ -109,6 +122,9 @@ func (a *App) stop() {
 	a.mu.Unlock()
 	if st != nil {
 		st.group.Close()
+		if st.quotas != nil {
+			st.quotas.Stop()
+		}
 	}
 	if a.providers != nil {
 		a.providers.stop()

@@ -25,6 +25,14 @@ func Claude() *quota.Source {
 		ParserVersion: 2, MinPoll: 5 * time.Minute,
 		Fetch:   fetchClaude(ClaudeUsageURL),
 		Headers: claudeHeaders,
+		// The usage endpoint rejects API keys; only the subscription OAuth token reads it.
+		AuthFrom: func(_ context.Context, lookup func(string) (*quota.Auth, error)) (*quota.Auth, error) {
+			a, err := lookup("claude")
+			if err != nil || a == nil || !strings.HasPrefix(a.Token, "sk-ant-oat") {
+				return nil, err
+			}
+			return a, nil
+		},
 	}
 }
 
