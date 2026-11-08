@@ -32,6 +32,8 @@ type state struct {
 	tokens   *tokens.Tracker
 	line     *lineView
 	aliases  *aliasSync
+
+	busClosers []func()
 }
 
 // App holds the current session's state.
@@ -110,6 +112,7 @@ func (a *App) start(ctx sdk.Context, _ map[string]any) (any, error) {
 		ctx.Notify("pig-auth-plus quotas: "+err.Error(), "warning")
 		return nil, nil
 	}
+	a.startBus(st)
 	a.startLine(st)
 	a.startAliases(st, a.early)
 	return nil, nil
@@ -145,6 +148,9 @@ func (a *App) stop() {
 	if st != nil {
 		if st.line != nil {
 			st.line.clear(st.line.placement())
+		}
+		for _, closeBus := range st.busClosers {
+			closeBus()
 		}
 		st.group.Close()
 		if st.aliases != nil {
