@@ -5,15 +5,15 @@ document:
   title: "Adding Anthropic API credit monitoring"
   description: "Repository integration analysis, verified public API constraints, private Console prior art and required validation"
   status: "published"
-  revision: 2
+  revision: 3
   created_at: "2026-11-09T17:00:29+01:00"
-  updated_at: "2026-11-09T22:31:36+01:00"
+  updated_at: "2026-11-09T22:42:18+01:00"
   created_by: "orchestrator"
   updated_by: "orchestrator"
   changelog:
-    - revision: 2
-      reason: "test existing authentication before requiring any extra credential"
-      changes: ["recorded live OAuth and API-key identity probes, ambiguous zero-balance controls and explicit Console OAuth rejection"]
+    - revision: 3
+      reason: "Console balance comparison disproves the existing OAuth balance response"
+      changes: ["recorded user-confirmed purchased and promotional balances, rejected the false-zero route and identified opt-in Chromium session reuse as the next candidate"]
 ---
 
 # Anthropic API credits
@@ -22,9 +22,9 @@ document:
 
 Add a quota source named `anthropic`, labelled **Anthropic API**, without replacing PiG's builtin inference provider. Keep it separate from `claude` subscription windows and extra usage. Prefer existing credentials if they can retrieve an independently verified API-wallet balance; do not require a cookie merely because prior art uses one.
 
-Live tests establish that the existing Claude OAuth login and Anthropic API key belong to the same account but different organizations. OAuth reaches the private OAuth prepaid endpoint, yet the endpoint also returns the same empty zero balance for a nonexistent organization. The Console browser route explicitly rejects the existing OAuth token. **No working, authoritative zero-extra-login balance path is established yet.**
+Live tests establish that the existing Claude OAuth login and Anthropic API key belong to the same account but different organizations. OAuth reaches the private OAuth prepaid endpoint, yet it returns the same empty zero balance for a nonexistent organization. The user reports **USD 4.99 purchased credit and USD 199.93 promotional credit** on Console Billing. Therefore, reject this OAuth response as a Console API balance. The Console browser route explicitly rejects the existing OAuth token. **No working, authoritative zero-extra-login balance path is established yet.**
 
-Next verification needs only the balance shown on Console Billing (amount and currency), not a secret. If that differs from the OAuth response, reject this route rather than shipping a false zero. No runtime code, login, token refresh, purchase or credential mutation was performed.
+The next least-friction candidate is opt-in reuse of the existing Console browser session, not manual cookie export. Chromium is the local default browser and a profile exists; no browser cookie store or keyring secret has been read. Obtain permission to access only the Console session and verify that it reaches the API organization discovered from the existing key. No runtime code, login, token refresh, purchase or credential mutation was performed.
 
 ## Verified constraints
 
@@ -35,7 +35,7 @@ Next verification needs only the balance shown on Console Billing (amount and cu
 | Spend Limits API | Enterprise member limits; unavailable to Console organizations [S3] | Wrong product and quantity |
 | Console billing page | Available purchased credits and promotional credits; prepaid and invoiced accounts differ [S4, S5] | Authoritative UI, private transport |
 | Private Console `/api/organizations/{uuid}/prepaid/credits` | Implemented in CodexBar with cookie authentication, amounts and grant arrays [S7]; existing OAuth rejected live [S11] | Cookie-authenticated balance still UNVERIFIED here |
-| Private OAuth `/api/oauth/organizations/{uuid}/prepaid/credits` | Existing Claude OAuth accepted, but subscription/API/nonexistent organization requests all return the same empty zero response [S11] | Authentication accepted; API-wallet balance attribution UNVERIFIED |
+| Private OAuth `/api/oauth/organizations/{uuid}/prepaid/credits` | Existing Claude OAuth accepted, but API-wallet request returns zero versus the user's nonzero Console balances [S11] | Rejected for Console API credits with the current token |
 
 Official docs say purchased credits expire; subscriber promotional credits expire at billing-cycle boundaries and are spent first. All keys/workspaces in the linked Console organization share the balance. Auto-reload considers purchased balance only. Some promotional credit is product-scoped and excludes Claude Code [S4, S5]. Therefore:
 
@@ -82,7 +82,11 @@ Official CLI documentation also describes a keyless Console browser OAuth sign-i
 
 ### Immediate verification boundary
 
-Compare the actual amount/currency on `https://platform.claude.com/settings/billing` with the OAuth response. A nonzero Console balance disproves the current zero response as an API balance. A matching zero is corroboration only; it still does not establish nonzero grant handling or reliable organization attribution. A fully working integration needs a positive or changing balance tied to the selected API wallet, or another independently verified wallet contract.
+The user reports USD 4.99 purchased and USD 199.93 promotional credit on Console Billing. This disproves the tested OAuth zero response as a usable Console API balance. These figures are user-reported UI evidence, not a programmatically captured billing response. Preserve the two balances separately; promotional credits have product restrictions and expiry, so do not describe their sum as universally usable funds.
+
+Chromium is installed and configured as the default browser; its standard Linux profile exists. No display environment is available to this process, though a session bus is present. None of these facts proves that Chromium holds a valid Console session. Browser access requires explicit consent before inspecting the Console cookie or invoking the OS keyring. Restrict any subsequent import to Console domains and `sessionKey`, keep the value out of logs/artifacts, and validate the key-discovered API organization before accepting it. No browser profile should be modified, and no other website sessions should be imported.
+
+The next validation is a read-only Console balance request using that explicitly authorized browser session. If the session is only on another device, local import cannot work; a browser-mediated connection on that device would be needed. Existing-token access, cookie-based access and keyless Console OAuth remain distinct mechanisms; do not claim one is verified merely because another works.
 
 ## Fit with this repository
 
@@ -100,7 +104,7 @@ Observed current behavior:
 ### Smallest complete first slice
 
 1. Add `internal/quota/sources/anthropic.go` and synthetic fixtures/regression tests. Source ID `anthropic`, `Credits: true`, no alias to `claude`, no header parser, no reset support. Leave inference registration untouched.
-2. Resolve credentials through `AuthFrom`, preferring the existing `claude` OAuth plus `anthropic` API-key organization discovery only after API-wallet attribution is verified. Do not place OAuth-derived subscription or empty-default balances under `anthropic`. If separate billing credentials are needed, isolate them from inference auth. The read-only `sdk.ReadStoredCredential` helper alone is not a persistence API.
+2. Resolve credentials through `AuthFrom`. The tested `claude` OAuth route is rejected for API credits; use the existing `anthropic` API key only for organization discovery. Prefer an explicitly authorized existing Console session over manual cookie copying. Isolate billing credentials from inference auth. The read-only `sdk.ReadStoredCredential` helper alone is not a persistence API.
 3. Keep login in PiG's `/login` if a separate billing auth method can be added without replacing builtin Anthropic auth. Otherwise obtain a UX decision before implementation; do not silently introduce a new login command or misuse `/login anthropic`.
 4. Persist organization selection as non-secret user configuration, preserving TOML comments/unknown keys. Single-organization discovery can be automatic; multiple organizations require explicit selection. Never emit IDs or credentials on the bus.
 5. Populate `Balance.Remaining` from the validated authoritative total and set currency; leave total and used nil unless their meanings are verified. Label it **Console API credit balance**, not subscription allowance or guaranteed funds for every request. Optional purchased/promotional breakdown belongs in `Detail` initially. Do not add invented monthly totals.
@@ -112,7 +116,7 @@ Defer current-month spend, structured grant/expiry bus fields and expiry-specifi
 
 ### Credential and transport requirements
 
-- Prefer existing provider credentials. If a Console browser session is ultimately required, use explicit user-supplied or browser-authorized access; no automatic browser database/keychain scraping and no collection of account passwords.
+- Prefer reuse of explicitly authorized existing credentials. The next candidate is opt-in import of only the Console session from the user's browser, never silent browser database/keychain scraping, unrelated sessions or account passwords.
 - Secret input must not appear in slash-command arguments, shell arguments/history, notifications, fixtures or evidence. Never ask the user to paste a cookie into chat.
 - If the chosen transport needs a dedicated billing credential, store it in a protected credential location, never `auth-plus.toml`, quota cache or inference auth. Missing billing access means zero billing HTTP requests even when an inference key exists. Existing-token discovery, if verified, must stay read-only and use its owner-approved endpoints.
 - For a cookie-based transport, send only the required Console cookie to the pinned HTTPS Console origin; reject redirects to avoid login HTML and unintended cookie forwarding. Do not reuse arbitrary inference base URLs.
@@ -132,7 +136,7 @@ Required tests for implementation:
 - Registry/command resolution, configured-provider filtering, default line and preserved user templates, bus snapshot round-trip.
 - `just check`; `just race` if concurrency changes; live `/quotas anthropic` plus `/auth` and tmux captures at 36/57/80/140 columns.
 
-**Open prerequisite:** the actual Console Billing balance (amount and currency only), followed by wallet-attribution validation. Existing credentials have now been tested read-only; they were not changed or persisted anywhere new. If zero-extra-login access cannot be established, a separate browser authorization may be necessary, but its access to the correct balance must be tested before adding any login UX. Do not claim the reported empty zero is the real API balance.
+**Open prerequisite:** permission to read only the existing Console session from local Chromium, and confirmation that this is the browser/device where Console Billing is signed in. No token or cookie should be supplied in chat. After authorization, verify API-wallet identity and nonzero purchased/promotional balances through read-only Console requests. Existing credentials were tested without mutation; browser/keyring access and a working frictionless integration remain unverified.
 
 ## Sources
 

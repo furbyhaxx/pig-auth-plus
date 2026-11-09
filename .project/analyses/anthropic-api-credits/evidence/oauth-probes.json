@@ -41,5 +41,21 @@
     "ant_cli_installed": false,
     "new_sign_in_attempted": false
   },
-  "pending": "Compare the actual Console Billing balance (amount and currency only) before accepting zero or choosing another authentication flow."
+  "user_reported_console_balance": {
+    "recorded_at": "2026-11-09T22:42:18+01:00",
+    "source": "user-reported Console Billing UI",
+    "currency": "USD",
+    "purchased": 4.99,
+    "promotional": 199.93,
+    "disproves_oauth_zero_as_console_api_balance": true
+  },
+  "browser_availability": {
+    "default_browser": "chromium.desktop",
+    "chromium_standard_profile_exists": true,
+    "display_environment_available": false,
+    "session_bus_available": true,
+    "cookie_store_read": false,
+    "keyring_secrets_read": false
+  },
+  "pending": "Need explicit consent to read only the Console session from Chromium, plus confirmation the signed-in Console is in that local browser, before attempting read-only cookie-authenticated balance validation."
 }
