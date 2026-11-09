@@ -87,6 +87,15 @@ func (c *Catalog) Models() []map[string]any {
 // with the model, so an API-key session restores the same exclusion.
 const unpricedKey = "claudeUnpriced"
 
+// listingKey marks a model the account listing produced, with listingVersion. A stored catalog
+// without it was written by the bundled anthropic snapshot, whose freshness says nothing about
+// the account, so the next online refresh refetches. pi-auth-plus reads and writes the same
+// member in the shared store entry.
+const (
+	listingKey     = "claudeListing"
+	listingVersion = 1
+)
+
 // replace installs a refreshed listing.
 func (c *Catalog) replace(models []map[string]any) {
 	c.mu.Lock()
@@ -104,10 +113,15 @@ type Fetch struct {
 // live is the production transport.
 var live = Fetch{Listing: fetchListing, Prices: fetchPrices}
 
-// Refresh restores the saved listing, refetches after the TTL and persists the result.
+// Refresh restores the saved listing, refetches after the TTL and persists the result. A stored
+// catalog that predates the listing is refetched even when its timestamp is fresh.
 func (c *Catalog) Refresh(r sdk.RefreshModelsContext, fetch Fetch, now time.Time) error {
 	credential := r.Credential
 	token, oauth := credentialToken(credential)
+	if !listed(r.Stored) {
+		force := true
+		r.Force = &force
+	}
 	f := catalog.Refresh{
 		Provider: ProviderID, TTL: catalogTTL, Now: now,
 		Apply: func(l catalog.List) { c.replace(l.Models) },
@@ -334,7 +348,42 @@ func (c *Catalog) parse(listing, prices []byte, includeUnpriced bool) ([]map[str
 		model["cost"] = cost
 		models = append(models, model)
 	}
-	return c.aliases(models), nil
+	models = c.aliases(models)
+	for _, m := range models {
+		m[listingKey] = float64(listingVersion)
+	}
+	return models, nil
+}
+
+// listed reports whether every stored claude model came from the account listing.
+func listed(stored map[string]any) bool {
+	entries, _ := stored["models"].([]any)
+	found := false
+	for _, entry := range entries {
+		model, ok := entry.(map[string]any)
+		if !ok || model["provider"] != ProviderID {
+			continue
+		}
+		if !stamped(model) {
+			return false
+		}
+		found = true
+	}
+	return found
+}
+
+// stamped reports whether a stored model came from the account listing.
+func stamped(model map[string]any) bool {
+	switch version := model[listingKey].(type) {
+	case float64:
+		return version == float64(listingVersion)
+	case int:
+		return version == listingVersion
+	case json.Number:
+		value, err := version.Float64()
+		return err == nil && value == float64(listingVersion)
+	}
+	return false
 }
 
 // aliases keeps the bundled undated ids of listed dated models, so saved selections and

@@ -289,3 +289,54 @@ func equalModels(a, b []map[string]any) bool {
 	second, _ := json.Marshal(b)
 	return string(first) == string(second)
 }
+
+func TestRefreshRefetchesAStoredCatalogThatPredatesTheListing(t *testing.T) {
+	now := time.UnixMilli(testNow)
+	credential := sdk.NewCredential("type", "oauth", "access", "test-access")
+	counted := listingFetch(t, nil)
+	listing := counted.Listing
+	fetches := 0
+	counted.Listing = func(ctx context.Context, cred *sdk.Credential) ([]byte, error) {
+		fetches++
+		return listing(ctx, cred)
+	}
+	refresh := func(stored map[string]any) *publisher {
+		t.Helper()
+		catalog, err := NewCatalog()
+		if err != nil {
+			t.Fatal(err)
+		}
+		pub := &publisher{}
+		r := sdk.RefreshModelsContext{Credential: credential, Stored: stored, AllowNetwork: true, Signal: context.Background(), Publish: pub.publish}
+		if err := catalog.Refresh(r, counted, now); err != nil {
+			t.Fatal(err)
+		}
+		return pub
+	}
+	fresh := float64(now.Add(-time.Minute).UnixMilli())
+	stored := map[string]any{"checkedAt": fresh, "models": []any{
+		map[string]any{"id": "claude-opus-4-5", "provider": ProviderID, "cost": map[string]any{"input": float64(5)}},
+	}}
+
+	pub := refresh(stored)
+	if fetches != 1 || len(pub.persisted) != 1 {
+		t.Fatalf("a stored catalog without %s must refetch: fetches=%d published=%d", listingKey, fetches, len(pub.persisted))
+	}
+	var persisted struct {
+		Models []map[string]any `json:"models"`
+	}
+	if err := json.Unmarshal(pub.persisted[0], &persisted); err != nil {
+		t.Fatal(err)
+	}
+	models := make([]any, 0, len(persisted.Models))
+	for _, m := range persisted.Models {
+		if m[listingKey] != float64(listingVersion) {
+			t.Fatalf("%v is not stamped: %v", m["id"], m[listingKey])
+		}
+		models = append(models, m)
+	}
+
+	if pub := refresh(map[string]any{"checkedAt": fresh, "models": models}); fetches != 1 || len(pub.persisted) != 0 {
+		t.Fatalf("a stamped fresh catalog must not refetch: fetches=%d published=%d", fetches, len(pub.persisted))
+	}
+}
