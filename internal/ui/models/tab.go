@@ -11,6 +11,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/list"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
@@ -82,7 +83,7 @@ func (t *Tab) OverrideSaved() {
 	t.mu.Unlock()
 }
 
-// AliasSaved closes the alias screen after the alias was stored or removed.
+// AliasSaved closes the alias form.Screen after the alias was stored or removed.
 func (t *Tab) AliasSaved() {
 	t.mu.Lock()
 	t.al, t.cur = nil, nil
@@ -204,7 +205,7 @@ func (t *Tab) Body(env frame.Env) []string {
 	t.above, t.below = 0, 0
 	if len(t.models()) == 0 {
 		if msg := t.failed(); msg != "" {
-			return []string{fit(paint(th, "  ▲ the model catalog could not be read: "+line.Plain(msg), "warning"), env.Width)}
+			return []string{form.Fit(form.Paint(th, "  ▲ the model catalog could not be read: "+line.Plain(msg), "warning"), env.Width)}
 		}
 		return []string{"  reading the model catalog…"}
 	}
@@ -244,7 +245,7 @@ func oneLine(s string) string {
 	}, s)
 }
 
-// refreshOpen swaps a clean open screen over to the latest catalog entry, so a saved override
+// refreshOpen swaps a clean open form.Screen over to the latest catalog entry, so a saved override
 // shows its effect and a new alias appears in the list. Staged changes keep their entry.
 func (t *Tab) refreshOpen() {
 	if t.ov == nil {
@@ -379,7 +380,7 @@ func (t *Tab) Key(data string) bool {
 		if closed {
 			t.ov = nil
 		}
-		if !closed && !t.ov.in.on && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right")) {
+		if !closed && !t.ov.in.On && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right")) {
 			_, _, isField := t.ov.selected()
 			consumed = isField
 		}
@@ -408,9 +409,9 @@ func (t *Tab) Click(row, count int) bool {
 	l := &t.cat
 	switch {
 	case t.al != nil:
-		l = &t.al.scr.l
+		l = &t.al.scr.L
 	case t.ov != nil:
-		l = &t.ov.scr.l
+		l = &t.ov.scr.L
 	}
 	id, again := l.Click(row)
 	t.mu.Unlock()
@@ -429,9 +430,9 @@ func (t *Tab) Wheel(delta int) {
 	defer t.mu.Unlock()
 	switch {
 	case t.al != nil:
-		t.al.scr.l.Scroll(delta)
+		t.al.scr.L.Scroll(delta)
 	case t.ov != nil:
-		t.ov.scr.l.Scroll(delta)
+		t.ov.scr.L.Scroll(delta)
 	default:
 		t.cat.Scroll(delta)
 	}

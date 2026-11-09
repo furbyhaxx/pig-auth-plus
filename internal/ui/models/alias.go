@@ -10,6 +10,7 @@ import (
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
 )
 
 // Alias is the editable definition of a model alias. Blank optional fields inherit from the
@@ -33,8 +34,8 @@ type aliasForm struct {
 	orig   Alias
 	isNew  bool
 	values map[string]string
-	scr    screen
-	in     edit
+	scr    form.Screen
+	in     form.Edit
 	leave  bool
 	err    string
 	// taken reports whether id is already a model of the alias's provider.
@@ -55,7 +56,7 @@ func newAliasForm(a Alias, isNew bool, taken func(string) bool, remove func()) *
 }
 
 func (f *aliasForm) dirty() bool {
-	if f.in.on {
+	if f.in.On {
 		return true
 	}
 	o := newAliasForm(f.orig, f.isNew, nil, nil)
@@ -67,7 +68,7 @@ func (f *aliasForm) dirty() bool {
 	return false
 }
 
-// draft validates the form; the error is shown on the screen and nothing is saved.
+// draft validates the form; the error is shown on the form.Screen and nothing is saved.
 func (f *aliasForm) draft() (Alias, error) {
 	a := Alias{Provider: f.orig.Provider, Source: f.orig.Source, Name: strings.TrimSpace(f.values[aName])}
 	a.ID = strings.TrimSpace(f.values[aID])
@@ -98,7 +99,7 @@ func (f *aliasForm) draft() (Alias, error) {
 	return a, nil
 }
 
-func (f *aliasForm) rows() []formRow {
+func (f *aliasForm) rows() []form.Row {
 	value := func(key string) (string, string, string) {
 		v, orig := strings.TrimSpace(f.values[key]), strings.TrimSpace(newAliasForm(f.orig, f.isNew, nil, nil).values[key])
 		src, tok := "alias", "muted"
@@ -115,46 +116,46 @@ func (f *aliasForm) rows() []formRow {
 		}
 		return line.Plain(v), src, tok
 	}
-	rows := []formRow{}
+	rows := []form.Row{}
 	for _, r := range []struct{ id, label string }{{aID, "Alias ID"}, {aSource, "Source"}, {aName, "Display name"}, {aCtx, "Context window"}, {aMax, "Max tokens"}} {
 		if r.id == aSource {
-			rows = append(rows, formRow{id: r.id, label: r.label, value: line.Plain(f.orig.Provider + "/" + f.orig.Source), source: "fixed", token: "dim"})
+			rows = append(rows, form.Row{ID: r.id, Label: r.label, Value: line.Plain(f.orig.Provider + "/" + f.orig.Source), Source: "fixed", Token: "dim"})
 			continue
 		}
 		v, src, tok := value(r.id)
-		rows = append(rows, formRow{id: r.id, label: r.label, value: v, source: src, token: tok})
+		rows = append(rows, form.Row{ID: r.id, Label: r.label, Value: v, Source: src, Token: tok})
 	}
 	if !f.isNew {
-		rows = append(rows, formRow{id: aRemove, label: "Remove alias", action: true})
+		rows = append(rows, form.Row{ID: aRemove, Label: "Remove alias", Action: true})
 	}
 	return rows
 }
 
 func (f *aliasForm) lines(th line.Theme, height, width int) (lines []string, above, below int) {
-	editing := noEdit
-	if f.in.on {
-		editing = string(f.in.text)
+	editing := form.NoEdit
+	if f.in.On {
+		editing = string(f.in.Text)
 	}
-	return f.scr.draw(th, f.rows(), editing, height, width)
+	return f.scr.Draw(th, f.rows(), editing, height, width)
 }
 
 func (f *aliasForm) selected() string {
 	rows := f.rows()
-	return rows[f.scr.index(rows)].id
+	return rows[f.scr.Index(rows)].ID
 }
 
 // key handles a key; save receives the validated alias. It reports whether the form closed.
 func (f *aliasForm) key(data string, save func(Alias)) (closed bool) {
 	kb := tui.GetKeybindings()
 	sel := f.selected()
-	if f.in.on {
+	if f.in.On {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"):
-			f.in.on = false
+			f.in.On = false
 		case kb.Matches(data, "tui.select.confirm"):
-			f.values[sel], f.in.on = f.in.value(), false
+			f.values[sel], f.in.On = f.in.Value(), false
 		default:
-			f.in.typeKey(data)
+			f.in.Type(data)
 		}
 		return false
 	}
@@ -175,9 +176,9 @@ func (f *aliasForm) key(data string, save func(Alias)) (closed bool) {
 		}
 		return true
 	case kb.Matches(data, "tui.select.down"):
-		f.scr.l.Move(1)
+		f.scr.L.Move(1)
 	case kb.Matches(data, "tui.select.up"):
-		f.scr.l.Move(-1)
+		f.scr.L.Move(-1)
 	case kb.Matches(data, "tui.select.confirm"):
 		switch sel {
 		case aRemove:
@@ -186,7 +187,7 @@ func (f *aliasForm) key(data string, save func(Alias)) (closed bool) {
 			}
 		case aSource:
 		default:
-			f.in.begin(f.values[sel])
+			f.in.Begin(f.values[sel])
 		}
 	case tui.MatchesKey(data, "backspace"), tui.MatchesKey(data, "delete"):
 		if sel == aName || sel == aCtx || sel == aMax {
@@ -213,7 +214,7 @@ func (f *aliasForm) description() string {
 }
 
 func (f *aliasForm) hints() []string {
-	if f.in.on {
+	if f.in.On {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
 	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("backspace", "inherit"), sdk.RawKeyHint("ctrl+s", "save")}

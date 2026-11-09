@@ -11,6 +11,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
 )
 
 type fieldKind int
@@ -60,9 +61,9 @@ type staged struct {
 type override struct {
 	model   Model
 	aliases []string
-	scr     screen
+	scr     form.Screen
 	changes map[string]staged
-	in      edit
+	in      form.Edit
 	leave   bool
 	// newAlias opens the alias form for this model.
 	newAlias func()
@@ -74,7 +75,7 @@ func newOverride(m Model, aliases []string, newAlias func()) *override {
 
 func (o *override) overridden(f ovField) bool { return slices.Contains(o.model.Overridden, f.key()) }
 
-func (o *override) dirty() bool { return len(o.changes) > 0 || o.in.on }
+func (o *override) dirty() bool { return len(o.changes) > 0 || o.in.On }
 
 // current is the value shown for f: staged, else the model's effective value.
 func (o *override) current(f ovField) any {
@@ -138,18 +139,18 @@ func (o *override) ops() []modelsfile.Op {
 func (o *override) stage(f ovField, v any) { o.changes[f.key()] = staged{value: v} }
 
 // rows are the screen's rows: every overridable field, then the model's aliases.
-func (o *override) rows() []formRow {
-	rows := make([]formRow, 0, len(ovFields)+2)
+func (o *override) rows() []form.Row {
+	rows := make([]form.Row, 0, len(ovFields)+2)
 	for _, f := range ovFields {
-		r := formRow{id: f.key(), label: f.label, value: format(o.current(f)), source: "provider", token: "dim"}
+		r := form.Row{ID: f.key(), Label: f.label, Value: format(o.current(f)), Source: "provider", Token: "dim"}
 		c, isStaged := o.changes[f.key()]
 		switch {
 		case isStaged && c.remove:
-			r.value, r.source, r.token = format(effective(o.model, f)), "● override removed", "warning"
+			r.Value, r.Source, r.Token = format(effective(o.model, f)), "● override removed", "warning"
 		case isStaged:
-			r.source, r.token = "● staged", "warning"
+			r.Source, r.Token = "● staged", "warning"
 		case o.overridden(f):
-			r.source, r.token = "override", "muted"
+			r.Source, r.Token = "override", "muted"
 		}
 		rows = append(rows, r)
 	}
@@ -158,23 +159,23 @@ func (o *override) rows() []formRow {
 		aliases = strings.Join(o.aliases, ", ")
 	}
 	return append(rows,
-		formRow{id: rowAliases, label: "Aliases", value: aliases},
-		formRow{id: rowNewAlias, label: "+ New alias", action: true})
+		form.Row{ID: rowAliases, Label: "Aliases", Value: aliases},
+		form.Row{ID: rowNewAlias, Label: "+ New alias", Action: true})
 }
 
 func (o *override) lines(th line.Theme, height, width int) (lines []string, above, below int) {
-	editing := noEdit
-	if o.in.on {
-		editing = string(o.in.text)
+	editing := form.NoEdit
+	if o.in.On {
+		editing = string(o.in.Text)
 	}
-	return o.scr.draw(th, o.rows(), editing, height, width)
+	return o.scr.Draw(th, o.rows(), editing, height, width)
 }
 
-func (o *override) selected() (formRow, ovField, bool) {
+func (o *override) selected() (form.Row, ovField, bool) {
 	rows := o.rows()
-	r := rows[o.scr.index(rows)]
+	r := rows[o.scr.Index(rows)]
 	for _, f := range ovFields {
-		if f.key() == r.id {
+		if f.key() == r.ID {
 			return r, f, true
 		}
 	}
@@ -182,18 +183,18 @@ func (o *override) selected() (formRow, ovField, bool) {
 }
 
 // key handles a key; save is called with the operations when the user saves. It reports
-// whether the screen closed.
+// whether the form.Screen closed.
 func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 	kb := tui.GetKeybindings()
 	r, f, isField := o.selected()
-	if o.in.on {
+	if o.in.On {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"):
-			o.in.on = false
+			o.in.On = false
 		case kb.Matches(data, "tui.select.confirm"):
 			o.commit(f)
 		default:
-			o.in.typeKey(data)
+			o.in.Type(data)
 		}
 		return false
 	}
@@ -211,23 +212,23 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 		}
 		return true
 	case kb.Matches(data, "tui.select.down"):
-		o.scr.l.Move(1)
+		o.scr.L.Move(1)
 	case kb.Matches(data, "tui.select.up"):
-		o.scr.l.Move(-1)
+		o.scr.L.Move(-1)
 	case kb.Matches(data, "tui.select.pageDown"):
-		o.scr.l.Page(1)
+		o.scr.L.Page(1)
 	case kb.Matches(data, "tui.select.pageUp"):
-		o.scr.l.Page(-1)
+		o.scr.L.Page(-1)
 	case isField && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right") || data == " "):
 		o.toggle(f)
 	case kb.Matches(data, "tui.select.confirm"):
 		switch {
-		case r.id == rowNewAlias && o.newAlias != nil:
+		case r.ID == rowNewAlias && o.newAlias != nil:
 			o.newAlias()
 		case isField && (f.kind == kindBool || f.kind == kindInput):
 			o.toggle(f)
 		case isField:
-			o.in.begin(format0(o.current(f)))
+			o.in.Begin(format0(o.current(f)))
 		}
 	case isField && (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")):
 		if o.overridden(f) {
@@ -271,7 +272,7 @@ func (o *override) toggle(f ovField) {
 
 // commit validates the typed value and stages it; an invalid value keeps the input open.
 func (o *override) commit(f ovField) {
-	text := o.in.value()
+	text := o.in.Value()
 	switch f.kind {
 	case kindText:
 		if text == "" {
@@ -291,21 +292,21 @@ func (o *override) commit(f ovField) {
 		}
 		o.stage(f, v)
 	}
-	o.in.on = false
+	o.in.On = false
 }
 
 func (o *override) description() string {
 	switch {
 	case o.leave:
 		return "Esc again discards the staged changes; ctrl+s saves them."
-	case o.in.on:
+	case o.in.On:
 		return "Type a value; enter stages it, esc cancels. Prices are per million tokens."
 	}
 	return "Changes how PiG lists, limits and prices the model, not what the provider enforces."
 }
 
 func (o *override) hints() []string {
-	if o.in.on {
+	if o.in.On {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
 	return []string{

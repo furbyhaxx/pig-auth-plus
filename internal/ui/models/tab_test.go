@@ -207,7 +207,7 @@ func TestOverrideRejectsInvalidNumbersAndAsksBeforeDiscarding(t *testing.T) {
 	tb.Key("\x15")
 	typeIn(tb, "x")
 	tb.Key("\r")
-	if !tb.ov.in.on || len(tb.ov.changes) != 0 {
+	if !tb.ov.in.On || len(tb.ov.changes) != 0 {
 		t.Fatal("a non-number must keep the input open and stage nothing")
 	}
 	tb.Key("\x1b") // leave the input

@@ -8,17 +8,8 @@ import (
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
 )
-
-func paint(th line.Theme, text, token string) string {
-	return th.Paint(text, line.Style{Fg: &line.Color{Token: token}})
-}
-
-func fit(s string, width int) string { return tui.TruncateToWidth(s, width, "…", false) }
-
-func pad(s string, w int) string {
-	return s + strings.Repeat(" ", max(w-tui.VisibleWidth(s), 0))
-}
 
 // tailText is the right-hand secondary text of a catalog row.
 func tailText(m Model) string {
@@ -38,7 +29,7 @@ func tailText(m Model) string {
 func row(th line.Theme, m Model, selected bool, keyW, width int) string {
 	marker := "  "
 	if selected {
-		marker = paint(th, "→ ", "accent")
+		marker = form.Paint(th, "→ ", "accent")
 	}
 	room := width - 2
 	keyW = min(keyW, room*55/100)
@@ -59,17 +50,17 @@ func row(th line.Theme, m Model, selected bool, keyW, width int) string {
 			col := min(keyW, room-tui.VisibleWidth(tail)-12)
 			nameRoom := room - max(col, w) - 2 - 2 - tui.VisibleWidth(tail)
 			if col >= w && nameRoom >= 8 {
-				l := marker + th.Paint(pad(key, col), style) + "  " + paint(th, fit(name, nameRoom), "muted")
+				l := marker + th.Paint(form.Pad(key, col), style) + "  " + form.Paint(th, form.Fit(name, nameRoom), "muted")
 				gap := width - tui.VisibleWidth(l) - tui.VisibleWidth(tail)
-				return l + strings.Repeat(" ", gap) + paint(th, tail, "muted")
+				return l + strings.Repeat(" ", gap) + form.Paint(th, tail, "muted")
 			}
 		}
 		if tail != "" && w+2+tui.VisibleWidth(tail) <= room {
 			gap := room - w - tui.VisibleWidth(tail)
-			return head + strings.Repeat(" ", gap) + paint(th, tail, "muted")
+			return head + strings.Repeat(" ", gap) + form.Paint(th, tail, "muted")
 		}
 	}
-	return fit(head, width)
+	return form.Fit(head, width)
 }
 
 func orUnknown(s string) string {
@@ -119,7 +110,7 @@ func PlainText(models []Model, width int) string {
 	}
 	var lines []string
 	for _, l := range strings.Split(strings.TrimRight(b.String(), "\n"), "\n") {
-		lines = append(lines, fit(l, max(width, 20)))
+		lines = append(lines, form.Fit(l, max(width, 20)))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -127,7 +118,7 @@ func PlainText(models []Model, width int) string {
 // midCut shortens s to width columns keeping its start and end.
 func midCut(s string, width int) string {
 	if tui.VisibleWidth(s) <= width || width < 3 {
-		return fit(s, width)
+		return form.Fit(s, width)
 	}
 	r := []rune(s)
 	tail := width / 3
