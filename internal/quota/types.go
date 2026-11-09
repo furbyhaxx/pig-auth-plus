@@ -103,6 +103,9 @@ const (
 	NothingToReset  ResetCode = "nothing_to_reset"
 	NoCredit        ResetCode = "no_credit"
 	AlreadyRedeemed ResetCode = "already_redeemed"
+	// Refused is a provider verdict that spent nothing, such as a cooldown or an unfulfilled
+	// eligibility condition; Reason says what the provider reported.
+	Refused ResetCode = "refused"
 )
 
 // ResetOutcome is the result of one consume request.
@@ -111,4 +114,6 @@ type ResetOutcome struct {
 	Code         ResetCode `json:"code"`
 	CreditID     string    `json:"creditId"`
 	WindowsReset int       `json:"windowsReset"`
+	// Reason is the provider's explanation of a Refused outcome, stripped of identifiers.
+	Reason string `json:"reason,omitempty"`
 }

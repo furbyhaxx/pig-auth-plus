@@ -11,7 +11,7 @@ always carry the PiG id.
 
 | Id | Aliases | Compact | Reports |
 |---|---|---|---|
-| `claude` | `cl`, `cc` | `cl` | Subscription session (5h), weekly (7d), scoped weekly windows, spend caps, extra usage; response-header updates |
+| `claude` | `cl`, `cc` | `cl` | Subscription session (5h), weekly (7d), scoped weekly windows, spend caps, extra usage, reset-credit count; response-header updates |
 | `antigravity` | `agy`, `ag` | `ag` | Every reported quota bucket per group (Gemini, Argon, third-party pools) and reset times |
 | `synthetic` | none | `syn` | Subscription request count, weekly plan budget, hourly search requests |
 | `codex` | `openai`, `openai-codex`, `chatgpt`, `cx`, `cox`, `oai` | `cox` | ChatGPT primary/secondary windows, plan, reset-credit count; response-header updates |
@@ -84,13 +84,20 @@ scope (session or user) and saves nothing until you confirm it.
 
 ## Reset credits
 
-Only `codex` supports reset credits: `alt+x` on its row or `/quotas reset [provider]`. Credits
-are listed first and the soonest-expiring is selected. **Keep the credit** is the first
-choice; only **Spend 1 credit now (cannot be undone)** sends one consume request. A consume
-is sent once, never retried, and is followed by a forced refresh. Dismissal, no UI or no
-redeemable credit spends nothing. If a request fails mid-way the credit may already be
+`codex` and `claude` support reset credits: `alt+x` on the row or `/quotas reset [provider]`.
+Credits are listed first and the soonest-expiring is selected. **Keep the credit** is the
+first choice; only **Spend 1 credit now (cannot be undone)** sends one consume request. A
+consume is sent once, never retried, and is followed by a forced refresh. Dismissal, no UI or
+no redeemable credit spends nothing. If a request fails mid-way the credit may already be
 spent: list again before approving another. Reset requests over the [bus](events.md) need
 the same in-session approval.
+
+Claude reads its grants from the same usage poll as its windows: a grant counts while it is
+usable, unpaused and unspent, and only the server's next grant is redeemable; the others are
+queued. A claim needs the subscription OAuth login (an API key is refused) and resolves the
+organization from the profile for that one request, never storing or logging it. Redirects
+are refused, and a verdict other than `reset`, `already_used` or `not_limited` reports
+`refused` with the provider's reason and spends nothing.
 
 ## Cache, refresh and drainage
 

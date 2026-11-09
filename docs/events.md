@@ -109,10 +109,13 @@ interface ResetCredit {
   grantedAtMs?: number; expiresAtMs?: number; redeemedAtMs?: number; supportedByPlan?: boolean;
 }
 interface ResetOutcome {
-  provider: string; code: "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed";
-  creditId: string; windowsReset: number;
+  provider: string; code: "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed" | "refused";
+  creditId: string; windowsReset: number; reason?: string;
 }
 ```
+
+`reason` accompanies `refused` and explains what the provider reported; it never confirms a
+spend.
 
 Timestamps are epoch milliseconds; ages, countdowns, coverage and ETA are seconds.
 `usedFraction` is 0-1, percentages 0-100; window drainage rates are fractions per hour,

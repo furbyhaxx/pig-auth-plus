@@ -108,8 +108,13 @@ func needsAuth(provider string, now time.Time, hint string) quota.Snapshot {
 // getJSON sends one authenticated request and decodes a JSON object; HTTP failures keep their
 // *httpx.StatusError so the engine can back off.
 func getJSON(ctx context.Context, provider, method, url string, header http.Header, body []byte, secrets ...string) (map[string]any, error) {
+	return callJSON(ctx, provider, method, url, header, body, secrets, false)
+}
+
+// callJSON is getJSON with the redirect policy spelled out; noRedirect refuses to follow one.
+func callJSON(ctx context.Context, provider, method, url string, header http.Header, body []byte, secrets []string, noRedirect bool) (map[string]any, error) {
 	var out any
-	_, err := httpx.JSON(ctx, httpx.Request{Provider: provider, Method: method, URL: url, Header: header, Body: body, Timeout: requestTimeout, Secrets: secrets}, &out)
+	_, err := httpx.JSON(ctx, httpx.Request{Provider: provider, Method: method, URL: url, Header: header, Body: body, Timeout: requestTimeout, Secrets: secrets, NoRedirect: noRedirect}, &out)
 	if err != nil {
 		return nil, err
 	}
