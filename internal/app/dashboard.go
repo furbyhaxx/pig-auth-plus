@@ -85,6 +85,10 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		Preview: d.previewTemplate,
 		Known:   d.knownProviders,
 	}, key)
+	level, lerr := ctx.GetThinkingLevel()
+	if lerr != nil {
+		level = "" // the rules then use the border color
+	}
 	d.frame = frame.New(func() frame.Env {
 		w, h := ctx.Width(), ctx.Height()
 		if w <= 0 {
@@ -93,7 +97,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		if h <= 0 {
 			h = defaultRows
 		}
-		return frame.Env{Width: w, Rows: max(h-reservedRows, 8), Theme: ctx.UITheme()}
+		return frame.Env{Width: w, Rows: max(h-reservedRows, 8), Theme: ctx.UITheme(), Level: level}
 	}, section, d.provs, d.quotas, d.tokens, d.models, d.sett)
 	stop := st.quotas.OnChange(d.frame.Invalidate)
 	defer stop()

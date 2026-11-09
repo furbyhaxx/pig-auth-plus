@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelKinsy/PiG/extensions/sdk/kit"
-
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/session"
@@ -33,8 +31,17 @@ func answer(t *testing.T, d *dashboard, title, option string) {
 	t.Helper()
 	for deadline := time.Now().Add(2 * time.Second); time.Now().Before(deadline); time.Sleep(time.Millisecond) {
 		if d.frame.ModalTitle() == title {
-			_, _ = d.frame.HandleViewEvent(kit.Event{Node: "modal", Type: kit.EventSelect, Item: &kit.SelectItem{Value: option}})
-			return
+			for i, o := range d.frame.ModalOptions() {
+				if o != option {
+					continue
+				}
+				for range i {
+					_, _ = d.frame.HandleInput("\x1b[B")
+				}
+				_, _ = d.frame.HandleInput("\r")
+				return
+			}
+			t.Fatalf("dialog %q has no option %q", title, option)
 		}
 	}
 	t.Fatalf("dialog %q never opened", title)
@@ -85,7 +92,7 @@ func TestDismissingTheChooserSavesNothing(t *testing.T) {
 	for d.frame.ModalTitle() == "" {
 		time.Sleep(time.Millisecond)
 	}
-	_, _ = d.frame.HandleViewEvent(kit.Event{Node: "modal", Type: kit.EventCancel})
+	_, _ = d.frame.HandleInput("\x1b")
 	<-done
 	if _, err := os.Stat(path); err == nil || d.st.settings.Snapshot().LinePlacement != "below-editor-first" {
 		t.Fatal("dismissal changed settings")

@@ -15,6 +15,12 @@ const TabSeparator = "❱"
 // greyTokens are tried in order for the inactive tab background: neutral first.
 var greyTokens = []string{"toolPendingBg", "selectedBg"}
 
+// greyFallback is the neutral foreground token whose color becomes the chip background when no
+// background token is real; terminal-derived themes resolve every *Bg token to the default.
+const greyFallback = "borderMuted"
+
+const defaultBg = "\x1b[49m"
+
 // Chrome paints the dashboard frame: the rules in the editor's thinking-level color and the
 // tab chips. Every method degrades to plain or modifier-only text when the theme lacks a token.
 type Chrome struct {
@@ -23,6 +29,7 @@ type Chrome struct {
 	accent string // background escape for the active tab, empty when unavailable
 	accFg  string // contrasting foreground for the accent background
 	grey   string // background escape for inactive tabs, empty when unavailable
+	greyFg string // foreground for the inactive chips; the muted color on a real background token
 }
 
 // NewChrome builds the chrome for a theme and the session's thinking level.
@@ -34,10 +41,15 @@ func NewChrome(t sdk.UITheme, level string) Chrome {
 		c.accFg = tui.ForegroundAnsi(contrastColor(tui.ColorToRgb(col)), mode)
 	}
 	for _, tok := range greyTokens {
-		if bg, err := t.GetBgAnsi(tok); err == nil {
+		if bg, err := t.GetBgAnsi(tok); err == nil && bg != "" && bg != defaultBg {
 			c.grey = bg
-			break
+			c.greyFg, _ = t.GetFgAnsi("muted")
+			return c
 		}
+	}
+	if col := toTUI(t.Colors()[greyFallback]); col != nil {
+		c.grey = tui.BackgroundAnsi(col, mode)
+		c.greyFg = tui.ForegroundAnsi(contrastColor(tui.ColorToRgb(col)), mode)
 	}
 	return c
 }
@@ -69,8 +81,7 @@ func (c Chrome) Tab(title string, active bool) string {
 		return c.t.Bold(c.t.Inverse(label))
 	}
 	if c.grey != "" {
-		fg, _ := c.t.GetFgAnsi("muted")
-		return tui.StyleTextWithAnsi(label, fg, c.grey, tui.TextAttributes{})
+		return tui.StyleTextWithAnsi(label, c.greyFg, c.grey, tui.TextAttributes{})
 	}
 	if _, err := c.t.GetFgAnsi("muted"); err == nil {
 		return c.t.Fg("muted", label)
