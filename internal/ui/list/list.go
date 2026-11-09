@@ -16,6 +16,8 @@ type Entry struct {
 	ID string
 	// Search is the plain text the filter matches against.
 	Search string
+	// Header marks a section title: it is drawn but never selected, and a filter hides it.
+	Header bool
 }
 
 // List holds the cursor, scroll offset and filter of one list screen. The zero value is ready
@@ -26,6 +28,7 @@ type List struct {
 	top   int
 	query string
 	ids   []string
+	skip  []bool
 	rows  int
 }
 
@@ -46,7 +49,13 @@ func Filter(entries []Entry, query string) []Entry {
 	if strings.TrimSpace(query) == "" {
 		return entries
 	}
-	return tui.FuzzyFilter(entries, query, func(e Entry) string { return e.Search })
+	items := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if !e.Header {
+			items = append(items, e)
+		}
+	}
+	return tui.FuzzyFilter(items, query, func(e Entry) string { return e.Search })
 }
 
 // SetFilter sets the filter text and returns the cursor to the top of the new results.
@@ -74,8 +83,8 @@ func (l *List) Selected() string {
 func (l *List) Select(id string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	for _, have := range l.ids {
-		if have == id {
+	for i, have := range l.ids {
+		if have == id && !l.skip[i] {
 			l.sel = id
 			return
 		}
@@ -89,23 +98,29 @@ func (l *List) Window(entries []Entry, rows int) Window {
 	defer l.mu.Unlock()
 	rows = max(rows, 1)
 	shown := Filter(entries, l.query)
-	l.ids = l.ids[:0]
-	idx := -1
+	l.ids, l.skip = l.ids[:0], l.skip[:0]
+	idx, first := -1, -1
 	for i, e := range shown {
-		l.ids = append(l.ids, e.ID)
-		if e.ID == l.sel {
+		l.ids, l.skip = append(l.ids, e.ID), append(l.skip, e.Header)
+		if first < 0 && !e.Header {
+			first = i
+		}
+		if e.ID == l.sel && !e.Header {
 			idx = i
 		}
 	}
 	l.rows = rows
-	if idx < 0 && len(shown) > 0 {
-		idx = 0
-		l.sel = shown[0].ID
-	}
-	if len(shown) == 0 {
-		l.sel = ""
+	if idx < 0 {
+		idx, l.sel = first, ""
+		if first >= 0 {
+			l.sel = shown[first].ID
+		}
 	}
 	l.top = clamp(l.top, 0, max(len(shown)-rows, 0))
+	// A section title stays with its first row when the cursor scrolls back to it.
+	if idx > 0 && l.skip[idx-1] && idx == l.top {
+		l.top--
+	}
 	// Keep the cursor inside the window: scrolling may leave it behind, moving pulls it back.
 	switch {
 	case idx >= 0 && idx < l.top:
@@ -128,8 +143,29 @@ func (l *List) Move(delta int) {
 	if len(l.ids) == 0 {
 		return
 	}
-	idx := l.index()
-	l.sel = l.ids[clamp(idx+delta, 0, len(l.ids)-1)]
+	step := 1
+	if delta < 0 {
+		step = -1
+	}
+	i := l.index()
+	for n := abs(delta); n > 0; n-- {
+		j := i + step
+		for j >= 0 && j < len(l.ids) && l.skip[j] {
+			j += step
+		}
+		if j < 0 || j >= len(l.ids) {
+			break
+		}
+		i = j
+	}
+	l.sel = l.ids[i]
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // Page moves the cursor by one window less one row.
@@ -143,7 +179,7 @@ func (l *List) pageRows() int {
 
 func (l *List) index() int {
 	for i, id := range l.ids {
-		if id == l.sel {
+		if id == l.sel && !l.skip[i] {
 			return i
 		}
 	}
@@ -160,10 +196,21 @@ func (l *List) Scroll(delta int) {
 	idx := l.index()
 	switch {
 	case idx < l.top:
-		l.sel = l.ids[l.top]
+		l.sel = l.firstSelectable(l.top, 1)
 	case idx >= l.top+l.rows && l.top+l.rows-1 < len(l.ids):
-		l.sel = l.ids[l.top+l.rows-1]
+		l.sel = l.firstSelectable(l.top+l.rows-1, -1)
 	}
+}
+
+// firstSelectable is the ID of the first non-header entry from i in direction step, or the
+// entry at i when every one that way is a header.
+func (l *List) firstSelectable(i, step int) string {
+	for j := i; j >= 0 && j < len(l.ids); j += step {
+		if !l.skip[j] {
+			return l.ids[j]
+		}
+	}
+	return l.ids[i]
 }
 
 // Click selects the entry on body row and reports whether it was already selected, which a
@@ -172,7 +219,7 @@ func (l *List) Click(row int) (id string, again bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	i := l.top + row
-	if row < 0 || row >= l.rows || i >= len(l.ids) {
+	if row < 0 || row >= l.rows || i >= len(l.ids) || l.skip[i] {
 		return "", false
 	}
 	again = l.ids[i] == l.sel

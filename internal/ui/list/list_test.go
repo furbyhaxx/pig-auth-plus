@@ -109,3 +109,73 @@ func TestScrollTakesTheCursorAlongAndStaysInRange(t *testing.T) {
 		t.Fatalf("scroll past the start: %+v", w)
 	}
 }
+
+func sections() []Entry {
+	return []Entry{
+		{ID: "h-a", Header: true},
+		{ID: "a1", Search: "alpha one"}, {ID: "a2", Search: "alpha two"},
+		{ID: "h-b", Header: true},
+		{ID: "b1", Search: "beta one"},
+	}
+}
+
+func TestHeadersAreDrawnButNeverSelected(t *testing.T) {
+	var l List
+	w := l.Window(sections(), 10)
+	if l.Selected() != "a1" || w.Selected != 1 {
+		t.Fatalf("the cursor must start on the first row, not its title: %q row %d", l.Selected(), w.Selected)
+	}
+	l.Move(1)
+	l.Move(1)
+	if l.Selected() != "b1" {
+		t.Fatalf("down must hop over the header: %q", l.Selected())
+	}
+	l.Move(-1)
+	l.Move(-1)
+	if l.Selected() != "a1" {
+		t.Fatalf("up must hop over the header and stop at the first row: %q", l.Selected())
+	}
+	l.Move(-1)
+	if l.Selected() != "a1" {
+		t.Fatalf("up at the first row must stay: %q", l.Selected())
+	}
+	l.Select("h-b")
+	if l.Selected() != "a1" {
+		t.Fatalf("selecting a header must be ignored: %q", l.Selected())
+	}
+}
+
+func TestClickOnAHeaderIsIgnoredAndFilterHidesHeaders(t *testing.T) {
+	var l List
+	l.Window(sections(), 10)
+	if id, _ := l.Click(0); id != "" {
+		t.Fatalf("header click selected %q", id)
+	}
+	if id, _ := l.Click(3); id != "" {
+		t.Fatalf("second header click selected %q", id)
+	}
+	if id, _ := l.Click(4); id != "b1" {
+		t.Fatalf("row click: %q", id)
+	}
+	l.SetFilter("alpha")
+	w := l.Window(sections(), 10)
+	for _, e := range w.Entries {
+		if e.Header {
+			t.Fatalf("a filtered list must not show section titles: %+v", w.Entries)
+		}
+	}
+	if w.Total != 2 {
+		t.Fatalf("filter kept %d", w.Total)
+	}
+}
+
+func TestScrollingNeverLeavesTheCursorOnAHeader(t *testing.T) {
+	var l List
+	es := sections()
+	l.Window(es, 2)
+	l.Scroll(1)
+	l.Window(es, 2)
+	if l.Selected() == "h-a" || l.Selected() == "h-b" {
+		t.Fatalf("cursor on a header: %q", l.Selected())
+	}
+}
