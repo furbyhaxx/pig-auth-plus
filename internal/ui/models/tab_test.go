@@ -344,3 +344,22 @@ func TestPlainTextCountsSignedInModelsAndNamesTheRest(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+func TestStatusSaysLoadingNotZeroModelsWhileTheCatalogIsStillBeingRead(t *testing.T) {
+	var rows []Model
+	failed := ""
+	tab := New(func() []Model { return rows }, func() string { return failed }, Actions{})
+	tab.Body(env)
+	if got := tab.Status(env); got != "loading…" {
+		t.Fatalf("while loading: %q", got)
+	}
+	failed = "boom"
+	if got := tab.Status(env); !strings.Contains(got, "failed") {
+		t.Fatalf("after a failure: %q", got)
+	}
+	failed, rows = "", catalog()
+	tab.Body(env)
+	if got := tab.Status(env); !strings.Contains(got, "models") || strings.Contains(got, "loading") {
+		t.Fatalf("loaded: %q", got)
+	}
+}

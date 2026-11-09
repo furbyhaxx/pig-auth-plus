@@ -155,6 +155,10 @@ func (t *Tab) Status(frame.Env) string {
 		return t.al.status()
 	case t.ov != nil:
 		return t.ov.status()
+	case len(t.models()) == 0 && t.failed() != "":
+		return "▲ failed"
+	case len(t.models()) == 0:
+		return "loading…"
 	case t.out > 0:
 		return fmt.Sprintf("%d models · %d providers left out", t.count, t.out)
 	}
