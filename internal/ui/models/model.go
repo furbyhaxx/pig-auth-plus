@@ -27,6 +27,9 @@ type Model struct {
 	AliasOf string
 	// Overridden lists the fields a models.json override changes.
 	Overridden []string
+	// SignedIn is false for models of a provider PiG has no usable credential for; the
+	// catalog hides them.
+	SignedIn bool
 }
 
 // Key is provider/id.
@@ -65,13 +68,16 @@ func Price(v float64) string {
 	return "$" + trim(v)
 }
 
-// match reports whether every word of query occurs in the model's provider, id or name.
-func match(m Model, query string) bool {
-	hay := strings.ToLower(m.Provider + "/" + m.ID + " " + m.Name)
-	for _, w := range strings.Fields(strings.ToLower(query)) {
-		if !strings.Contains(hay, w) {
-			return false
-		}
+// Commas formats n with thousands separators.
+func Commas(n int64) string {
+	s := fmt.Sprint(n)
+	neg := strings.HasPrefix(s, "-")
+	s = strings.TrimPrefix(s, "-")
+	for i := len(s) - 3; i > 0; i -= 3 {
+		s = s[:i] + "," + s[i:]
 	}
-	return true
+	if neg {
+		return "-" + s
+	}
+	return s
 }

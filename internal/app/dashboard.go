@@ -496,7 +496,9 @@ func (d *dashboard) removeAlias(ctx context.Context, m uimodels.Model) {
 			list = append(list, e)
 		}
 	}
-	d.saveAliases(ctx, scope, list, "Alias "+m.Key()+" removed")
+	if d.saveAliases(ctx, scope, list, "Alias "+m.Key()+" removed") {
+		d.models.AliasSaved()
+	}
 }
 
 func (d *dashboard) resetCrumb(id string) string {

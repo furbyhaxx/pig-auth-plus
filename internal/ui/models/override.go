@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
@@ -34,16 +33,21 @@ type ovField struct {
 func (f ovField) key() string { return strings.Join(f.path, ".") }
 
 var ovFields = []ovField{
-	{[]string{"name"}, "name", kindText},
-	{[]string{"contextWindow"}, "context window", kindInt},
-	{[]string{"maxTokens"}, "max output", kindInt},
-	{[]string{"reasoning"}, "reasoning", kindBool},
-	{[]string{"input"}, "input types", kindInput},
-	{[]string{"cost", "input"}, "price in /M", kindPrice},
-	{[]string{"cost", "output"}, "price out /M", kindPrice},
-	{[]string{"cost", "cacheRead"}, "price cache read", kindPrice},
-	{[]string{"cost", "cacheWrite"}, "price cache write", kindPrice},
+	{[]string{"name"}, "Name", kindText},
+	{[]string{"contextWindow"}, "Context window", kindInt},
+	{[]string{"maxTokens"}, "Max tokens", kindInt},
+	{[]string{"reasoning"}, "Reasoning", kindBool},
+	{[]string{"input"}, "Input", kindInput},
+	{[]string{"cost", "input"}, "Price in /M", kindPrice},
+	{[]string{"cost", "output"}, "Price out /M", kindPrice},
+	{[]string{"cost", "cacheRead"}, "Cache read /M", kindPrice},
+	{[]string{"cost", "cacheWrite"}, "Cache write /M", kindPrice},
 }
+
+const (
+	rowAliases  = "\x01aliases"
+	rowNewAlias = "\x01new-alias"
+)
 
 // staged is one pending change: a new value, or removal of the override.
 type staged struct {
@@ -51,30 +55,36 @@ type staged struct {
 	remove bool
 }
 
-// override edits the models.json override of one model; changes stay staged until saved.
+// override is the model detail screen: it edits the models.json override of one model, and
+// lists its aliases. Changes stay staged until saved.
 type override struct {
 	model   Model
-	sel     int
+	aliases []string
+	scr     screen
 	changes map[string]staged
-	input   []rune
-	editing bool
+	in      edit
 	leave   bool
+	// newAlias opens the alias form for this model.
+	newAlias func()
 }
 
-func newOverride(m Model) *override {
-	return &override{model: m, changes: map[string]staged{}}
+func newOverride(m Model, aliases []string, newAlias func()) *override {
+	return &override{model: m, aliases: aliases, changes: map[string]staged{}, newAlias: newAlias}
 }
 
 func (o *override) overridden(f ovField) bool { return slices.Contains(o.model.Overridden, f.key()) }
 
-func (o *override) dirty() bool { return len(o.changes) > 0 || o.editing }
+func (o *override) dirty() bool { return len(o.changes) > 0 || o.in.on }
 
 // current is the value shown for f: staged, else the model's effective value.
 func (o *override) current(f ovField) any {
 	if c, ok := o.changes[f.key()]; ok && !c.remove {
 		return c.value
 	}
-	m := o.model
+	return effective(o.model, f)
+}
+
+func effective(m Model, f ovField) any {
 	switch f.key() {
 	case "name":
 		return m.Label()
@@ -98,101 +108,92 @@ func (o *override) current(f ovField) any {
 	return nil
 }
 
-func format(f ovField, v any) string {
+func format(v any) string {
 	switch x := v.(type) {
 	case string:
 		return line.Plain(x)
 	case int64:
-		return fmt.Sprint(x)
+		return Commas(x)
 	case float64:
-		return strconv.FormatFloat(x, 'f', -1, 64)
+		return "$" + strconv.FormatFloat(x, 'f', -1, 64)
 	case bool:
-		return yesNo(x)
+		return onOff(x)
 	case []string:
-		return strings.Join(x, ", ")
+		return orUnknown(strings.Join(x, ", "))
 	}
-	return "?"
+	return "–"
 }
 
 // ops turns the staged changes into models.json operations in field order.
 func (o *override) ops() []modelsfile.Op {
 	var out []modelsfile.Op
 	for _, f := range ovFields {
-		c, ok := o.changes[f.key()]
-		if !ok {
-			continue
+		if c, ok := o.changes[f.key()]; ok {
+			out = append(out, modelsfile.Op{Path: f.path, Value: c.value, Remove: c.remove})
 		}
-		out = append(out, modelsfile.Op{Path: f.path, Value: c.value, Remove: c.remove})
 	}
 	return out
 }
 
-func (o *override) stage(f ovField, v any) {
-	o.changes[f.key()] = staged{value: v}
-}
+func (o *override) stage(f ovField, v any) { o.changes[f.key()] = staged{value: v} }
 
-func (o *override) lines(th line.Theme, width int) []string {
-	head := " " + th.Paint(o.model.Label(), line.Style{Bold: true}) + paint(th, "  "+o.model.Key(), "muted")
-	out := []string{fit(head, width)}
-	for i, f := range ovFields {
-		marker := "  "
-		if i == o.sel {
-			marker = paint(th, "→ ", "accent")
-		}
+// rows are the screen's rows: every overridable field, then the model's aliases.
+func (o *override) rows() []formRow {
+	rows := make([]formRow, 0, len(ovFields)+2)
+	for _, f := range ovFields {
+		r := formRow{id: f.key(), label: f.label, value: format(o.current(f)), source: "provider", token: "dim"}
 		c, isStaged := o.changes[f.key()]
-		val := format(f, o.current(f))
-		tag := ""
 		switch {
 		case isStaged && c.remove:
-			val, tag = format(f, o.baseline(f)), paint(th, "● override removed", "warning")
+			r.value, r.source, r.token = format(effective(o.model, f)), "● override removed", "warning"
 		case isStaged:
-			tag = paint(th, "● staged", "warning")
+			r.source, r.token = "● staged", "warning"
 		case o.overridden(f):
-			tag = paint(th, "override", "muted")
+			r.source, r.token = "override", "muted"
 		}
-		out = append(out, fit(marker+fmt.Sprintf("%-18s", f.label)+val+"  "+tag, width))
+		rows = append(rows, r)
 	}
-	if o.editing {
-		out = append(out, fit(" "+paint(th, "edit ", "accent")+string(o.input)+"▏", width))
+	aliases := "none"
+	if len(o.aliases) > 0 {
+		aliases = strings.Join(o.aliases, ", ")
 	}
-	if o.leave {
-		out = append(out, fit(paint(th, " ▲ Esc again discards the staged changes; ctrl+s saves them", "warning"), width))
-	}
-	out = append(out, fit(paint(th, " Changes the model as PiG lists and prices it, not what the provider enforces.", "muted"), width))
-	return out
+	return append(rows,
+		formRow{id: rowAliases, label: "Aliases", value: aliases},
+		formRow{id: rowNewAlias, label: "+ New alias", action: true})
 }
 
-// baseline is the value without the staged change: where a removal ends up is unknown until
-// the file is rewritten, so the editor shows the effective value.
-func (o *override) baseline(f ovField) any {
-	saved := o.changes
-	o.changes = nil
-	defer func() { o.changes = saved }()
-	return o.current(f)
+func (o *override) lines(th line.Theme, height, width int) (lines []string, above, below int) {
+	editing := noEdit
+	if o.in.on {
+		editing = string(o.in.text)
+	}
+	return o.scr.draw(th, o.rows(), editing, height, width)
 }
 
-// key handles a key; saved is called with the operations when the user saves.
+func (o *override) selected() (formRow, ovField, bool) {
+	rows := o.rows()
+	r := rows[o.scr.index(rows)]
+	for _, f := range ovFields {
+		if f.key() == r.id {
+			return r, f, true
+		}
+	}
+	return r, ovField{}, false
+}
+
+// key handles a key; save is called with the operations when the user saves. It reports
+// whether the screen closed.
 func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 	kb := tui.GetKeybindings()
-	f := ovFields[o.sel]
-	if o.editing {
+	r, f, isField := o.selected()
+	if o.in.on {
 		switch {
 		case kb.Matches(data, "tui.select.cancel"):
-			o.editing = false
+			o.in.on = false
 		case kb.Matches(data, "tui.select.confirm"):
 			o.commit(f)
-		case tui.MatchesKey(data, "backspace"):
-			if n := len(o.input); n > 0 {
-				o.input = o.input[:n-1]
-			}
-		case tui.MatchesKey(data, "ctrl+u"):
-			o.input = nil
 		default:
-			for _, r := range data {
-				if unicode.IsPrint(r) {
-					o.input = append(o.input, r)
-				}
-			}
+			o.in.typeKey(data)
 		}
 		return false
 	}
@@ -210,18 +211,25 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 		}
 		return true
 	case kb.Matches(data, "tui.select.down"):
-		o.sel = min(o.sel+1, len(ovFields)-1)
+		o.scr.l.Move(1)
 	case kb.Matches(data, "tui.select.up"):
-		o.sel = max(o.sel-1, 0)
-	case tui.MatchesKey(data, "left"), tui.MatchesKey(data, "right"), data == " ":
+		o.scr.l.Move(-1)
+	case kb.Matches(data, "tui.select.pageDown"):
+		o.scr.l.Page(1)
+	case kb.Matches(data, "tui.select.pageUp"):
+		o.scr.l.Page(-1)
+	case isField && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right") || data == " "):
 		o.toggle(f)
 	case kb.Matches(data, "tui.select.confirm"):
-		if f.kind == kindBool || f.kind == kindInput {
+		switch {
+		case r.id == rowNewAlias && o.newAlias != nil:
+			o.newAlias()
+		case isField && (f.kind == kindBool || f.kind == kindInput):
 			o.toggle(f)
-		} else {
-			o.editing, o.input = true, []rune(format(f, o.current(f)))
+		case isField:
+			o.in.begin(format0(o.current(f)))
 		}
-	case tui.MatchesKey(data, "backspace"), tui.MatchesKey(data, "delete"):
+	case isField && (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")):
 		if o.overridden(f) {
 			o.changes[f.key()] = staged{remove: true}
 		} else {
@@ -231,6 +239,19 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 		return false
 	}
 	return false
+}
+
+// format0 is the editable text of a value: no grouping or currency symbol.
+func format0(v any) string {
+	switch x := v.(type) {
+	case int64:
+		return strconv.FormatInt(x, 10)
+	case float64:
+		return strconv.FormatFloat(x, 'f', -1, 64)
+	case string:
+		return line.Plain(x)
+	}
+	return ""
 }
 
 func (o *override) toggle(f ovField) {
@@ -248,9 +269,9 @@ func (o *override) toggle(f ovField) {
 	}
 }
 
-// commit validates the typed value and stages it; an invalid value keeps the editor open.
+// commit validates the typed value and stages it; an invalid value keeps the input open.
 func (o *override) commit(f ovField) {
-	text := strings.TrimSpace(string(o.input))
+	text := o.in.value()
 	switch f.kind {
 	case kindText:
 		if text == "" {
@@ -270,22 +291,41 @@ func (o *override) commit(f ovField) {
 		}
 		o.stage(f, v)
 	}
-	o.editing = false
+	o.in.on = false
+}
+
+func (o *override) description() string {
+	switch {
+	case o.leave:
+		return "Esc again discards the staged changes; ctrl+s saves them."
+	case o.in.on:
+		return "Type a value; enter stages it, esc cancels. Prices are per million tokens."
+	}
+	return "Changes how PiG lists, limits and prices the model, not what the provider enforces."
 }
 
 func (o *override) hints() []string {
-	if o.editing {
+	if o.in.on {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
 	return []string{
-		sdk.RawKeyHint("←/→", "change"), sdk.KeyHint("tui.select.confirm", "edit"),
-		sdk.RawKeyHint("backspace", "remove override"), sdk.RawKeyHint("ctrl+s", "save"),
+		sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("←→", "toggle"),
+		sdk.RawKeyHint("backspace", "reset"), sdk.RawKeyHint("ctrl+s", "save"),
 	}
 }
 
-const overrideHelp = ` Model override
- Changes how PiG lists, limits and prices one model; it does not change what the provider
- enforces. Overrides are written to models.json (modelOverrides); comments and other
- settings in that file are kept, and a malformed file is never overwritten.
- Left/Right toggle · Enter edit · Backspace stage removal of the override on a field
- Ctrl+S save all staged fields in one write · Esc leaves; staged changes ask first.`
+func (o *override) status() string {
+	if n := len(o.changes); n > 0 {
+		return fmt.Sprintf("● %d staged", n)
+	}
+	return "listed"
+}
+
+const overrideHelp = ` Model detail
+ Every field shows its effective value and where it comes from: provider (PiG's catalog),
+ override (models.json) or staged (not saved yet). Changes how PiG lists, limits and prices
+ the model; it does not change what the provider enforces.
+ Enter edit a field · Left/Right toggle · Backspace reset a field to the provider value
+ Ctrl+S saves all staged fields in one write to models.json; comments and other settings
+ in that file are kept and a malformed file is never overwritten. Esc leaves; staged
+ changes ask first.`

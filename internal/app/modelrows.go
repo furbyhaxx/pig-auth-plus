@@ -26,6 +26,16 @@ func (a *App) catalogRows(host sdk.Context) ([]uimodels.Model, error) {
 	for _, al := range a.settings().Aliases {
 		aliases[al.Provider+"/"+al.ID] = al.Source
 	}
+	signedIn := map[string]bool{}
+	signed := func(provider string) bool {
+		v, ok := signedIn[provider]
+		if !ok {
+			status, err := host.ModelRegistry().GetProviderAuthStatus(provider)
+			v = err == nil && status.Configured
+			signedIn[provider] = v
+		}
+		return v
+	}
 	out := make([]uimodels.Model, 0, len(all))
 	for _, m := range all {
 		row := uimodels.Model{
@@ -45,6 +55,7 @@ func (a *App) catalogRows(host sdk.Context) ([]uimodels.Model, error) {
 		if c, ok := m["cost"].(map[string]any); ok {
 			row.Cost = uimodels.Cost{Input: fnum(c["input"]), Output: fnum(c["output"]), CacheRead: fnum(c["cacheRead"]), CacheWrite: fnum(c["cacheWrite"])}
 		}
+		row.SignedIn = signed(row.Provider)
 		row.AliasOf = aliases[row.Provider+"/"+row.ID]
 		row.Overridden = modelsfile.Keys(overrides[row.Provider][row.ID])
 		out = append(out, row)

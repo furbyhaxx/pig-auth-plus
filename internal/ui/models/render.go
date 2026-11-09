@@ -16,100 +16,88 @@ func paint(th line.Theme, text, token string) string {
 
 func fit(s string, width int) string { return tui.TruncateToWidth(s, width, "…", false) }
 
-// row renders one catalog row: identity first, then limits when they fit.
-func row(th line.Theme, m Model, selected bool, width int) string {
+func pad(s string, w int) string {
+	return s + strings.Repeat(" ", max(w-tui.VisibleWidth(s), 0))
+}
+
+// tailText is the right-hand secondary text of a catalog row.
+func tailText(m Model) string {
+	var parts []string
+	if m.AliasOf != "" {
+		parts = append(parts, "alias")
+	}
+	if len(m.Overridden) > 0 {
+		parts = append(parts, "override")
+	}
+	parts = append(parts, Tokens(m.ContextWindow))
+	return strings.Join(parts, " · ")
+}
+
+// row renders one catalog row. The model's key survives every width; the display name goes
+// first, then the tags, then the context size.
+func row(th line.Theme, m Model, selected bool, keyW, width int) string {
 	marker := "  "
 	if selected {
 		marker = paint(th, "→ ", "accent")
 	}
-	id := line.Plain(m.ID)
-	head := marker + th.Paint(id, line.Style{Bold: selected})
-	if tui.VisibleWidth(head) > width {
-		// Model ids differ at the tail (dates, versions), so cut the middle.
-		head = marker + th.Paint(midCut(id, width-tui.VisibleWidth(marker)), line.Style{Bold: selected})
+	room := width - 2
+	keyW = min(keyW, room*55/100)
+	key := line.Plain(m.Key())
+	if tui.VisibleWidth(key) > room {
+		key = midCut(key, room)
 	}
-	var tags []string
-	if m.AliasOf != "" {
-		tags = append(tags, "alias")
+	style := line.Style{Bold: selected}
+	head := marker + th.Paint(key, style)
+	name := line.Plain(m.Label())
+	if name == line.Plain(m.ID) {
+		name = ""
 	}
-	if len(m.Overridden) > 0 {
-		tags = append(tags, "override")
-	}
-	tail := Tokens(m.ContextWindow)
-	if len(tags) > 0 {
-		tail = strings.Join(tags, ",") + "  " + tail
-	}
-	if tui.VisibleWidth(head)+2+tui.VisibleWidth(tail) <= width {
-		pad := width - tui.VisibleWidth(head) - tui.VisibleWidth(tail)
-		return head + strings.Repeat(" ", pad) + paint(th, tail, "muted")
+	tails := []string{tailText(m), Tokens(m.ContextWindow), ""}
+	for _, tail := range tails {
+		w := tui.VisibleWidth(key)
+		if name != "" && tail != "" {
+			col := min(keyW, room-tui.VisibleWidth(tail)-12)
+			nameRoom := room - max(col, w) - 2 - 2 - tui.VisibleWidth(tail)
+			if col >= w && nameRoom >= 8 {
+				l := marker + th.Paint(pad(key, col), style) + "  " + paint(th, fit(name, nameRoom), "muted")
+				gap := width - tui.VisibleWidth(l) - tui.VisibleWidth(tail)
+				return l + strings.Repeat(" ", gap) + paint(th, tail, "muted")
+			}
+		}
+		if tail != "" && w+2+tui.VisibleWidth(tail) <= room {
+			gap := room - w - tui.VisibleWidth(tail)
+			return head + strings.Repeat(" ", gap) + paint(th, tail, "muted")
+		}
 	}
 	return fit(head, width)
 }
 
-// listLines renders the filtered catalog grouped by provider; idx maps a model's position in
-// shown to its line, for scrolling.
-func listLines(th line.Theme, shown []Model, sel, width int) (lines []string, at []int) {
-	at = make([]int, len(shown))
-	last := ""
-	for i, m := range shown {
-		if m.Provider != last {
-			last = m.Provider
-			lines = append(lines, fit(" "+th.Paint(line.Plain(m.Provider), line.Style{Bold: true}), width))
-		}
-		at[i] = len(lines)
-		lines = append(lines, row(th, m, i == sel, width))
-	}
-	return lines, at
-}
-
-// detailLines renders every field of one model; long values wrap rather than clip.
-func detailLines(th line.Theme, m Model, width int) []string {
-	var out []string
-	field := func(name, value string) {
-		for i, l := range tui.WrapTextWithAnsi(fmt.Sprintf("%-10s %s", name, value), max(width-2, 10)) {
-			if i > 0 {
-				l = "           " + strings.TrimLeft(l, " ")
-			}
-			out = append(out, " "+l)
-		}
-	}
-	out = append(out, " "+th.Paint(m.Label(), line.Style{Bold: true}))
-	field("id", m.Key())
-	if m.AliasOf != "" {
-		field("alias of", m.Provider+"/"+m.AliasOf)
-	}
-	field("api", orUnknown(m.API))
-	field("context", Tokens(m.ContextWindow))
-	field("output", Tokens(m.MaxTokens))
-	field("reasoning", yesNo(m.Reasoning))
-	field("input", orUnknown(strings.Join(m.Input, ", ")))
-	field("price/M", fmt.Sprintf("in %s · out %s · cache read %s · cache write %s",
-		Price(m.Cost.Input), Price(m.Cost.Output), Price(m.Cost.CacheRead), Price(m.Cost.CacheWrite)))
-	if len(m.Overridden) > 0 {
-		field("override", strings.Join(m.Overridden, ", "))
-	}
-	return out
-}
-
 func orUnknown(s string) string {
 	if strings.TrimSpace(s) == "" {
-		return "?"
+		return "–"
 	}
 	return line.Plain(s)
 }
 
-func yesNo(b bool) string {
+func onOff(b bool) string {
 	if b {
-		return "yes"
+		return "on"
 	}
-	return "no"
+	return "off"
 }
 
-// PlainText counts models per provider for a surface without a TUI.
+// PlainText counts the signed-in models per provider for a surface without a TUI.
 func PlainText(models []Model, width int) string {
 	counts := map[string]int{}
+	out := map[string]bool{}
+	n := 0
 	for _, m := range models {
+		if !m.SignedIn {
+			out[m.Provider] = true
+			continue
+		}
 		counts[m.Provider]++
+		n++
 	}
 	names := make([]string, 0, len(counts))
 	for p := range counts {
@@ -117,15 +105,23 @@ func PlainText(models []Model, width int) string {
 	}
 	sort.Strings(names)
 	var b strings.Builder
-	fmt.Fprintf(&b, "%d models in %d providers\n", len(models), len(names))
+	fmt.Fprintf(&b, "%d models in %d signed-in providers\n", n, len(names))
 	for _, p := range names {
 		fmt.Fprintf(&b, "%s  %d\n", p, counts[p])
 	}
-	var out []string
-	for _, l := range strings.Split(strings.TrimRight(b.String(), "\n"), "\n") {
-		out = append(out, fit(l, max(width, 20)))
+	if len(out) > 0 {
+		left := make([]string, 0, len(out))
+		for p := range out {
+			left = append(left, p)
+		}
+		sort.Strings(left)
+		fmt.Fprintf(&b, "not signed in, left out: %s\n", strings.Join(left, ", "))
 	}
-	return strings.Join(out, "\n")
+	var lines []string
+	for _, l := range strings.Split(strings.TrimRight(b.String(), "\n"), "\n") {
+		lines = append(lines, fit(l, max(width, 20)))
+	}
+	return strings.Join(lines, "\n")
 }
 
 // midCut shortens s to width columns keeping its start and end.
