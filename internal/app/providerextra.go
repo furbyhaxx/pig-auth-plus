@@ -61,15 +61,18 @@ func headline(v *quota.View, d uiquotas.Display) string {
 	}
 	cfg := line.Config{PercentUsed: d.PercentUsed}
 	var parts []string
-	for _, w := range line.ImportantWindows(s) {
-		short := w.Short
-		if short == "" {
-			short = w.ID
+	if s.Credits != nil && (v.Source.Credits || len(s.Windows) == 0) {
+		if s.Credits.Remaining != nil {
+			parts = append(parts, fmt.Sprintf("%s%.2f left", s.Credits.Currency, *s.Credits.Remaining))
 		}
-		parts = append(parts, short+" "+line.FormatPercent(w.Used, cfg))
-	}
-	if len(parts) == 0 && s.Credits != nil && s.Credits.Remaining != nil {
-		parts = append(parts, fmt.Sprintf("%s%.2f left", s.Credits.Currency, *s.Credits.Remaining))
+	} else {
+		for _, w := range line.ImportantWindows(s) {
+			short := w.Short
+			if short == "" {
+				short = w.ID
+			}
+			parts = append(parts, short+" "+line.FormatPercent(w.Used, cfg))
+		}
 	}
 	return strings.Join(parts, " · ")
 }

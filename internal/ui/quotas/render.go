@@ -20,6 +20,8 @@ type Display struct {
 	HideSignedOut     bool
 	CreditHealthyUSD  float64
 	CreditCriticalUSD float64
+	// Placement is the configured quota line placement, shown in the top rule.
+	Placement string
 }
 
 // block is one provider's rendered lines.
@@ -29,6 +31,9 @@ type block struct {
 }
 
 const barCells = 8
+
+// maxLabel keeps a window label next to its bar on wide terminals.
+const maxLabel = 26
 
 func (d Display) lineConfig() line.Config {
 	return line.Config{PercentUsed: d.PercentUsed, CreditHealthyUSD: d.CreditHealthyUSD, CreditCriticalUSD: d.CreditCriticalUSD}
@@ -97,6 +102,17 @@ func providerLines(env frame.Env, th line.Theme, v quota.View, d Display, select
 	if snap == nil {
 		return lines
 	}
+	return append(lines, detailLines(th, v, d, w, now)...)
+}
+
+// detailLines are the lines under a provider heading: every window with its drainage, the
+// balance, reset credits and the error. Its caller has checked that a snapshot exists.
+func detailLines(th line.Theme, v quota.View, d Display, w int, now time.Time) []string {
+	snap := v.Snapshot
+	if snap == nil {
+		return nil
+	}
+	var lines []string
 	nowMs := now.UnixMilli()
 	metrics := map[string]*quota.Metrics{}
 	for i := range v.Drainage {
@@ -209,9 +225,9 @@ func windowLine(th line.Theme, win quota.Window, d Display, w int, nowMs int64) 
 	const resetW = 10
 	fixed := 4 + 1 + cells + 1 + tui.VisibleWidth(pctCol)
 	showReset := w-fixed-resetW-1 >= 12
-	labelW := max(w-fixed, 6)
+	labelW := min(max(w-fixed, 6), maxLabel)
 	if showReset {
-		labelW = w - fixed - resetW
+		labelW = min(w-fixed-resetW, maxLabel)
 	}
 	label = fitLabel(label, labelW-1)
 	row := "    " + label + " " + bar(th, win.Used, cells) + " " + pctCol

@@ -154,6 +154,7 @@ func (a *App) display() uiquotas.Display {
 		HideSignedOut:     s.HideSignedOut,
 		CreditHealthyUSD:  float64(s.CreditHealthyUSD),
 		CreditCriticalUSD: float64(s.CreditCriticalUSD),
+		Placement:         s.LinePlacement,
 	}
 }
 
@@ -216,7 +217,7 @@ func (d *dashboard) choosePlacement(ctx context.Context) {
 	for i, p := range placements {
 		labels[i] = p.label
 	}
-	pick, ok := d.frame.Choose("Quota line placement", labels, ctx.Done())
+	pick, ok := d.frame.ChooseAt("Line position", "Where should the quota line appear?\nSaving asks for a scope next.", labels, ctx.Done())
 	if !ok {
 		return
 	}
@@ -230,7 +231,7 @@ func (d *dashboard) choosePlacement(ctx context.Context) {
 	for i, s := range scopes {
 		slabels[i] = s.label
 	}
-	spick, ok := d.frame.Choose("Save placement to", slabels, ctx.Done())
+	spick, ok := d.frame.ChooseAt("Line position › Save", "Save the line position to", slabels, ctx.Done())
 	if !ok {
 		return
 	}
@@ -255,17 +256,18 @@ func (d *dashboard) choosePlacement(ctx context.Context) {
 type modalDialogs struct {
 	ctx   context.Context
 	frame *frame.Frame
+	crumb string
 }
 
 func (m modalDialogs) Interactive() bool { return true }
 
 func (m modalDialogs) Select(title string, options []string) (string, bool, error) {
-	choice, ok := m.frame.Choose(title, options, m.ctx.Done())
+	choice, ok := m.frame.ChooseAt(m.crumb, title, options, m.ctx.Done())
 	return choice, ok, nil
 }
 
 func (d *dashboard) reset(ctx context.Context, id string) {
-	res, err := resetflow.Run(ctx, d.st.quotas, modalDialogs{ctx: ctx, frame: d.frame}, id, quota.FromPanel)
+	res, err := resetflow.Run(ctx, d.st.quotas, modalDialogs{ctx: ctx, frame: d.frame, crumb: d.resetCrumb(id)}, id, quota.FromPanel)
 	if err != nil {
 		if ctx.Err() == nil {
 			d.notice("Reset failed: "+err.Error(), true)
@@ -495,4 +497,11 @@ func (d *dashboard) removeAlias(ctx context.Context, m uimodels.Model) {
 		}
 	}
 	d.saveAliases(ctx, scope, list, "Alias "+m.Key()+" removed")
+}
+
+func (d *dashboard) resetCrumb(id string) string {
+	if s := d.st.quotas.Registry().Resolve(id); s != nil {
+		return s.Label + " › Reset"
+	}
+	return "Reset"
 }

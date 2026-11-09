@@ -496,3 +496,16 @@ func TestLeaveHintSaysBackInADrillInAndCloseOnTheRoot(t *testing.T) {
 		t.Fatalf("drill-in leave hint: %q", last(drilled))
 	}
 }
+
+func TestChooseAtShowsItsOwnBreadcrumbUnderTheActiveTab(t *testing.T) {
+	f := newFrame(80, 20, &fakeTab{id: "a", title: "Quotas"})
+	done := make(chan struct{})
+	defer close(done)
+	go f.ChooseAt("Codex › Reset", "Spend one reset?", []string{"No", "Yes"}, done)
+	for f.ModalTitle() == "" {
+	}
+	top := plainRows(render(f, 80))[0]
+	if !strings.Contains(top, "Auth › Quotas › Codex › Reset") {
+		t.Fatalf("top rule %q", top)
+	}
+}

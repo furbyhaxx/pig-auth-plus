@@ -130,7 +130,13 @@ func (f *Frame) Invalidate() {
 // first line of title is the question and the following lines are facts. It must not be
 // called from the panel's own queue (a tab key handler); run it in a goroutine.
 func (f *Frame) Choose(title string, options []string, done <-chan struct{}) (string, bool) {
-	m := &modal{crumb: "Confirm", title: title, options: options, reply: make(chan reply, 1)}
+	return f.ChooseAt("Confirm", title, options, done)
+}
+
+// ChooseAt is [Frame.Choose] with the breadcrumb the screen shows after the active tab, such
+// as "Line position" or "Codex › Reset".
+func (f *Frame) ChooseAt(crumb, title string, options []string, done <-chan struct{}) (string, bool) {
+	m := &modal{crumb: crumb, title: title, options: options, reply: make(chan reply, 1)}
 	f.mu.Lock()
 	f.modal = m
 	f.mu.Unlock()
