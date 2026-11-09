@@ -62,3 +62,17 @@ func TestEditBackspaceRemovesTheLastRune(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+func TestLongValueIsCutBeforeItsSource(t *testing.T) {
+	r := Row{ID: "k", Label: "Providers", Value: strings.Repeat("openrouter, ", 8), Source: "user", Token: "muted"}
+	for _, w := range []int{36, 57, 80} {
+		l := Line(plain{}, r, 10, false, NoEdit, w)
+		if tui.VisibleWidth(l) > w || !strings.HasSuffix(l, "user") || !strings.Contains(l, "…") {
+			t.Fatalf("width %d: %q", w, l)
+		}
+	}
+	short := Row{ID: "k", Label: "Density", Value: "‹ comfortable ›", Source: "default"}
+	if l := Line(plain{}, short, 10, false, NoEdit, 80); !strings.HasSuffix(l, "default") || strings.Contains(l, "…") {
+		t.Fatalf("a value that fits must not be cut: %q", l)
+	}
+}

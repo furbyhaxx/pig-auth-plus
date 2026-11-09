@@ -22,6 +22,8 @@ type Row struct {
 	Action bool
 	// Header rows are drawn as titles and never selected.
 	Header bool
+	// Search is extra text the filter matches besides the label and value, such as a key.
+	Search string
 }
 
 // LabelWidth is the widest label of the rows that have a label column.
@@ -35,8 +37,6 @@ func LabelWidth(rows []Row) int {
 	return w
 }
 
-// Line lays one row out: cursor, label column, value, source. The value keeps its room
-// before the source does.
 // Line lays one row out: cursor, label column, value, source. The value keeps its room
 // before the source does. editing is the text of the row when it is being edited, otherwise
 // [NoEdit].
@@ -59,12 +59,17 @@ func Line(th line.Theme, r Row, labelW int, selected bool, editing string, width
 		value, source, token = line.Plain(editing)+"▏", "editing", "accent"
 	}
 	room := width - tui.VisibleWidth(head)
-	if source != "" && room-tui.VisibleWidth(value) >= tui.VisibleWidth(source)+2 {
+	// The origin of a value is part of its meaning, so a long value is cut before it.
+	if keep := room - tui.VisibleWidth(source) - 2; source != "" && keep >= min(tui.VisibleWidth(value), minValue) {
+		value = Fit(value, keep)
 		gap := room - tui.VisibleWidth(value) - tui.VisibleWidth(source)
 		return head + value + strings.Repeat(" ", gap) + Paint(th, source, token)
 	}
 	return Fit(head+value, width)
 }
+
+// minValue is the least of a value worth showing next to its source.
+const minValue = 6
 
 // NoEdit is the editing argument of Line for a row that is not being edited.
 const NoEdit = "\x00"
@@ -72,10 +77,11 @@ const NoEdit = "\x00"
 // Screen is the cursor and scroll state of one field screen.
 type Screen struct{ L list.List }
 
-func entries(rows []Row) []list.Entry {
+// Entries are the list entries of rows, for a screen that filters or scrolls them itself.
+func Entries(rows []Row) []list.Entry {
 	out := make([]list.Entry, len(rows))
 	for i, r := range rows {
-		out[i] = list.Entry{ID: r.ID, Search: r.Label + " " + r.Value, Header: r.Header}
+		out[i] = list.Entry{ID: r.ID, Search: r.Label + " " + r.Value + " " + r.Search, Header: r.Header}
 	}
 	return out
 }
@@ -83,7 +89,7 @@ func entries(rows []Row) []list.Entry {
 // Draw renders the rows that fit in rows lines; editing is the text of the selected row when
 // it is being edited, otherwise NoEdit.
 func (s *Screen) Draw(th line.Theme, rows []Row, editing string, height, width int) (lines []string, above, below int) {
-	win := s.L.Window(entries(rows), height)
+	win := s.L.Window(Entries(rows), height)
 	by := make(map[string]Row, len(rows))
 	for _, r := range rows {
 		by[r.ID] = r

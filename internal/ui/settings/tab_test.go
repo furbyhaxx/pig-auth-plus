@@ -19,13 +19,10 @@ func snap(t *testing.T, content string) func() *config.Snapshot {
 
 func selectKey(t *testing.T, tb *Tab, key string) {
 	t.Helper()
-	for i, d := range config.Catalog {
-		if d.Key == key {
-			tb.sel = i
-			return
-		}
+	tb.scr.L.Select(key)
+	if tb.scr.L.Selected() != key {
+		t.Fatalf("no setting %s", key)
 	}
-	t.Fatalf("no setting %s", key)
 }
 
 func TestEveryRowFitsAtAllWidths(t *testing.T) {
@@ -190,5 +187,82 @@ func TestCollectionEditorsFitAllWidths(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestSettingsAreGroupedUnderSectionHeadersWithSourceAndUnits(t *testing.T) {
+	tb := New(snap(t, ""), Actions{}, "")
+	body := strings.Join(tb.Body(frame.Env{Width: 100, Rows: 60}), "\n")
+	for _, want := range []string{"Quotas", "Claude", "Refresh interval", "60 s", "[x] on", "‹ below-editor-first ›", "all sources", "default"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("missing %q in\n%s", want, body)
+		}
+	}
+	if tb.scr.L.Selected() == "" || strings.HasPrefix(tb.scr.L.Selected(), "§") {
+		t.Fatalf("the cursor must start on a setting, not a header: %q", tb.scr.L.Selected())
+	}
+}
+
+func TestFilterMatchesTheKeyAndHidesHeaders(t *testing.T) {
+	tb := New(snap(t, ""), Actions{}, "")
+	tb.SetFilter("cacheRetention")
+	body := strings.Join(tb.Body(frame.Env{Width: 100, Rows: 20}), "\n")
+	if !strings.Contains(body, "Cache retention") || strings.Contains(body, "Refresh interval") || strings.Contains(body, "Quotas") {
+		t.Fatalf("filter by key:\n%s", body)
+	}
+	tb.SetFilter("zzzzzz")
+	if body = strings.Join(tb.Body(frame.Env{Width: 100, Rows: 20}), "\n"); !strings.Contains(body, "no setting matches") {
+		t.Fatalf("empty result:\n%s", body)
+	}
+}
+
+func TestSpaceAndBackspaceBelongToTheFilterOnceItHasText(t *testing.T) {
+	tb := New(snap(t, ""), Actions{}, "")
+	selectKey(t, tb, "quotas.refreshOnRequest")
+	tb.SetFilter("refresh")
+	selectKey(t, tb, "quotas.refreshOnRequest")
+	if tb.Key(" ") || tb.Key("\x7f") {
+		t.Fatal("with filter text, space and backspace must reach the filter")
+	}
+	if tb.Dirty() {
+		t.Fatal("nothing may be staged by keys that belong to the filter")
+	}
+	tb.SetFilter("")
+	selectKey(t, tb, "quotas.refreshOnRequest")
+	if !tb.Key(" ") || !tb.Dirty() {
+		t.Fatal("with an empty filter, space toggles")
+	}
+}
+
+func TestLeftRightSwitchTabsOnRowsThatDoNotStepInPlace(t *testing.T) {
+	tb := New(snap(t, ""), Actions{}, "")
+	selectKey(t, tb, "quotas.lineTemplate")
+	if tb.Key("\x1b[C") || tb.Key("\x1b[D") {
+		t.Fatal("arrows on a text setting belong to the frame's tab switch")
+	}
+	selectKey(t, tb, "quotas.compactWidthCols")
+	if !tb.Key("\x1b[C") || !tb.Dirty() {
+		t.Fatal("arrows nudge a number")
+	}
+}
+
+func TestAliasesRowJumpsToTheModelsTab(t *testing.T) {
+	var to string
+	tb := New(snap(t, ""), Actions{Goto: func(tab string) { to = tab }}, "")
+	selectKey(t, tb, "models.aliases")
+	tb.Key("\r")
+	if to != "models" {
+		t.Fatalf("jumped to %q", to)
+	}
+}
+
+func TestDrillInHasBreadcrumbAndUnsavedStatus(t *testing.T) {
+	tb := open(t, "claude.cacheRetentionProviders")
+	if got := tb.Crumbs(); len(got) != 1 || got[0] != "claude.cacheRetentionProviders" || tb.Filterable() {
+		t.Fatalf("crumbs %v filterable %v", got, tb.Filterable())
+	}
+	tb.Key(" ")
+	if got := tb.Status(frame.Env{}); !strings.Contains(got, "unsaved") {
+		t.Fatalf("status %q", got)
 	}
 }

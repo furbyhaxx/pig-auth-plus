@@ -85,6 +85,7 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		Save:    func(edits []config.Edit) { d.async(func(c context.Context) { d.saveSettings(c, edits) }) },
 		Preview: d.previewTemplate,
 		Known:   d.knownProviders,
+		Goto:    func(tab string) { d.frame.Activate(tab) },
 	}, key)
 	level, lerr := ctx.GetThinkingLevel()
 	if lerr != nil {

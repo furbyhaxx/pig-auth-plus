@@ -12,6 +12,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
@@ -25,6 +26,8 @@ type Actions struct {
 	Known func(key string) []string
 	// Preview renders a quota line template at width and lists its ignored syntax.
 	Preview func(template string, width int) (lines, unknown []string)
+	// Goto opens another dashboard tab by id.
+	Goto func(tab string)
 }
 
 // Tab implements frame.Tab over a settings snapshot and staged edits.
@@ -33,32 +36,35 @@ type Tab struct {
 	actions Actions
 
 	mu      sync.Mutex
-	sel     int
-	top     int
+	scr     form.Screen
 	staged  map[string]config.Edit
-	editing *edit
+	editing *form.Edit
+	editKey string
 	coll    collection
 	collKey string
 	leave   bool
+	jump    string
 	notice  string
 	warn    bool
+	above   int
+	below   int
 }
 
-type edit struct {
-	key string
-	buf []rune
-}
-
-var _ frame.Tab = (*Tab)(nil)
+var (
+	_ frame.Tab        = (*Tab)(nil)
+	_ frame.Crumber    = (*Tab)(nil)
+	_ frame.Statuser   = (*Tab)(nil)
+	_ frame.Describer  = (*Tab)(nil)
+	_ frame.Filterer   = (*Tab)(nil)
+	_ frame.Overflower = (*Tab)(nil)
+	_ frame.Pointer    = (*Tab)(nil)
+)
 
 // New builds the tab; selectKey starts on that setting when it names one.
 func New(snap func() *config.Snapshot, actions Actions, selectKey string) *Tab {
 	t := &Tab{snap: snap, actions: actions, staged: map[string]config.Edit{}}
-	for i, d := range config.Catalog {
-		if d.Key == selectKey {
-			t.sel = i
-		}
-	}
+	t.scr.L.Window(form.Entries(t.rows()), 1<<10)
+	t.scr.L.Select(selectKey)
 	return t
 }
 
@@ -82,7 +88,7 @@ func (t *Tab) Discard() {
 	t.mu.Unlock()
 }
 
-// SetNotice shows feedback until the next key.
+// SetNotice shows feedback in the description line until the next key.
 func (t *Tab) SetNotice(text string, warn bool) {
 	t.mu.Lock()
 	t.notice, t.warn = text, warn
@@ -115,22 +121,149 @@ func (t *Tab) stagedLocked() []config.Edit {
 	return out
 }
 
-func (t *Tab) rows() []row {
+// Filterable implements frame.Filterer; only the setting list takes typed filter text.
+func (t *Tab) Filterable() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.coll == nil && t.editing == nil
+}
+
+// SetFilter implements frame.Filterer.
+func (t *Tab) SetFilter(q string) { t.scr.L.SetFilter(q) }
+
+// Overflow implements frame.Overflower.
+func (t *Tab) Overflow() (int, int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.above, t.below
+}
+
+// Crumbs implements frame.Crumber.
+func (t *Tab) Crumbs() []string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.coll != nil {
+		return []string{t.collKey}
+	}
+	return nil
+}
+
+// Status implements frame.Statuser.
+func (t *Tab) Status(frame.Env) string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	switch {
+	case t.coll != nil && t.coll.Dirty():
+		return "● unsaved"
+	case t.coll != nil:
+		return "list"
+	case len(t.staged) > 0:
+		return fmt.Sprintf("%d settings · ● %d staged", len(config.Catalog), len(t.staged))
+	}
+	return fmt.Sprintf("%d settings", len(config.Catalog))
+}
+
+var sections = map[string]string{
+	"dashboard": "Dashboard", "quotas": "Quotas", "models": "Models",
+	"openai": "OpenAI", "claude": "Claude", "tokens": "Tokens",
+}
+
+// units are the suffixes of a key that name the unit of its number.
+var units = []struct{ suffix, unit string }{{"Sec", " s"}, {"Percent", "%"}, {"Usd", " USD"}, {"Cols", " cols"}}
+
+// labelOf turns "refreshIntervalSec" into "Refresh interval" and its unit " s".
+func labelOf(key string) (label, unit string) {
+	name := key[strings.IndexByte(key, '.')+1:]
+	for _, u := range units {
+		if strings.HasSuffix(name, u.suffix) && len(name) > len(u.suffix) {
+			name, unit = strings.TrimSuffix(name, u.suffix), u.unit
+		}
+	}
+	var b strings.Builder
+	for i, r := range name {
+		switch {
+		case i == 0:
+			b.WriteRune(unicode.ToUpper(r))
+		case unicode.IsUpper(r):
+			b.WriteByte(' ')
+			b.WriteRune(unicode.ToLower(r))
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String(), unit
+}
+
+// display is a value as a row shows it: [x]/[ ] toggles, ‹ value › cycles, units on numbers.
+func display(d *config.Definition, v any) string {
+	_, unit := labelOf(d.Key)
+	switch x := v.(type) {
+	case bool:
+		if x {
+			return "[x] on"
+		}
+		return "[ ] off"
+	case string:
+		if d.Kind == config.KindEnum {
+			return "‹ " + x + " ›"
+		}
+	case int64:
+		return fmt.Sprint(x) + unit
+	case []string:
+		if len(x) == 0 && d.Key == "quotas.providers" {
+			return "all sources"
+		}
+	case []config.Alias:
+		return fmt.Sprintf("%d alias(es)", len(x))
+	case []config.ReplacePattern:
+		return fmt.Sprintf("%d rule(s)", len(x))
+	}
+	return Format(d, v)
+}
+
+func (t *Tab) value(d *config.Definition) (v any, staged, reset bool) {
+	if e, ok := t.staged[d.Key]; ok {
+		if e.Reset {
+			return d.Default, true, true
+		}
+		return e.Value, true, false
+	}
+	return t.snap().Value(d.Key), false, false
+}
+
+func (t *Tab) rows() []form.Row {
 	snap := t.snap()
-	out := make([]row, len(config.Catalog))
+	var out []form.Row
+	last := ""
 	for i := range config.Catalog {
 		d := &config.Catalog[i]
-		r := row{def: d, value: snap.Value(d.Key), source: snap.Source(d.Key).String()}
-		if e, ok := t.staged[d.Key]; ok {
-			r.staged, r.reset = true, e.Reset
-			r.value = e.Value
-			if e.Reset {
-				r.value = d.Default
+		section := d.Key[:strings.IndexByte(d.Key, '.')]
+		if section != last {
+			title := sections[section]
+			if title == "" {
+				title = section
+			}
+			out = append(out, form.Row{ID: "§" + section, Label: title, Header: true})
+			last = section
+		}
+		label, _ := labelOf(d.Key)
+		v, staged, reset := t.value(d)
+		r := form.Row{ID: d.Key, Label: label, Value: display(d, v), Search: d.Key, Source: snap.Source(d.Key).String(), Token: "muted"}
+		if staged {
+			r.Source, r.Token = "● staged", "warning"
+			if reset {
+				r.Source = "● staged reset"
 			}
 		}
-		out[i] = r
+		out = append(out, r)
 	}
 	return out
+}
+
+// selected is the definition under the cursor, nil when the filter matches nothing.
+func (t *Tab) selected() *config.Definition {
+	d, _ := config.Lookup(t.scr.L.Selected())
+	return d
 }
 
 // Body implements frame.Tab.
@@ -141,67 +274,84 @@ func (t *Tab) Body(env frame.Env) []string {
 	if t.coll != nil {
 		return t.collBody(th, env)
 	}
-	rows := t.rows()
-	t.sel = max(0, min(t.sel, len(rows)-1))
-	cur := rows[t.sel]
-
-	var foot []string
+	edited := form.NoEdit
 	if t.editing != nil {
-		foot = append(foot, fit(paint(th, " edit ", "accent")+string(t.editing.buf)+"▏", env.Width))
+		edited = string(t.editing.Text)
 	}
-	for _, l := range tui.WrapTextWithAnsi(paint(th, cur.def.Help, "muted"), max(env.Width-2, 10)) {
-		foot = append(foot, " "+l)
+	lines, above, below := t.scr.Draw(th, t.rows(), edited, env.Rows, env.Width)
+	t.above, t.below = above, below
+	if len(lines) == 0 {
+		return []string{"  no setting matches “" + line.Plain(t.scr.L.Query()) + "”"}
 	}
-	if cur.def.Key == "quotas.lineTemplate" && t.actions.Preview != nil {
-		src := fmt.Sprint(cur.value)
-		if t.editing != nil && t.editing.key == cur.def.Key {
-			src = string(t.editing.buf)
-		}
-		lines, unknown := t.actions.Preview(src, env.Width-2)
-		foot = append(foot, paint(th, " preview", "dim"))
-		for _, l := range lines[:min(len(lines), 3)] {
-			foot = append(foot, " "+fit(l, env.Width-1))
-		}
-		if len(unknown) > 0 {
-			foot = append(foot, fit(paint(th, " ▲ ignored: "+strings.Join(unknown, ", "), "warning"), env.Width))
-		}
-	}
-	if t.notice != "" {
-		token, glyph := "muted", "· "
-		if t.warn {
-			token, glyph = "warning", "▲ "
-		}
-		for i, l := range tui.WrapTextWithAnsi(t.notice, max(env.Width-4, 10)) {
-			p := "  "
-			if i == 0 {
-				p = glyph
-			}
-			foot = append(foot, " "+paint(th, p+l, token))
-		}
-	}
-	room := max(env.Rows-len(foot), 3)
+	return lines
+}
 
-	var lines []string
-	spans := make([][2]int, len(rows))
-	for i, r := range rows {
-		l := rowLines(th, r, i == t.sel, env.Width)
-		spans[i] = [2]int{len(lines), len(lines) + len(l)}
-		lines = append(lines, l...)
+// Description implements frame.Describer.
+func (t *Tab) Description(env frame.Env) string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	switch {
+	case t.notice != "":
+		if t.warn {
+			return "▲ " + line.Plain(t.notice)
+		}
+		return line.Plain(t.notice)
+	case t.coll != nil && t.leave:
+		return "▲ Esc again discards this draft; ctrl+s applies it."
+	case t.coll != nil:
+		return "Ctrl+S stages the list into Settings; save it there."
 	}
-	if s := spans[t.sel]; s[0] < t.top {
-		t.top = s[0]
-	} else if s[1] > t.top+room {
-		t.top = s[1] - room
+	d := t.selected()
+	if d == nil {
+		return "Type to filter settings by name or value."
 	}
-	t.top = max(0, min(t.top, len(lines)-room))
-	end := min(t.top+room, len(lines))
-	body := append([]string(nil), lines[t.top:end]...)
-	return append(body, foot...)
+	if d.Key == "quotas.lineTemplate" && t.actions.Preview != nil {
+		src := fmt.Sprint(t.snap().Value(d.Key))
+		if t.editing != nil {
+			src = string(t.editing.Text)
+		}
+		if lines, _ := t.actions.Preview(src, max(env.Width-10, 10)); len(lines) > 0 {
+			return "preview " + line.Plain(lines[0])
+		}
+	}
+	return d.Key + " · " + d.Help
+}
+
+// Click implements frame.Pointer: a click selects, a second click opens.
+func (t *Tab) Click(row, count int) bool {
+	t.mu.Lock()
+	if t.coll != nil || t.editing != nil {
+		t.mu.Unlock()
+		return false
+	}
+	id, again := t.scr.L.Click(row)
+	t.mu.Unlock()
+	if id == "" {
+		return false
+	}
+	if again || count >= 2 {
+		t.Key("\r")
+	}
+	return true
+}
+
+// Wheel implements frame.Pointer.
+func (t *Tab) Wheel(delta int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.coll == nil {
+		t.scr.L.Scroll(delta)
+	}
 }
 
 var printable = func(r rune) bool { return unicode.IsPrint(r) }
 
-// Key implements frame.Tab.
+// steppable reports whether Left/Right change the setting in place.
+func steppable(d *config.Definition) bool {
+	return d.Kind == config.KindBool || d.Kind == config.KindEnum || d.Kind == config.KindInt
+}
+
+// Key implements frame.Tab. Bare letters are never bound: on the list they feed the filter.
 func (t *Tab) Key(data string) bool {
 	t.mu.Lock()
 	t.notice = ""
@@ -211,25 +361,33 @@ func (t *Tab) Key(data string) bool {
 	}
 	if t.editing != nil {
 		defer t.mu.Unlock()
-		return t.editKey(data)
+		return t.editKeyLocked(data)
 	}
 	kb := tui.GetKeybindings()
+	d := t.selected()
+	idle := t.scr.L.Query() == ""
 	var save []config.Edit
+	t.jump = ""
 	switch {
-	case kb.Matches(data, "tui.select.down"), data == "j":
-		t.sel = min(t.sel+1, len(config.Catalog)-1)
-	case kb.Matches(data, "tui.select.up"), data == "k":
-		t.sel = max(t.sel-1, 0)
-	case tui.MatchesKey(data, "left"), data == "h":
-		t.step(-1)
-	case tui.MatchesKey(data, "right"), data == "l":
-		t.step(1)
-	case data == " ":
-		t.step(1)
-	case kb.Matches(data, "tui.select.confirm"):
-		t.enter()
-	case tui.MatchesKey(data, "backspace"), tui.MatchesKey(data, "delete"):
-		d := &config.Catalog[t.sel]
+	case kb.Matches(data, "tui.select.down"):
+		t.scr.L.Move(1)
+	case kb.Matches(data, "tui.select.up"):
+		t.scr.L.Move(-1)
+	case kb.Matches(data, "tui.select.pageDown"):
+		t.scr.L.Page(1)
+	case kb.Matches(data, "tui.select.pageUp"):
+		t.scr.L.Page(-1)
+	case (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right")) && d != nil && steppable(d):
+		dir := 1
+		if tui.MatchesKey(data, "left") {
+			dir = -1
+		}
+		t.step(d, dir)
+	case data == " " && idle && d != nil:
+		t.step(d, 1)
+	case kb.Matches(data, "tui.select.confirm") && d != nil:
+		t.enter(d)
+	case (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")) && idle && d != nil:
 		t.staged[d.Key] = config.Edit{Key: d.Key, Reset: true}
 	case tui.MatchesKey(data, "ctrl+s"):
 		if len(t.staged) == 0 {
@@ -241,21 +399,20 @@ func (t *Tab) Key(data string) bool {
 		t.mu.Unlock()
 		return false
 	}
+	jump := t.jump
 	t.mu.Unlock()
 	if save != nil && t.actions.Save != nil {
 		t.actions.Save(save)
+	}
+	if jump != "" && t.actions.Goto != nil {
+		t.actions.Goto(jump)
 	}
 	return true
 }
 
 func (t *Tab) current(d *config.Definition) any {
-	if e, ok := t.staged[d.Key]; ok {
-		if e.Reset {
-			return d.Default
-		}
-		return e.Value
-	}
-	return t.snap().Value(d.Key)
+	v, _, _ := t.value(d)
+	return v
 }
 
 func (t *Tab) stage(d *config.Definition, v any) {
@@ -267,9 +424,8 @@ func (t *Tab) stage(d *config.Definition, v any) {
 	t.staged[d.Key] = config.Edit{Key: d.Key, Value: norm}
 }
 
-// step changes the selected setting by one: toggles, cycles or nudges.
-func (t *Tab) step(dir int) {
-	d := &config.Catalog[t.sel]
+// step changes the setting by one: toggles, cycles or nudges.
+func (t *Tab) step(d *config.Definition, dir int) {
 	switch d.Kind {
 	case config.KindBool:
 		t.stage(d, dir > 0)
@@ -299,69 +455,54 @@ func (t *Tab) step(dir int) {
 }
 
 // enter opens the inline editor, toggles or cycles, or opens a collection editor.
-func (t *Tab) enter() {
-	d := &config.Catalog[t.sel]
+func (t *Tab) enter(d *config.Definition) {
 	switch d.Kind {
 	case config.KindBool, config.KindEnum:
-		t.step(1)
+		t.step(d, 1)
 	case config.KindStringList:
 		var known []string
 		if t.actions.Known != nil {
 			known = t.actions.Known(d.Key)
 		}
-		empty := ""
+		empty := "the override is disabled"
 		if d.Key == "quotas.providers" {
 			empty = "all quota sources are polled"
-		} else {
-			empty = "the override is disabled"
 		}
 		t.coll, t.collKey, t.leave = newProviderList(known, t.current(d).([]string), empty), d.Key, false
 	case config.KindInt, config.KindString:
-		cur := t.current(d)
 		text := ""
-		switch x := cur.(type) {
+		switch x := t.current(d).(type) {
 		case int64:
 			text = strconv.FormatInt(x, 10)
 		case string:
 			text = x
 		}
-		t.editing = &edit{key: d.Key, buf: []rune(text)}
+		t.editing, t.editKey = &form.Edit{}, d.Key
+		t.editing.Begin(text)
 	case config.KindAliases:
-		t.notice, t.warn = "Aliases are edited in the Models tab.", false
+		t.jump = "models"
 	case config.KindReplacePatterns:
 		t.coll, t.collKey, t.leave = newPatternList(t.current(d).([]config.ReplacePattern)), d.Key, false
 	}
 }
 
-// editKey handles the inline editor; the caller holds t.mu.
-func (t *Tab) editKey(data string) bool {
-	e := t.editing
+// editKeyLocked handles the inline editor; the caller holds t.mu.
+func (t *Tab) editKeyLocked(data string) bool {
 	kb := tui.GetKeybindings()
 	switch {
 	case kb.Matches(data, "tui.select.cancel"):
 		t.editing = nil
 	case kb.Matches(data, "tui.select.confirm"):
 		t.commit()
-	case tui.MatchesKey(data, "backspace"):
-		if n := len(e.buf); n > 0 {
-			e.buf = e.buf[:n-1]
-		}
-	case tui.MatchesKey(data, "ctrl+u"):
-		e.buf = nil
 	default:
-		for _, r := range data {
-			if printable(r) {
-				e.buf = append(e.buf, r)
-			}
-		}
+		t.editing.Type(data)
 	}
 	return true
 }
 
 func (t *Tab) commit() {
-	e := t.editing
-	d, _ := config.Lookup(e.key)
-	text := string(e.buf)
+	d, _ := config.Lookup(t.editKey)
+	text := string(t.editing.Text)
 	var value any
 	switch d.Kind {
 	case config.KindInt:
@@ -402,7 +543,7 @@ func (t *Tab) Hints(frame.Env) []string {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
 	return []string{
-		sdk.RawKeyHint("←/→", "change"),
+		sdk.RawKeyHint("←→", "change"),
 		sdk.KeyHint("tui.select.confirm", "edit"),
 		sdk.RawKeyHint("ctrl+s", "save"),
 		sdk.RawKeyHint("backspace", "default"),
@@ -424,24 +565,15 @@ const helpText = ` Settings
  Every setting with its effective value and the layer it comes from:
  default, user (auth-plus.toml) or session. Edits are staged, shown with ●, and written
  only when you save; the save asks for user or session scope.
- Left/Right or h/l  toggle, cycle or nudge      Enter  edit text, numbers and lists
- Space  toggle or advance                      Backspace  stage the built-in default
- Ctrl+S  save staged edits                      Esc  cancel an edit; closing asks first
+ type  filter by name or value             ←→ or space  toggle, cycle or nudge
+ enter  edit text, numbers and lists        backspace  stage the built-in default
+ ctrl+s  save staged edits                  esc  clear the filter, cancel an edit, or close
  Lists open a typed editor. A higher layer overrides a lower one, so a saved
  value can stay shadowed; the save reports which keys.`
 
 func (t *Tab) collBody(th line.Theme, env frame.Env) []string {
 	lines := t.coll.Lines(th, env.Width)
-	head := paint(th, " Settings › "+t.collKey, "accent")
-	if t.coll.Dirty() {
-		head += paint(th, "  ● unsaved", "warning")
-	}
-	out := []string{fit(head, env.Width)}
-	out = append(out, lines[:min(len(lines), max(env.Rows-2, 1))]...)
-	if t.leave {
-		out = append(out, fit(paint(th, " ▲ Esc again discards this draft; ctrl+s applies it", "warning"), env.Width))
-	}
-	return out
+	return lines[:min(len(lines), max(env.Rows, 1))]
 }
 
 // collKeyLocked routes a key to the open collection editor; the caller holds t.mu.
