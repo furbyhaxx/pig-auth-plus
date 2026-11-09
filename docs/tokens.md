@@ -62,8 +62,9 @@ Evidence: `.project/analyses/synthetic-usage-units/report.md`,
 
 | Row | Content |
 |---|---|
-| Total, Context | The count, its source, and the percentage of the context window |
-| Pi, Delta | PiG's own count and the difference |
+| Context | The count as a bar, with its share of the context window |
+| Source | Where the count comes from, as a glyph and a word |
+| Pi | PiG's own count and the difference (Δ) |
 | Anchor, Tail | The last reply's usage, and the messages after it |
 | Breakdown | The full request split into system, tools, user, assistant and tool results |
 

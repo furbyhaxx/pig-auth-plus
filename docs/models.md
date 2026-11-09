@@ -1,14 +1,15 @@
 # Models
 
-`/auth models` lists every model PiG can list, grouped by provider, with its context window.
-`/` searches provider, id and name (all words must match); Enter opens a model's detail.
-Overrides and aliases are marked on the rows they change. Hiding models and routing groups
-are not part of pig-auth-plus.
+`/auth models` lists the models of the providers you are signed in to, with their context
+windows. Providers without a credential are left out (sign in with `/login <provider>`).
+Type to filter provider, id and name (all words must match); Enter opens a model. Overrides
+and aliases are marked on the rows they change. Hiding models and routing groups are not part
+of pig-auth-plus.
 
 ## Overrides
 
-Select a model and press `o`. Name, context and output limits, reasoning, input types and
-prices can be staged individually; Enter edits a field, Left/Right changes an option and
+Enter on a model opens its fields. Name, context and output limits, reasoning, input types
+and prices can be staged individually; Enter edits a field, Left/Right changes an option and
 Backspace stages removal of that override. `ctrl+s` writes all staged fields in one locked
 update; Esc asks before discarding them.
 
@@ -20,10 +21,11 @@ a model; it does not change what the provider enforces. Fields such as headers,
 
 ## Aliases
 
-`a` on a model adds or edits an alias: an id (no spaces, not equal to the source and not
-taken in that provider), an optional display name and optional context and output limits.
-Blank optional fields inherit from the source. `d` removes an alias. The save asks for
-`user` or `session` scope.
+In a model's detail, `+ New alias` opens the alias form and Enter on an existing alias row
+edits it: an id (no spaces, not equal to the source and not taken in that provider), an
+optional display name and optional context and output limits. Blank optional fields inherit
+from the source. `Remove alias` (or `d` on it) deletes one. The save asks for `user` or
+`session` scope.
 
 An alias is a PiG virtual model listed under the source's provider; requests go to the
 source model. Aliases are stored in `models.aliases` of `auth-plus.toml`, and a higher layer's

@@ -75,10 +75,12 @@ and the Quotas tab, with the literal text of their segment. Before data arrives 
 
 ## Quotas tab
 
-Shows every window, balances, reset countdowns, plan badges, fetch age, errors, login hints
-and observed drainage. Opening it never fetches. Keys are listed in [commands](commands.md).
-The placement chooser asks for a save scope (session or user) and saves nothing until you
-confirm it.
+One row per provider with its important windows, balance, reset countdown and fetch age;
+the row drops reset countdowns, then bars, then age as the terminal narrows, and never the
+provider name or its state. Enter opens every window with its burn rate and projected
+exhaustion; `/quotas <provider>` opens that detail directly. Opening the tab never fetches.
+Keys are listed in [commands](commands.md#dashboard). The placement chooser asks for a save
+scope (session or user) and saves nothing until you confirm it.
 
 ## Reset credits
 

@@ -12,7 +12,8 @@ quota monitoring and one `/auth` dashboard. It replaces
   and DeepSeek, with a configurable status line and a live panel.
 - Context token counts from the best source per model, with the source shown. Synthetic
   usage is reported in real tokens.
-- `/auth` dashboard: providers, quotas, tokens, models (overrides and aliases), settings.
+- `/auth` dashboard: one fixed-height panel with providers, quotas, tokens, models
+  (overrides and aliases) and settings; keyboard and mouse, filterable lists, detail screens.
 - Event bus `pi-auth-plus:v1:*` for other extensions (quotas, token counts).
 
 Commands: `/auth`, `/quotas` (`/quota`), `/tokens` (`/token`). Login stays `/login`.
