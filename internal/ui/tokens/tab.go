@@ -9,12 +9,14 @@ import (
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 	"github.com/MichaelKinsy/PiG/extensions/sdk/tui"
 
+	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/tokens"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
 
-// Tab implements frame.Tab. The owner pushes breakdown state with SetBreakdown.
+// Tab implements frame.Tab and the optional frame interfaces. The owner pushes breakdown state
+// with SetBreakdown.
 type Tab struct {
 	report    func() *tokens.Report
 	display   func() Display
@@ -26,7 +28,14 @@ type Tab struct {
 	rows      int
 }
 
-var _ frame.Tab = (*Tab)(nil)
+var (
+	_ frame.Tab        = (*Tab)(nil)
+	_ frame.Statuser   = (*Tab)(nil)
+	_ frame.Describer  = (*Tab)(nil)
+	_ frame.Filterer   = (*Tab)(nil)
+	_ frame.Overflower = (*Tab)(nil)
+	_ frame.Pointer    = (*Tab)(nil)
+)
 
 // New builds the tab. report is the tracker's latest report; recount starts a fresh count and
 // breakdown asynchronously.
@@ -52,6 +61,34 @@ func (t *Tab) Dirty() bool { return false }
 
 // Discard implements frame.Tab.
 func (t *Tab) Discard() {}
+
+// Filterable implements frame.Filterer: the screen has a handful of rows and `r` recounts, so
+// typed text never filters.
+func (t *Tab) Filterable() bool { return false }
+
+// SetFilter implements frame.Filterer.
+func (t *Tab) SetFilter(string) {}
+
+// Status implements frame.Statuser: the model the count is for.
+func (t *Tab) Status(frame.Env) string {
+	r := t.report()
+	if r == nil {
+		return "no model"
+	}
+	return line.Plain(r.Provider + "/" + r.Model)
+}
+
+// Description implements frame.Describer.
+func (t *Tab) Description(frame.Env) string {
+	return "Live session context count, where it came from, and what fills it."
+}
+
+// Overflow implements frame.Overflower.
+func (t *Tab) Overflow() (int, int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.top, max(t.last-t.top-t.rows, 0)
+}
 
 // Body implements frame.Tab.
 func (t *Tab) Body(env frame.Env) []string {
@@ -79,31 +116,48 @@ func (t *Tab) Key(data string) bool {
 			t.recount()
 		}
 	case kb.Matches(data, "tui.select.down"):
-		t.scroll(1)
+		t.Wheel(1)
 	case kb.Matches(data, "tui.select.up"):
-		t.scroll(-1)
+		t.Wheel(-1)
+	case kb.Matches(data, "tui.select.pageDown"):
+		t.Wheel(max(t.pageRows()-1, 1))
+	case kb.Matches(data, "tui.select.pageUp"):
+		t.Wheel(-max(t.pageRows()-1, 1))
 	default:
 		return false
 	}
 	return true
 }
 
-func (t *Tab) scroll(delta int) {
+func (t *Tab) pageRows() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.rows
+}
+
+// Click implements frame.Pointer; nothing on this screen is selectable.
+func (t *Tab) Click(int, int) bool { return false }
+
+// Wheel implements frame.Pointer.
+func (t *Tab) Wheel(delta int) {
 	t.mu.Lock()
 	t.top = max(0, min(t.top+delta, t.last-t.rows))
 	t.mu.Unlock()
 }
 
 // Hints implements frame.Tab.
-func (t *Tab) Hints(frame.Env) []string { return []string{sdk.RawKeyHint("r", "recount")} }
+func (t *Tab) Hints(frame.Env) []string {
+	return []string{sdk.RawKeyHint("↑↓", "scroll"), sdk.RawKeyHint("r", "recount")}
+}
 
 // Help implements frame.Tab.
 func (t *Tab) Help(frame.Env) []string { return strings.Split(helpText, "\n") }
 
 const helpText = ` Tokens
- Total is the context the next request carries: the last reply's usage plus the messages after it.
- exact (usage)  reported by the provider for a real request
- count API      the provider counted the full request; not billed usage
- estimate       measured characters per token; labelled whenever a total includes one
- Delta compares the total with the host's own estimate. Breakdown recounts the full request.
- r  recount now          Up/Down  scroll`
+ Context is what the next request carries: the last reply's usage plus the messages after it.
+ ● exact (usage)  reported by the provider for a real request
+ ◐ count API      the provider counted the full request; not billed usage
+ ≈ estimate       measured characters per token; shown whenever a total includes one
+ Pi is the host's own estimate; Δ is the difference. Breakdown recounts the full request and
+ shows each part's share of that request, not of the context window.
+ r  recount now     ↑↓  scroll     pgup/pgdn  page`

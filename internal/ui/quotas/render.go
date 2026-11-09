@@ -2,7 +2,6 @@ package quotas
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/meter"
 	"github.com/furbyhaxx/pig-auth-plus/internal/uitheme"
 )
 
@@ -184,24 +184,6 @@ func short(d time.Duration) string {
 	return fmt.Sprintf("%ds", int(d.Seconds()))
 }
 
-func bar(th line.Theme, used *float64, cells int) string {
-	if used == nil {
-		return paint(th, strings.Repeat("·", cells), "dim")
-	}
-	u := math.Min(1, math.Max(0, *used))
-	filled := int(math.Round(u * float64(cells)))
-	var b strings.Builder
-	for i := 0; i < cells; i++ {
-		if i < filled {
-			s := float64(i)/float64(max(cells-1, 1))*0.45 + u*0.55
-			b.WriteString(th.Paint("█", line.Style{Stress: &s}))
-		} else {
-			b.WriteString(paint(th, "░", "dim"))
-		}
-	}
-	return b.String()
-}
-
 func windowLine(th line.Theme, win quota.Window, d Display, w int, nowMs int64) string {
 	label := line.Plain(win.Label)
 	if label == "" {
@@ -230,7 +212,7 @@ func windowLine(th line.Theme, win quota.Window, d Display, w int, nowMs int64) 
 		labelW = min(w-fixed-resetW, maxLabel)
 	}
 	label = fitLabel(label, labelW-1)
-	row := "    " + label + " " + bar(th, win.Used, cells) + " " + pctCol
+	row := "    " + label + " " + meter.Bar(th, win.Used, cells) + " " + pctCol
 	if showReset && reset != "" {
 		row += " " + paint(th, reset, "muted")
 	}

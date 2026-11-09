@@ -9,6 +9,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/quota"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/meter"
 )
 
 // detail levels of a summary row, from most to least informative.
@@ -21,7 +22,7 @@ const (
 )
 
 func miniBar(th line.Theme, used *float64, cells int) string {
-	return paint(th, "▕", "dim") + bar(th, used, cells) + paint(th, "▏", "dim")
+	return paint(th, "▕", "dim") + meter.Bar(th, used, cells) + paint(th, "▏", "dim")
 }
 
 // windowSummary is one window of a summary row at the given level.
