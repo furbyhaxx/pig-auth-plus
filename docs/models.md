@@ -6,6 +6,17 @@ Type to filter provider, id and name (all words must match); Enter opens a model
 and aliases are marked on the rows they change. Hiding models and routing groups are not part
 of pig-auth-plus.
 
+The `claude` catalog refreshes from Anthropic's account model listing through PiG's model
+refresh lifecycle, with a four-hour freshness window. Prices come from models.dev's Anthropic
+catalog, falling back to PiG's bundled price for the same model if unavailable. Compatibility
+metadata comes from PiG, inheriting from the newest model in the same line when needed;
+unknown lines are omitted. Models without a verified price are offered only for OAuth; PiG
+restores its saved catalog offline and uses its bundled list before the first refresh. An
+undated alias of a listed model (`claude-opus-4-5`) stays available, priced like its dated
+id; the alias of a deprecated model is dropped. Open `/model` online to refresh;
+`--list-models` only reads the saved or bundled list. OAuth subscription models still show
+zero cost.
+
 ## Overrides
 
 Enter on a model opens its fields. Name, context and output limits, reasoning, input types

@@ -3,6 +3,7 @@ package claude
 import (
 	"context"
 	"maps"
+	"time"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
 
@@ -18,25 +19,35 @@ type Provider struct {
 }
 
 // Native builds the native provider registration.
-func (p *Provider) Native() (*sdk.Provider, error) {
+func (p *Provider) Native() *sdk.Provider {
 	base := defaultBaseURL
-	return sdk.CreateProvider(sdk.CreateProviderOptions{
-		ID:      ProviderID,
-		Name:    "Claude",
-		BaseURL: &base,
-		Auth:    p.Auth.ProviderAuth(),
-		Models:  p.Catalog.Models(),
-		FetchModels: func(sdk.RefreshModelsContext) ([]map[string]any, error) {
-			return p.Catalog.Models(), nil
+	return &sdk.Provider{
+		ID: ProviderID, Name: "Claude", BaseURL: &base,
+		Auth:         p.Auth.ProviderAuth(),
+		GetModels:    func() ([]map[string]any, error) { return p.Catalog.Models(), nil },
+		FilterModels: p.filterModels,
+		RefreshModels: func(r sdk.RefreshModelsContext) error {
+			return p.Catalog.Refresh(r, live, time.Now())
 		},
-		FilterModels: func(models []map[string]any, cred *sdk.Credential) ([]map[string]any, error) {
-			if t, _ := cred.Get("type"); t == "oauth" {
-				return freeOf(models), nil
-			}
-			return models, nil
-		},
-		API: &sdk.ProviderStreams{Stream: p.streamer(false), StreamSimple: p.streamer(true)},
-	})
+		Stream:       p.streamer(false),
+		StreamSimple: p.streamer(true),
+	}
+}
+
+// filterModels applies the credential: subscription turns are prepaid, and a model without a
+// verified price is not offered to an API key.
+func (p *Provider) filterModels(models []map[string]any, cred *sdk.Credential) ([]map[string]any, error) {
+	if t, _ := cred.Get("type"); t == "oauth" {
+		return freeOf(models), nil
+	}
+	priced := make([]map[string]any, 0, len(models))
+	for _, m := range models {
+		if unpriced, _ := m[unpricedKey].(bool); unpriced {
+			continue
+		}
+		priced = append(priced, m)
+	}
+	return priced, nil
 }
 
 func (p *Provider) streamer(simple bool) sdk.ProviderStreamFunc {

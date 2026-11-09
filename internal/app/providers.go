@@ -44,10 +44,7 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 		Shaper:  claude.NewShaper(stateDir, os.Getenv, func() []config.ReplacePattern { return a.settings().ReplacePatterns }),
 		Runtime: ps.runtime,
 	}
-	native, err := ps.claude.Native()
-	if err != nil {
-		return nil, fmt.Errorf("claude provider: %w", err)
-	}
+	native := ps.claude.Native()
 	if err := ext.RegisterNativeProvider(native); err != nil {
 		return nil, fmt.Errorf("claude provider: %w", err)
 	}
@@ -73,18 +70,11 @@ func registerProviders(ext *sdk.Extension, a *App) (*providers, error) {
 	return ps, nil
 }
 
-// start binds the session and republishes catalogs that differ from the running host's.
+// start binds the session and reports a malformed Claude version override.
 func (ps *providers) start(ctx sdk.Context) {
 	ps.runtime.Bind(&ctx)
 	// The CLI re-derives its project per run; a new session does the same.
 	ps.antigravity.Projects.Reset()
-	anthropic, err := ctx.ModelRegistry().GetModelsOfType("chat", "anthropic")
-	if err == nil && ps.claude.Catalog.Update(anthropic) {
-		force := true
-		if _, err := ctx.ModelRegistry().Refresh(sdk.ModelsRefreshOptions{Providers: []string{claude.ProviderID}, Force: &force}); err != nil {
-			ctx.Notify("pig-auth-plus: claude catalog refresh: "+err.Error(), "warning")
-		}
-	}
 	if w := ps.claude.Shaper.VersionWarning(); w != "" {
 		ctx.Notify(w, "warning")
 	}
