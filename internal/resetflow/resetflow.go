@@ -137,7 +137,11 @@ func Describe(c quota.ResetCredit) string {
 	if c.ExpiresAtMs != nil {
 		exp = ", expires " + Date(c.ExpiresAtMs)
 	}
-	return fmt.Sprintf("%s (%s%s)", title, Plain(c.Status), exp)
+	desc := ""
+	if d := Plain(c.Description); d != "" {
+		desc = " — " + d
+	}
+	return fmt.Sprintf("%s (%s%s)%s", title, Plain(c.Status), exp, desc)
 }
 
 // List renders the listing under the provider label.
@@ -174,8 +178,16 @@ func outcomeText(e Engine, o quota.ResetOutcome) Result {
 		return Result{Text: n + ": nothing to reset; no credit was spent.", Warn: true}
 	case quota.NoCredit:
 		return Result{Text: n + ": no reset credit available; nothing was spent.", Warn: true}
-	default:
+	case quota.Refused:
+		reason := ""
+		if r := Plain(o.Reason); r != "" {
+			reason = " (" + r + ")"
+		}
+		return Result{Text: fmt.Sprintf("%s: reset refused%s; nothing was spent; check /quotas reset %s before approving another attempt.", n, reason, Plain(o.Provider)), Warn: true}
+	case quota.AlreadyRedeemed:
 		return Result{Text: n + ": that credit was already redeemed.", Warn: true}
+	default:
+		return Result{Text: n + ": the provider's answer did not confirm a spend; list again before approving another attempt.", Warn: true}
 	}
 }
 

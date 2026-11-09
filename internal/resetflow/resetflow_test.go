@@ -129,6 +129,26 @@ func TestUnknownProviderIsRejected(t *testing.T) {
 	}
 }
 
+func TestRefusedOutcomeWarnsWithItsSanitizedReason(t *testing.T) {
+	e := setup()
+	e.outcome = quota.ResetOutcome{Provider: "codex", Code: quota.Refused, Reason: "cooldown\x1b[31m until 12:00"}
+	r, err := Run(context.Background(), e, &fakeDialogs{interactive: true, choose: Spend, answered: true}, "", quota.FromCommand)
+	if err != nil || !r.Warn || strings.Contains(r.Text, "credit spent") {
+		t.Fatalf("result=%+v err=%v", r, err)
+	}
+	if !strings.Contains(r.Text, "refused (cooldown until 12:00)") {
+		t.Fatalf("text = %q", r.Text)
+	}
+}
+
+func TestDescribeShowsTheClearedWindowsAndExpiry(t *testing.T) {
+	c := quota.ResetCredit{ID: "g", Status: "available", Title: "Launch grant", Description: "clears seven_day_overage_included", ExpiresAtMs: ms(1793008800000)}
+	want := "Launch grant (available, expires 26.10.2026 11:00) — clears seven_day_overage_included"
+	if got := Describe(c); got != want {
+		t.Fatalf("Describe = %q, want %q", got, want)
+	}
+}
+
 func TestPlainStripsTerminalSequences(t *testing.T) {
 	if got := Plain("a\x1b[31mred\x1b[0m\x1b]0;title\x07b\x00c"); got != "aredbc" {
 		t.Fatalf("Plain = %q", got)

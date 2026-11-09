@@ -62,6 +62,8 @@ type Request struct {
 	Body     []byte
 	Timeout  time.Duration
 	Secrets  []string
+	// NoRedirect refuses to follow redirects; a 3xx answer becomes a [*StatusError].
+	NoRedirect bool
 }
 
 // Do sends r and returns the response with its body fully read. Non-2xx statuses become a
@@ -89,7 +91,13 @@ func Do(ctx context.Context, r Request) (*http.Response, []byte, error) {
 	if r.Header != nil {
 		req.Header = r.Header.Clone()
 	}
-	resp, err := Client.Do(req)
+	client := Client
+	if r.NoRedirect {
+		clone := *Client
+		clone.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+		client = &clone
+	}
+	resp, err := client.Do(req)
 	if err == nil {
 		var data []byte
 		data, err = io.ReadAll(resp.Body)
