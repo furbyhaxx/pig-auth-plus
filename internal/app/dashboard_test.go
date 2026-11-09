@@ -98,3 +98,19 @@ func TestDismissingTheChooserSavesNothing(t *testing.T) {
 		t.Fatal("dismissal changed settings")
 	}
 }
+
+func TestSaveTitleNamesTheKeysAndCapsTheList(t *testing.T) {
+	edits := []config.Edit{{Key: "a.one", Value: int64(1)}, {Key: "a.two", Reset: true}, {Key: "a.three"}, {Key: "a.four"}, {Key: "a.five"}}
+	got := saveTitle(edits)
+	for _, want := range []string{"Save 5 staged settings to", "a.one · set", "a.two · reset to default", "… and 2 more"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("missing %q in\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "a.four") {
+		t.Fatalf("list must be capped:\n%s", got)
+	}
+	if one := saveTitle(edits[:1]); !strings.HasPrefix(one, "Save 1 staged setting to") {
+		t.Fatalf("singular: %q", one)
+	}
+}

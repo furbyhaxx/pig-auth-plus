@@ -143,7 +143,8 @@ func (t *Tab) Crumbs() []string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.coll != nil {
-		return []string{t.collKey}
+		label, _ := labelOf(t.collKey)
+		return []string{label}
 	}
 	return nil
 }
@@ -153,10 +154,8 @@ func (t *Tab) Status(frame.Env) string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	switch {
-	case t.coll != nil && t.coll.Dirty():
-		return "● unsaved"
 	case t.coll != nil:
-		return "list"
+		return t.coll.Status()
 	case len(t.staged) > 0:
 		return fmt.Sprintf("%d settings · ● %d staged", len(config.Catalog), len(t.staged))
 	}
@@ -272,7 +271,9 @@ func (t *Tab) Body(env frame.Env) []string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.coll != nil {
-		return t.collBody(th, env)
+		lines, above, below := t.coll.Body(th, env.Rows, env.Width)
+		t.above, t.below = above, below
+		return lines
 	}
 	edited := form.NoEdit
 	if t.editing != nil {
@@ -297,9 +298,9 @@ func (t *Tab) Description(env frame.Env) string {
 		}
 		return line.Plain(t.notice)
 	case t.coll != nil && t.leave:
-		return "▲ Esc again discards this draft; ctrl+s applies it."
+		return "▲ Esc again discards these changes; ctrl+s stages them."
 	case t.coll != nil:
-		return "Ctrl+S stages the list into Settings; save it there."
+		return t.coll.Description()
 	}
 	d := t.selected()
 	if d == nil {
@@ -320,7 +321,15 @@ func (t *Tab) Description(env frame.Env) string {
 // Click implements frame.Pointer: a click selects, a second click opens.
 func (t *Tab) Click(row, count int) bool {
 	t.mu.Lock()
-	if t.coll != nil || t.editing != nil {
+	if t.coll != nil {
+		again := t.coll.Click(row)
+		t.mu.Unlock()
+		if again || count >= 2 {
+			t.Key("\r")
+		}
+		return true
+	}
+	if t.editing != nil {
 		t.mu.Unlock()
 		return false
 	}
@@ -339,9 +348,11 @@ func (t *Tab) Click(row, count int) bool {
 func (t *Tab) Wheel(delta int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.coll == nil {
-		t.scr.L.Scroll(delta)
+	if t.coll != nil {
+		t.coll.Wheel(delta)
+		return
 	}
+	t.scr.L.Scroll(delta)
 }
 
 var printable = func(r rune) bool { return unicode.IsPrint(r) }
@@ -464,12 +475,15 @@ func (t *Tab) enter(d *config.Definition) {
 		if t.actions.Known != nil {
 			known = t.actions.Known(d.Key)
 		}
-		empty := "the override is disabled"
+		unknown, empty := "custom id", "the override is disabled"
 		if d.Key == "quotas.providers" {
-			empty = "all quota sources are polled"
+			unknown, empty = "unknown id · ignored", "all quota sources are polled"
 		}
-		t.coll, t.collKey, t.leave = newProviderList(known, t.current(d).([]string), empty), d.Key, false
-	case config.KindInt, config.KindString:
+		t.coll, t.collKey, t.leave = newProviderList(known, t.current(d).([]string), unknown, empty), d.Key, false
+		t.scr.L.SetFilter("")
+	case config.KindString:
+		t.coll, t.collKey, t.leave = newTemplateEditor(t.current(d).(string), t.actions.Preview), d.Key, false
+	case config.KindInt:
 		text := ""
 		switch x := t.current(d).(type) {
 		case int64:
@@ -483,6 +497,9 @@ func (t *Tab) enter(d *config.Definition) {
 		t.jump = "models"
 	case config.KindReplacePatterns:
 		t.coll, t.collKey, t.leave = newPatternList(t.current(d).([]config.ReplacePattern)), d.Key, false
+	}
+	if t.coll != nil {
+		t.scr.L.SetFilter("")
 	}
 }
 
@@ -534,10 +551,7 @@ func (t *Tab) Hints(frame.Env) []string {
 	coll := t.coll
 	t.mu.Unlock()
 	if coll != nil {
-		if t.inputOpenOn(coll) {
-			return coll.Hints()
-		}
-		return append(coll.Hints(), sdk.KeyHint("tui.select.cancel", "back"))
+		return coll.Hints()
 	}
 	if editing {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
@@ -571,21 +585,14 @@ const helpText = ` Settings
  Lists open a typed editor. A higher layer overrides a lower one, so a saved
  value can stay shadowed; the save reports which keys.`
 
-func (t *Tab) collBody(th line.Theme, env frame.Env) []string {
-	lines := t.coll.Lines(th, env.Width)
-	return lines[:min(len(lines), max(env.Rows, 1))]
-}
-
-// collKeyLocked routes a key to the open collection editor; the caller holds t.mu.
+// collKeyLocked routes a key to the open drill-in editor; the caller holds t.mu.
 func (t *Tab) collKeyLocked(data string) bool {
 	kb := tui.GetKeybindings()
 	switch {
 	case tui.MatchesKey(data, "ctrl+s"):
-		d, _ := config.Lookup(t.collKey)
-		t.stage(d, t.coll.Value())
-		t.coll, t.leave = nil, false
+		t.stageCollection()
 		return true
-	case kb.Matches(data, "tui.select.cancel") && !t.inputOpen():
+	case kb.Matches(data, "tui.select.cancel") && !t.coll.Capturing():
 		if t.coll.Dirty() && !t.leave {
 			t.leave = true
 			return true
@@ -594,19 +601,17 @@ func (t *Tab) collKeyLocked(data string) bool {
 		return true
 	}
 	t.leave = false
-	t.coll.Key(data)
-	return true
+	used := t.coll.Key(data)
+	if t.coll.Done() {
+		t.stageCollection()
+	}
+	return used
 }
 
-// inputOpen reports whether the editor's inline input owns Esc.
-func (t *Tab) inputOpen() bool { return t.inputOpenOn(t.coll) }
-
-func (t *Tab) inputOpenOn(coll collection) bool {
-	switch c := coll.(type) {
-	case *providerList:
-		return c.input != nil
-	case *patternList:
-		return c.input != nil
+func (t *Tab) stageCollection() {
+	if t.coll.Dirty() {
+		d, _ := config.Lookup(t.collKey)
+		t.stage(d, t.coll.Value())
 	}
-	return false
+	t.coll, t.leave = nil, false
 }

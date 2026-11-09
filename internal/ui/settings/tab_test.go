@@ -108,27 +108,47 @@ func TestPlainTextNamesSource(t *testing.T) {
 
 func open(t *testing.T, key string) *Tab {
 	t.Helper()
-	tb := New(snap(t, ""), Actions{Known: func(string) []string { return []string{"claude", "codex", "xai"} }}, key)
+	tb := New(snap(t, ""), Actions{
+		Known:   func(string) []string { return []string{"claude", "codex", "xai"} },
+		Preview: func(src string, w int) ([]string, []string) { return []string{src}, []string{"{nope:id}"} },
+	}, key)
 	tb.Key("\r")
 	if tb.coll == nil {
-		t.Fatalf("%s must open a collection editor", key)
+		t.Fatalf("%s must open a drill-in editor", key)
 	}
+	view(tb)
 	return tb
+}
+
+// view renders the tab once, as the host does between keys, so the list knows its rows.
+func view(tb *Tab) []string { return tb.Body(frame.Env{Width: 80, Rows: 20}) }
+
+// press sends keys the way the host does: one key, then a render.
+func press(tb *Tab, keys ...string) {
+	for _, k := range keys {
+		tb.Key(k)
+		view(tb)
+	}
 }
 
 func typeText(tb *Tab, s string) {
 	for _, c := range s {
-		tb.Key(string(c))
+		press(tb, string(c))
 	}
 }
 
+const (
+	down      = "\x1b[B"
+	shiftUp   = "\x1b[1;2A"
+	backspace = "\x7f"
+)
+
 func TestProviderListStagesCheckedAndCustomIDs(t *testing.T) {
 	tb := open(t, "quotas.providers")
-	tb.Key(" ") // claude
-	tb.Key("a")
+	press(tb, " ")                    // claude
+	press(tb, down, down, down, "\r") // "+ Custom ID"
 	typeText(tb, "my-proxy")
-	tb.Key("\r")
-	tb.Key("\x13")
+	press(tb, "\r", "\x13")
 	e := tb.Staged()
 	got, _ := e[0].Value.([]string)
 	if tb.coll != nil || len(e) != 1 || strings.Join(got, ",") != "claude,my-proxy" {
@@ -136,9 +156,23 @@ func TestProviderListStagesCheckedAndCustomIDs(t *testing.T) {
 	}
 }
 
+func TestCustomProviderIDIsMarkedAndRemovable(t *testing.T) {
+	tb := open(t, "quotas.providers")
+	press(tb, down, down, down, "\r")
+	typeText(tb, "zai")
+	press(tb, "\r")
+	if body := strings.Join(view(tb), "\n"); !strings.Contains(body, "⚠ unknown id") {
+		t.Fatalf("a custom id must be flagged:\n%s", body)
+	}
+	press(tb, backspace)
+	if body := strings.Join(view(tb), "\n"); strings.Contains(body, "zai") {
+		t.Fatalf("backspace must remove a custom id:\n%s", body)
+	}
+}
+
 func TestEscOnDirtyEditorNeedsConfirmation(t *testing.T) {
 	tb := open(t, "claude.cacheRetentionProviders")
-	tb.Key(" ")
+	press(tb, " ")
 	if !tb.Dirty() {
 		t.Fatal("a changed draft must count as unsaved")
 	}
@@ -146,47 +180,123 @@ func TestEscOnDirtyEditorNeedsConfirmation(t *testing.T) {
 	if tb.coll == nil {
 		t.Fatal("the first Esc must not discard a draft")
 	}
+	if d := tb.Description(frame.Env{Width: 80}); !strings.Contains(d, "Esc again") {
+		t.Fatalf("the confirmation must be visible: %q", d)
+	}
 	tb.Key("\x1b")
 	if tb.coll != nil || len(tb.Staged()) != 0 {
 		t.Fatal("the second Esc discards and stages nothing")
 	}
 }
 
+func TestEscInsideATextInputCancelsTheInputNotTheEditor(t *testing.T) {
+	tb := open(t, "quotas.providers")
+	press(tb, down, down, down, "\r")
+	typeText(tb, "abc")
+	tb.Key("\x1b")
+	if tb.coll == nil || tb.coll.Capturing() {
+		t.Fatal("Esc must close only the input")
+	}
+	if tb.Dirty() {
+		t.Fatal("a cancelled input stages nothing")
+	}
+}
+
 func TestPatternRulesAddEditReorderDrop(t *testing.T) {
 	tb := open(t, "claude.replacePatterns")
-	tb.Key("a")
+	press(tb, "\r") // "+ Rewrite rule"
 	typeText(tb, "old")
-	tb.Key("\r")
+	press(tb, "\r")
 	typeText(tb, "new")
-	tb.Key("\r")
-	tb.Key("a")
+	press(tb, "\r")
+	press(tb, down, down, "\r") // "+ Drop rule"
 	typeText(tb, "secret")
-	tb.Key("\r")
-	tb.Key("\r") // empty replacement: drop paragraphs
-	tb.Key("\x1b[1;2A")
-	body := strings.Join(tb.Body(frame.Env{Width: 80, Rows: 20}), "\n")
-	if !strings.Contains(body, `1. drop paragraphs containing "secret"`) || !strings.Contains(body, `2. "old" → "new"`) {
+	press(tb, "\r", shiftUp)
+	body := strings.Join(view(tb), "\n")
+	if !strings.Contains(body, `1 drop`) || !strings.Contains(body, `"secret"`) || !strings.Contains(body, `2 rewrite`) || !strings.Contains(body, `"old" → "new"`) {
 		t.Fatalf("rules not ordered as edited:\n%s", body)
 	}
-	tb.Key("\x13")
+	press(tb, "\x13")
 	rules, _ := tb.Staged()[0].Value.([]config.ReplacePattern)
-	if len(rules) != 2 || rules[0].HasReplacement || !rules[1].HasReplacement {
+	if len(rules) != 2 || rules[0].HasReplacement || !rules[1].HasReplacement || rules[1].Replacement != "new" {
 		t.Fatalf("got %+v", rules)
 	}
 }
 
-func TestCollectionEditorsFitAllWidths(t *testing.T) {
-	for _, key := range []string{"quotas.providers", "claude.replacePatterns"} {
+func TestRewriteRuleWithoutAReplacementIsNotAdded(t *testing.T) {
+	tb := open(t, "claude.replacePatterns")
+	press(tb, "\r")
+	typeText(tb, "old")
+	press(tb, "\r", "\r") // empty replacement on a rewrite
+	if !tb.coll.Capturing() || len(tb.coll.Value().([]config.ReplacePattern)) != 0 {
+		t.Fatal("a rewrite needs a replacement; use a drop rule to remove paragraphs")
+	}
+}
+
+func TestTemplateEditorStagesOnEnterAndPreviewsEveryWidth(t *testing.T) {
+	tb := open(t, "quotas.lineTemplate")
+	body := strings.Join(tb.Body(frame.Env{Width: 80, Rows: 60}), "\n")
+	for _, w := range []string{"140", "80", "57", "36"} {
+		if !strings.Contains(body, "Preview at "+w+" cols") {
+			t.Fatalf("missing the %s-column preview:\n%s", w, body)
+		}
+	}
+	if !strings.Contains(body, "⚠ ignored: {nope:id}") {
+		t.Fatalf("ignored tokens must be listed:\n%s", body)
+	}
+	if got := tb.Status(frame.Env{}); !strings.Contains(got, "1 ignored token") {
+		t.Fatalf("status %q", got)
+	}
+	typeText(tb, "!")
+	press(tb, "\r")
+	e := tb.Staged()
+	if tb.coll != nil || len(e) != 1 || !strings.HasSuffix(e[0].Value.(string), "!") {
+		t.Fatalf("enter must stage the edited template: %+v", e)
+	}
+}
+
+func TestBlankTemplateCannotBeStaged(t *testing.T) {
+	tb := open(t, "quotas.lineTemplate")
+	press(tb, "\x15") // ctrl+u clears
+	press(tb, "\r")
+	if tb.coll == nil {
+		t.Fatal("a blank template must keep the editor open")
+	}
+}
+
+func TestDrillInEditorsFitAllWidthsAndReportOverflow(t *testing.T) {
+	for _, key := range []string{"quotas.providers", "claude.replacePatterns", "quotas.lineTemplate"} {
 		tb := open(t, key)
-		tb.Key("a")
-		typeText(tb, strings.Repeat("long-input ", 10))
 		for _, w := range []int{36, 57, 80, 140} {
-			for _, row := range tb.Body(frame.Env{Width: w, Rows: 20}) {
+			rows := tb.Body(frame.Env{Width: w, Rows: 4})
+			if len(rows) > 4 {
+				t.Fatalf("%s width %d: %d rows in a 4-row body", key, w, len(rows))
+			}
+			for _, row := range rows {
 				if tui.VisibleWidth(row) > w {
 					t.Fatalf("%s width %d: %q", key, w, row)
 				}
 			}
 		}
+	}
+	tb := open(t, "quotas.lineTemplate")
+	tb.Body(frame.Env{Width: 80, Rows: 4})
+	if _, below := tb.Overflow(); below == 0 {
+		t.Fatal("a template taller than the body must report rows below")
+	}
+}
+
+func TestDrillInHasBreadcrumbAndStatus(t *testing.T) {
+	tb := open(t, "quotas.providers")
+	if got := tb.Crumbs(); len(got) != 1 || got[0] != "Providers" || tb.Filterable() {
+		t.Fatalf("crumbs %v filterable %v", got, tb.Filterable())
+	}
+	if got := tb.Status(frame.Env{}); got != "0 selected" {
+		t.Fatalf("status %q", got)
+	}
+	press(tb, " ")
+	if got := tb.Status(frame.Env{}); got != "1 selected · ● staged" {
+		t.Fatalf("status %q", got)
 	}
 }
 
@@ -256,13 +366,13 @@ func TestAliasesRowJumpsToTheModelsTab(t *testing.T) {
 	}
 }
 
-func TestDrillInHasBreadcrumbAndUnsavedStatus(t *testing.T) {
-	tb := open(t, "claude.cacheRetentionProviders")
-	if got := tb.Crumbs(); len(got) != 1 || got[0] != "claude.cacheRetentionProviders" || tb.Filterable() {
-		t.Fatalf("crumbs %v filterable %v", got, tb.Filterable())
+func TestLongTemplateShowsItsTailAndLeavesRoomForPreviews(t *testing.T) {
+	tb := open(t, "quotas.lineTemplate")
+	body := strings.Join(tb.Body(frame.Env{Width: 36, Rows: 12}), "\n")
+	if !strings.Contains(body, "earlier lines") || !strings.Contains(body, "Preview at 140 cols") {
+		t.Fatalf("the template must not push the previews out of a 12-row body:\n%s", body)
 	}
-	tb.Key(" ")
-	if got := tb.Status(frame.Env{}); !strings.Contains(got, "unsaved") {
-		t.Fatalf("status %q", got)
+	if !strings.Contains(body, "▏") {
+		t.Fatalf("the cursor end of the template must stay visible:\n%s", body)
 	}
 }

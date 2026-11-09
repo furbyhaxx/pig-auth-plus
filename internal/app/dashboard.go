@@ -311,6 +311,27 @@ func (d *dashboard) previewTemplate(src string, width int) ([]string, []string) 
 	return line.Pack(th, segs, max(width, 10)), tpl.Unknown
 }
 
+// saveTitle is the question of the save screen followed by the keys it would write.
+func saveTitle(edits []config.Edit) string {
+	noun := "settings"
+	if len(edits) == 1 {
+		noun = "setting"
+	}
+	lines := []string{fmt.Sprintf("Save %d staged %s to", len(edits), noun)}
+	for i, e := range edits {
+		if i == 3 {
+			lines = append(lines, fmt.Sprintf("… and %d more", len(edits)-3))
+			break
+		}
+		what := "set"
+		if e.Reset {
+			what = "reset to default"
+		}
+		lines = append(lines, "  "+e.Key+" · "+what)
+	}
+	return strings.Join(lines, "\n")
+}
+
 // saveSettings asks for the scope, then writes the staged edits; nothing is written until the
 // scope is confirmed, and a failed save keeps the drafts.
 func (d *dashboard) saveSettings(ctx context.Context, edits []config.Edit) {
@@ -318,7 +339,7 @@ func (d *dashboard) saveSettings(ctx context.Context, edits []config.Edit) {
 	for i, s := range scopes {
 		labels[i] = s.label
 	}
-	pick, ok := d.frame.Choose(fmt.Sprintf("Save %d setting(s) to", len(edits)), labels, ctx.Done())
+	pick, ok := d.frame.ChooseAt("Save", saveTitle(edits), labels, ctx.Done())
 	if !ok {
 		return
 	}

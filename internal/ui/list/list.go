@@ -91,6 +91,14 @@ func (l *List) Select(id string) {
 	}
 }
 
+// Focus puts the cursor on id even when the last window did not hold it, for a row that was
+// just added; a later Window falls back to the first entry if id is gone.
+func (l *List) Focus(id string) {
+	l.mu.Lock()
+	l.sel = id
+	l.mu.Unlock()
+}
+
 // Window applies the filter, keeps the cursor on its entry (or the first one), scrolls just
 // enough to show it and returns rows entries.
 func (l *List) Window(entries []Entry, rows int) Window {
