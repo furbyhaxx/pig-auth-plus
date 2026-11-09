@@ -1,32 +1,32 @@
+[Context]
+  ~/.pig/agent/APPEND_SYSTEM.md, AGENTS.md
+
+[Skills]
+  accordion-context-folding, accordion-context-recall, accordion-task-lists, agents-md, dot-project, extending-pig, golang, models-dev,
+online-research, python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
+
+[Extensions]
   pig-auth-plus
 
 
+── Auth › Models ──────────────────────────────────────────────────────────────────────────────────── 1200 models · 36 providers left out ──
+ ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
+ ⌕ Type to filter…
+
+→ anthropic/claude-fable-5                                             Claude Fable 5                                                     1M
+  anthropic/claude-fable-5-1                                           Claude Fable 5.1                                                   1M
+  anthropic/claude-haiku-4-5                                           Claude Haiku 4.5 (latest)                                        200k
+  anthropic/claude-haiku-4-5-20251001                                  Claude Haiku 4.5                                                 200k
+  anthropic/claude-haiku-5-5                                           Claude Haiku 5.5                                                   1M
+  anthropic/claude-opus-4-5                                            Claude Opus 4.5 (latest)                                         200k
+  anthropic/claude-opus-4-5-20251101                                   Claude Opus 4.5                                                  200k
+  anthropic/claude-opus-4-6                                            Claude Opus 4.6                                                    1M
+  anthropic/claude-opus-4-7                                            Claude Opus 4.7                                                    1M
+  anthropic/claude-opus-4-8                                            Claude Opus 4.8                                                    1M
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- Auth › Models
-  Providers  Quotas  Tokens [Models] Settings
- amazon-bedrock
-→ amazon.nova-2-lite-v1:0                                                                                                                 1M
-  amazon.nova-lite-v1:0                                                                                                                 300k
-  amazon.nova-micro-v1:0                                                                                                                128k
-  amazon.nova-pro-v1:0                                                                                                                  300k
-  anthropic.claude-fable-5                                                                                                                1M
-  anthropic.claude-fable-5-1                                                                                                              1M
-  anthropic.claude-haiku-4-5-20251001-v1:0                                                                                              200k
-  anthropic.claude-haiku-5-5                                                                                                              1M
-  anthropic.claude-opus-4-1-20250805-v1:0                                                                                               200k
-  anthropic.claude-opus-4-5-20251101-v1:0                                                                                               200k
-  anthropic.claude-opus-4-6-v1                                                                                                            1M
-  anthropic.claude-opus-4-7                                                                                                               1M
-  anthropic.claude-opus-4-8                                                                                                               1M
-  anthropic.claude-opus-5-5                                                                                                               1M
-  anthropic.claude-sonnet-4-5-20250929-v1:0                                                                                             200k
-  anthropic.claude-sonnet-4-6                                                                                                             1M
-  anthropic.claude-sonnet-5                                                                                                               1M
-  anthropic.claude-sonnet-5-5                                                                                                             1M
-  apac.amazon.nova-lite-v1:0                                                                                                            300k
-  apac.amazon.nova-micro-v1:0                                                                                                           128k
- f1 help · escape/ctrl+c close · / search · enter detail · tab next
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-openrouter: 17.97$ · deepseek: 7.91$ · codex: 46% · claude: 5h/? 7d/14% · antigravity: gem/2% arg/3% · synthetic: 0% · xai: 35%
+ Claude Fable 5 · anthropic-messages · reasoning · text, image · in $10 / out $50
+ ↑↓ move · enter open · tab next tab · type to filter · f1 help · escape/ctrl+c close
+──────────────────────────────────────────────────────────────── ↓ 1190 more ───────────────────────────────────────────────────────────────
+openrouter: 17.93$ · deepseek: 6.57$ · codex: 52% · claude: 5h/? 7d/20% · antigravity: gem/3% arg/3% · synthetic: 9% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

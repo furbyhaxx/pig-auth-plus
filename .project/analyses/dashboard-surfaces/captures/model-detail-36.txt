@@ -1,0 +1,32 @@
+models-dev, online-research, python,
+reddit-cli, rust, skill-creator,
+systematic-debugging, toml,
+typescript
+
+[Extensions]
+  pig-auth-plus
+
+
+── anthropic/claude-… ──── listed ──
+ …❱ Tokens ❱ Models ❱ Settings  4/5
+ ⌕
+
+→ Name          Claude Fa…  provider
+  Context win…  1,000,000   provider
+  Max tokens    128,000     provider
+  Reasoning     on          provider
+  Input         text, ima…  provider
+  Price in /M   $10         provider
+  Price out /M  $50         provider
+  Cache read …  $1          provider
+  Cache write…  $12.5       provider
+  Aliases       none
+────────────────────────────────────
+ Changes how PiG lists, limits and …
+ f1 help · escape/ctrl+c back
+───────────── ↓ 1 more ─────────────
+or: 17.93$ · ds: 6.57$ · cox: 52%
+cl: 5h/? 7d/20% · ag: gem/3% arg/3%
+syn: 9% · xai: 38%
+/mnt/Projects/furbyhaxx/pig-auth-...
+$0.000 (sub) 0.0%/425k (auto)  gpt-6

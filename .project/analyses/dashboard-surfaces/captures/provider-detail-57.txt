@@ -1,0 +1,32 @@
+  accordion-context-folding, accordion-context-recall,
+accordion-task-lists, agents-md, dot-project,
+extending-pig, golang, models-dev, online-research,
+python, reddit-cli, rust, skill-creator,
+systematic-debugging, toml, typescript
+
+[Extensions]
+  pig-auth-plus
+
+
+── Auth › Providers › Claude ─────────────── read-only ──
+ ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
+ ⌕
+
+→ Provider     Claude (claude · alias cl, cc)
+  Credential   ● signed in · OAuth login · expires in 1h…
+  Sign in/out  /login claude  /logout claude
+  Quota        7d 20%                    → open in Quotas
+  Models       17 listed · 0 aliases     → open in Models
+  Tokens       provider usage; native count endpoint wit…
+  Settings     cache retention long · 0 prompt rules
+
+
+
+─────────────────────────────────────────────────────────
+ Read-only. Enter on a row marked → opens the tab that o…
+ ↑↓ move · enter open · f1 help · escape/ctrl+c back
+─────────────────────────────────────────────────────────
+or: 17.93$ · ds: 6.77$ · cox: 52% · cl: 5h/? 7d/20%
+ag: gem/3% arg/3% · syn: 8% · xai: 38%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)
+$0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

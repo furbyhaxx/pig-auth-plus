@@ -1,32 +1,32 @@
+models-dev, online-research, python,
+reddit-cli, rust, skill-creator,
+systematic-debugging, toml,
+typescript
 
+[Extensions]
+  pig-auth-plus
+
+
+── Auth › Settings ── 22 settings ──
+ …❱ Tokens ❱ Models ❱ Settings  5/5
+ ⌕ Type to filter…
+
+ Dashboard
+→ Density       ‹ comforta…  default
+  Max body ro…  0            default
+  Show proven…  [ ] off      default
+ Quotas
+  Refresh int…  60 s         default
+  Refresh on …  [x] on       default
+  Providers     openrouter, d…  user
+  Line placem…  ‹ below-edito…  user
+  Percent dis…  ‹ used ›        user
 ────────────────────────────────────
- Auth › Settings
- … Quotas  Tokens  Models [Settings]
-→ dashboard.density
-    "comfortable"  default
-  dashboard.maxBodyRows   0  default
-  dashboard.showProvenance
-    false  default
-  quotas.refreshIntervalSec
-    60  default
-  quotas.refreshOnRequest
-    true  default
-  quotas.providers
-    openrouter, deepseek, codex, cl…
-  quotas.linePlacement
-    "below-editor-first"  user
-  quotas.percentDisplay
-    "used"  user
-  quotas.compactWidthCols
-    100  default
-  quotas.alwaysShortIds
-    false  default
- Dashboard row spacing; compact
- uses less vertical space.
+ dashboard.density · Dashboard row …
  f1 help · escape/ctrl+c close
-────────────────────────────────────
-or: 17.97$ · ds: 7.91$ · cox: 46%
-cl: 5h/? 7d/14% · ag: gem/2% arg/3%
-syn: 0% · xai: 35%
+───────────── ↓ 18 more ────────────
+or: 17.93$ · ds: 6.67$ · cox: 52%
+cl: 5h/? 7d/20% · ag: gem/3% arg/3%
+syn: 9% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6

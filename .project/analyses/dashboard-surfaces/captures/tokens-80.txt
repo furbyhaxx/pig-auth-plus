@@ -1,8 +1,3 @@
- gpt-6.1-terra, hf:moonshotai/Kimi-K3.1-Pro, grok-4.7 (Ctrl+P to cycle)
-
-
-[Context]
-  ~/.pig/agent/APPEND_SYSTEM.md, AGENTS.md
 
 [Skills]
   accordion-context-folding, accordion-context-recall, accordion-task-lists,
@@ -13,20 +8,25 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
   pig-auth-plus
 
 
+── Auth › Tokens ─────────────────────────────────── openai-codex/gpt-6.1-sol ──
+ ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
+ ⌕
+
+  Context      ▕░░░░░░░░░░▏ 2.5% of 425K · 10,453 tokens
+  Source       ≈ estimate
+  Pi           0 · Δ +10,453
+  Anchor       – none; counted from the full context
+  Tail         10,453 · ≈ estimate · 0 messages
+
+  Breakdown    full request · share of the request
+  system         8,870 ▕███████░▏  85%  1 message   ≈ estimate
+  tools          1,583 ▕█░░░░░░░▏  15%  7 tools     ≈ estimate
+
 ────────────────────────────────────────────────────────────────────────────────
- Auth › Tokens
-  Providers  Quotas [Tokens] Models  Settings
-Total      10,316 tokens · estimate · 2% of 425,000
-Context    openai-codex/gpt-6.1-sol
-Pi         0 · delta +10,316
-Anchor     none; counted from the full context
-Tail       10,316 · estimate · 0 messages
-Breakdown
-  system        8,733 · estimate · 1
-  tools         1,583 · estimate · 7
- f1 help · escape/ctrl+c close · r recount · tab next
+ Live session context count, where it came from, and what fills it.
+ ↑↓ scroll · r recount · tab next tab · f1 help · escape/ctrl+c close
 ────────────────────────────────────────────────────────────────────────────────
-or: 17.97$ · ds: 7.91$ · cox: 46% · cl: 5h/? 7d/14% · ag: gem/2% arg/3%
-syn: 0% · xai: 35%
+or: 17.93$ · ds: 6.72$ · cox: 52% · cl: 5h/? 7d/20% · ag: gem/3% arg/3%
+syn: 9% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

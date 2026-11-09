@@ -1,32 +1,32 @@
+  accordion-context-folding, accordion-context-recall,
+accordion-task-lists, agents-md, dot-project,
+extending-pig, golang, models-dev, online-research,
+python, reddit-cli, rust, skill-creator,
+systematic-debugging, toml, typescript
+
+[Extensions]
+  pig-auth-plus
 
 
+── Auth › Settings ─────────────────────── 22 settings ──
+ ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
+ ⌕ Type to filter…
+
+ Dashboard
+→ Density              ‹ comfortable ›            default
+  Max body rows        0                          default
+  Show provenance      [ ] off                    default
+ Quotas
+  Refresh interval     60 s                       default
+  Refresh on request   [x] on                     default
+  Providers            openrouter, deepseek, codex…  user
+  Line placement       ‹ below-editor-first ›        user
+  Percent display      ‹ used ›                      user
 ─────────────────────────────────────────────────────────
- Auth › Settings
-  Providers  Quotas  Tokens  Models [Settings]
-→ dashboard.density                "comfortable"  default
-  dashboard.maxBodyRows                        0  default
-  dashboard.showProvenance                 false  default
-  quotas.refreshIntervalSec                   60  default
-  quotas.refreshOnRequest                   true  default
-  quotas.providers
-    openrouter, deepseek, codex, claude, antigravity, sy…
-  quotas.linePlacement         "below-editor-first"  user
-  quotas.percentDisplay                      "used"  user
-  quotas.compactWidthCols                    100  default
-  quotas.alwaysShortIds                    false  default
-  quotas.hideSignedOut                      true  default
-  quotas.creditHealthyUsd                        10  user
-  quotas.creditCriticalUsd                     5  default
-  quotas.lineTemplate
-    "{openrouter:id}: {openrouter:credits-remaining} · {…
-  models.aliases                     0 alias(es)  default
-  openai.verbosity                            "low"  user
-  openai.verbosityProviders
- Dashboard row spacing; compact uses less vertical
- space.
- f1 help · escape/ctrl+c close · ←/→ change · enter edit
-─────────────────────────────────────────────────────────
-or: 17.97$ · ds: 7.91$ · cox: 46% · cl: 5h/? 7d/14%
-ag: gem/2% arg/3% · syn: 0% · xai: 35%
+ dashboard.density · Dashboard row spacing; compact uses…
+ ←→ change · enter edit · f1 help · escape/ctrl+c close
+─────────────────────── ↓ 18 more ───────────────────────
+or: 17.93$ · ds: 6.67$ · cox: 52% · cl: 5h/? 7d/20%
+ag: gem/3% arg/3% · syn: 9% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

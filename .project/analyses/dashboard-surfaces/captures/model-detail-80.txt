@@ -1,0 +1,32 @@
+
+[Skills]
+  accordion-context-folding, accordion-context-recall, accordion-task-lists,
+agents-md, dot-project, extending-pig, golang, models-dev, online-research,
+python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
+
+[Extensions]
+  pig-auth-plus
+
+
+── Auth › Models › anthropic/claude-fable-5 ────────────────────────── listed ──
+ ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
+ ⌕
+
+→ Name            Claude Fable 5                                        provider
+  Context window  1,000,000                                             provider
+  Max tokens      128,000                                               provider
+  Reasoning       on                                                    provider
+  Input           text, image                                           provider
+  Price in /M     $10                                                   provider
+  Price out /M    $50                                                   provider
+  Cache read /M   $1                                                    provider
+  Cache write /M  $12.5                                                 provider
+  Aliases         none
+────────────────────────────────────────────────────────────────────────────────
+ Changes how PiG lists, limits and prices the model, not what the provider enfo…
+ ↑↓ move · enter edit · ←→ toggle · f1 help · escape/ctrl+c back
+─────────────────────────────────── ↓ 1 more ───────────────────────────────────
+or: 17.93$ · ds: 6.57$ · cox: 52% · cl: 5h/? 7d/20% · ag: gem/3% arg/3%
+syn: 9% · xai: 38%
+/mnt/Projects/furbyhaxx/pig-auth-plus (dev)
+$0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

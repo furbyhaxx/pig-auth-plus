@@ -1,32 +1,32 @@
+models-dev, online-research, python,
+reddit-cli, rust, skill-creator,
+systematic-debugging, toml,
+typescript
 
+[Extensions]
+  pig-auth-plus
+
+
+── Auth › Models ───────────────────
+ …❱ Tokens ❱ Models ❱ Settings  4/5
+ ⌕ Type to filter…
+
+→ anthropic/claude-fable-5        1M
+  anthropic/claude-fable-5-1      1M
+  anthropic/claude-haiku-4-5    200k
+  anthropic/claude-haiku…-5-20251001
+  anthropic/claude-haiku-5-5      1M
+  anthropic/claude-opus-4-5     200k
+  anthropic/claude-opus-4-5-20251101
+  anthropic/claude-opus-4-6       1M
+  anthropic/claude-opus-4-7       1M
+  anthropic/claude-opus-4-8       1M
 ────────────────────────────────────
- Auth › Models
- … Quotas  Tokens [Models] Settings
- amazon-bedrock
-→ amazon.nova-2-lite-v1:0         1M
-  amazon.nova-lite-v1:0         300k
-  amazon.nova-micro-v1:0        128k
-  amazon.nova-pro-v1:0          300k
-  anthropic.claude-fable-5        1M
-  anthropic.claude-fable-5-1      1M
-  anthropic.claude-haiku…251001-v1:0
-  anthropic.claude-haiku-5-5      1M
-  anthropic.claude-opus-…250805-v1:0
-  anthropic.claude-opus-…251101-v1:0
-  anthropic.claude-opus-4-6-v1    1M
-  anthropic.claude-opus-4-7       1M
-  anthropic.claude-opus-4-8       1M
-  anthropic.claude-opus-5-5       1M
-  anthropic.claude-sonne…250929-v1:0
-  anthropic.claude-sonnet-4-6     1M
-  anthropic.claude-sonnet-5       1M
-  anthropic.claude-sonnet-5-5     1M
-  apac.amazon.nova-lite-v1:0    300k
-  apac.amazon.nova-micro-v1:0   128k
+ Claude Fable 5 · anthropic-message…
  f1 help · escape/ctrl+c close
-────────────────────────────────────
-or: 17.97$ · ds: 7.91$ · cox: 46%
-cl: 5h/? 7d/14% · ag: gem/2% arg/3%
-syn: 0% · xai: 35%
+──────────── ↓ 1190 more ───────────
+or: 17.93$ · ds: 6.57$ · cox: 52%
+cl: 5h/? 7d/20% · ag: gem/3% arg/3%
+syn: 9% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6
