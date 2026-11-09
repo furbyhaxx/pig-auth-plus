@@ -1,0 +1,45 @@
+{
+  "captured_at": "2026-11-09T22:31:36+01:00",
+  "kind": "sanitized-observation-summary",
+  "raw_responses_retained": false,
+  "credentials_persisted_or_modified": false,
+  "request_methods": ["GET"],
+  "identity": {
+    "claude_oauth_profile_status": 200,
+    "claude_oauth_roles_status": 200,
+    "api_key_models_status": 200,
+    "api_key_profile_status": 200,
+    "oauth_and_api_key_same_account": true,
+    "oauth_and_api_key_same_organization": false,
+    "oauth_organization_type": "claude_max",
+    "api_key_organization_type": "api_individual",
+    "api_key_billing_type": "prepaid",
+    "api_key_profile_org_matches_models_response_org_header": true
+  },
+  "oauth_credit_route": {
+    "host": "api.anthropic.com",
+    "path_template": "/api/oauth/organizations/{organization}/prepaid/credits",
+    "credential": "existing PiG claude OAuth",
+    "outcomes": [
+      {"organization": "subscription", "status": 200, "amount": 0, "currency": "USD", "exponent": 2},
+      {"organization": "api-key-discovered", "status": 200, "amount": 0, "currency": "USD", "exponent": 2},
+      {"organization": "nonexistent-all-zero-uuid", "status": 200, "amount": 0, "currency": "USD", "exponent": 2}
+    ],
+    "all_purchased_and_promotional_arrays_empty": true,
+    "same_result_with_x_organization_uuid_header": true,
+    "api_key_authentication_status": 401,
+    "unauthenticated_status": 401,
+    "conclusion": "OAuth is accepted, but an empty 200 response is not proof of the requested wallet balance."
+  },
+  "console_route_with_existing_oauth": [
+    {"host": "platform.claude.com", "path": "/api/organizations", "status": 403, "message": "This endpoint does not accept OAuth access tokens."},
+    {"host": "api.anthropic.com", "path": "/api/organizations", "status": 403, "message": "This endpoint does not accept OAuth access tokens."},
+    {"host": "platform.claude.com", "path_template": "/api/organizations/{api-organization}/prepaid/credits", "status": 403, "message": "This endpoint does not accept OAuth access tokens."}
+  ],
+  "console_profile": {
+    "standard_anthropic_config_directory_exists": false,
+    "ant_cli_installed": false,
+    "new_sign_in_attempted": false
+  },
+  "pending": "Compare the actual Console Billing balance (amount and currency only) before accepting zero or choosing another authentication flow."
+}
