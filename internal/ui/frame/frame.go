@@ -258,7 +258,7 @@ func (f *Frame) View(width int) kit.View {
 		if fl, ok := tab.(Filterer); ok {
 			filterable = fl.Filterable()
 		}
-		hints = tabHints(tab.Hints(benv), filterable)
+		hints = tabHints(tab.Hints(benv), filterable, len(crumbs) > 0)
 	}
 	if f.anyDirty() {
 		status = strings.TrimPrefix(status+" · ", " · ") + th.Fg("warning", "▲ unsaved")
@@ -456,7 +456,7 @@ func confirmHints() []hint {
 
 // tabHints orders the hints for display (the tab's own first, the frame's last) with
 // priorities that keep esc, then help, then the tab's most important hints when space runs out.
-func tabHints(tabs []string, filterable bool) []hint {
+func tabHints(tabs []string, filterable, drilled bool) []hint {
 	var out []hint
 	for i, h := range tabs {
 		out = append(out, hint{h, 2 + i})
@@ -465,7 +465,11 @@ func tabHints(tabs []string, filterable bool) []hint {
 	if filterable {
 		out = append(out, hint{"type to filter", 21})
 	}
-	return append(out, hint{sdk.RawKeyHint("f1", "help"), 1}, hint{sdk.KeyHint("tui.select.cancel", "close"), 0})
+	leave := "close"
+	if drilled {
+		leave = "back"
+	}
+	return append(out, hint{sdk.RawKeyHint("f1", "help"), 1}, hint{sdk.KeyHint("tui.select.cancel", leave), 0})
 }
 
 // hintRow joins the hints in display order, dropping the lowest-priority ones until it fits.
@@ -656,6 +660,18 @@ func (f *Frame) toggleHelp() {
 	f.help = !f.help
 	f.helpTop = 0
 	f.mu.Unlock()
+}
+
+// Activate shows the tab with the given id; an unknown id changes nothing.
+func (f *Frame) Activate(id string) {
+	f.mu.Lock()
+	for i, t := range f.tabs {
+		if t.ID() == id {
+			f.active = i
+		}
+	}
+	f.mu.Unlock()
+	f.Invalidate()
 }
 
 func (f *Frame) switchTab(dir int) {

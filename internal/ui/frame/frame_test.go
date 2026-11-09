@@ -484,3 +484,15 @@ func TestSlashFocusesSearchInsteadOfTypingAndAltArrowsScrollALine(t *testing.T) 
 		t.Fatalf("alt+arrows scrolled %v, want [1 -1]", a.wheel)
 	}
 }
+
+func TestLeaveHintSaysBackInADrillInAndCloseOnTheRoot(t *testing.T) {
+	root := tabHints([]string{"x"}, true, false)
+	drilled := tabHints([]string{"x"}, false, true)
+	last := func(h []hint) string { return h[len(h)-1].text }
+	if !strings.Contains(last(root), "close") || strings.Contains(last(root), "back") {
+		t.Fatalf("root leave hint: %q", last(root))
+	}
+	if !strings.Contains(last(drilled), "back") || strings.Contains(last(drilled), "close") {
+		t.Fatalf("drill-in leave hint: %q", last(drilled))
+	}
+}

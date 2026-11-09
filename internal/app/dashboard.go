@@ -63,7 +63,8 @@ func (a *App) openDashboard(ctx sdk.Context, section, solo, key string) error {
 		return nil
 	}
 	d := &dashboard{a: a, st: st}
-	d.provs = uiproviders.New(d.providerRows, func() { d.rereadProviders(ctx) })
+	d.provs = uiproviders.New(d.providerRows, func(id string) uiproviders.Extra { return a.providerExtra(st, d.catalogRows)(id) },
+		uiproviders.Actions{Reread: func() { d.rereadProviders(ctx) }, Goto: func(tab string) { d.frame.Activate(tab) }})
 	d.quotas = uiquotas.New(st.quotas.View, a.display, uiquotas.Actions{
 		Refresh:   d.refresh,
 		Placement: func() { d.async(d.choosePlacement) },

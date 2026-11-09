@@ -1,6 +1,7 @@
 package app
 
 import (
+	"strings"
 	"time"
 
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"
@@ -31,7 +32,12 @@ func (a *App) providerRows(host sdk.Context, now time.Time) []uiproviders.Row {
 	st := a.session()
 	rows := make([]uiproviders.Row, 0, len(providerEntries))
 	for _, e := range providerEntries {
-		row := uiproviders.Row{ID: e.id, Label: e.label, Login: e.login, Note: e.note}
+		row := uiproviders.Row{ID: e.id, Label: e.label, Login: e.login, Logout: strings.Replace(e.login, "/login", "/logout", 1), Note: e.note}
+		if st != nil {
+			if src := st.quotas.Registry().Resolve(e.id); src != nil {
+				row.Aliases = src.Aliases
+			}
+		}
 		id := e.id
 		if id == "codex" {
 			id = sources.CodexPiProvider
