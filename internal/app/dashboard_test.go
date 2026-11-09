@@ -51,12 +51,12 @@ func TestPlacementIsSavedOnlyAfterTheScopeIsConfirmed(t *testing.T) {
 	d, path := testDashboard(t)
 	done := make(chan struct{})
 	go func() { d.choosePlacement(context.Background()); close(done) }()
-	answer(t, d, "Quota line placement", "Hidden (refresh continues)")
+	answer(t, d, "Where should the quota line appear?\nSaving asks for a scope next.", "Hidden (refresh continues)")
 	time.Sleep(20 * time.Millisecond)
 	if got := d.st.settings.Snapshot().LinePlacement; got != "below-editor-first" {
 		t.Fatalf("placement changed before the scope was confirmed: %q", got)
 	}
-	answer(t, d, "Save placement to", "This session only")
+	answer(t, d, "Save the line position to", "This session only")
 	<-done
 	if got := d.st.settings.Snapshot().LinePlacement; got != "off" {
 		t.Fatalf("session placement = %q", got)
@@ -76,8 +76,8 @@ func TestPlacementSavedToUserFileKeepsComments(t *testing.T) {
 	}
 	done := make(chan struct{})
 	go func() { d.choosePlacement(context.Background()); close(done) }()
-	answer(t, d, "Quota line placement", "Above the editor")
-	answer(t, d, "Save placement to", "User file (auth-plus.toml)")
+	answer(t, d, "Where should the quota line appear?\nSaving asks for a scope next.", "Above the editor")
+	answer(t, d, "Save the line position to", "User file (auth-plus.toml)")
 	<-done
 	raw, _ := os.ReadFile(path)
 	if !strings.Contains(string(raw), "# mine") || !strings.Contains(string(raw), "# keep") || !strings.Contains(string(raw), `linePlacement = "above-editor"`) {
