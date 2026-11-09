@@ -465,3 +465,22 @@ func TestMouseSelectsAndActivatesConfirmOptions(t *testing.T) {
 		t.Fatal("double click activates the selected option")
 	}
 }
+
+func TestSlashFocusesSearchInsteadOfTypingAndAltArrowsScrollALine(t *testing.T) {
+	a := &fakeTab{id: "a", title: "A", filtering: true}
+	f := newFrame(80, 20, a)
+	f.HandleInput("/")
+	if a.filter != "" {
+		t.Fatalf("a leading slash must not enter the filter: %q", a.filter)
+	}
+	f.HandleInput("a")
+	f.HandleInput("/")
+	if a.filter != "a/" {
+		t.Fatalf("a slash inside a query is text: %q", a.filter)
+	}
+	f.HandleInput("\x1b[1;3B") // alt+down
+	f.HandleInput("\x1b[1;3A") // alt+up
+	if len(a.wheel) != 2 || a.wheel[0] != 1 || a.wheel[1] != -1 {
+		t.Fatalf("alt+arrows scrolled %v, want [1 -1]", a.wheel)
+	}
+}

@@ -519,6 +519,10 @@ func (f *Frame) HandleInput(data string) (sdk.RemoteComponentResult, error) {
 	case tui.MatchesKey(data, "shift+tab"):
 		f.switchTab(-1)
 	case tab.Key(data):
+	case tui.MatchesKey(data, "alt+up"):
+		f.scroll(tab, -1)
+	case tui.MatchesKey(data, "alt+down"):
+		f.scroll(tab, 1)
 	case kb.Matches(data, "tui.select.cancel"):
 		if f.clearFilter(tab) {
 			break
@@ -598,6 +602,9 @@ func (f *Frame) filterKey(tab Tab, data string) {
 	q := f.filters[tab.ID()]
 	f.mu.Unlock()
 	switch {
+	case data == "/" && q == "":
+		// Slash focuses the search line, which always has focus on a filterable screen.
+		return
 	case tui.MatchesKey(data, "backspace"):
 		_, size := utf8.DecodeLastRuneInString(q)
 		q = q[:len(q)-size]
@@ -717,6 +724,13 @@ func (f *Frame) HandleMouse(e sdk.MouseEvent) (sdk.RemoteComponentResult, error)
 		}
 	}
 	return sdk.RemoteComponentResult{}, nil
+}
+
+// scroll moves the body by delta lines, as the wheel does.
+func (f *Frame) scroll(tab Tab, delta int) {
+	if p, ok := tab.(Pointer); ok {
+		p.Wheel(delta)
+	}
 }
 
 func (f *Frame) wheel(tab Tab, m *modal, help bool, delta int) {
