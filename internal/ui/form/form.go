@@ -128,15 +128,32 @@ func (e *Edit) Type(data string) {
 		}
 	case tui.MatchesKey(data, "ctrl+u"):
 		e.Text = nil
-	case strings.HasPrefix(data, "\x1b"):
-		// A key sequence such as an arrow is not text; only its tail would look printable.
 	default:
-		for _, r := range data {
+		for _, r := range dropKeySequences(data) {
 			if unicode.IsPrint(r) {
 				e.Text = append(e.Text, r)
 			}
 		}
 	}
+}
+
+// dropKeySequences removes CSI (ESC [ … final) and SS3/Alt (ESC + one rune) sequences: an arrow
+// key is not text, and its tail would look printable.
+func dropKeySequences(data string) string {
+	var b strings.Builder
+	rs := []rune(data)
+	for i := 0; i < len(rs); i++ {
+		if rs[i] != 0x1b {
+			b.WriteRune(rs[i])
+			continue
+		}
+		i++
+		if i < len(rs) && rs[i] == '[' {
+			for i++; i < len(rs) && (rs[i] < 0x40 || rs[i] > 0x7e); i++ {
+			}
+		}
+	}
+	return b.String()
 }
 
 // Value is the trimmed text.

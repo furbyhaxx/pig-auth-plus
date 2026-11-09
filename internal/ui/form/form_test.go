@@ -41,12 +41,24 @@ func TestHeaderRowIsATitleAndNeverSelected(t *testing.T) {
 	}
 }
 
-func TestEditKeepsPrintableTextOnly(t *testing.T) {
+func TestEditIgnoresKeySequencesInsideTypedText(t *testing.T) {
 	var e Edit
 	e.Begin("ab")
-	e.Type("c\x1b[A")
+	e.Type("c\x1b[A\x1b[1;5Cd")
+	if got := e.Value(); got != "abcd" {
+		t.Fatalf("arrow tails leaked into the text: %q", got)
+	}
+	e.Type("\x1b[A")
+	if got := e.Value(); got != "abcd" {
+		t.Fatalf("a lone arrow must change nothing: %q", got)
+	}
+}
+
+func TestEditBackspaceRemovesTheLastRune(t *testing.T) {
+	var e Edit
+	e.Begin("añ")
 	e.Type("\x7f")
-	if got := e.Value(); got != "abc" {
+	if got := e.Value(); got != "a" {
 		t.Fatalf("got %q", got)
 	}
 }
