@@ -156,10 +156,10 @@ func TestKeysDispatchActionsForTheSelectedProvider(t *testing.T) {
 	}
 	env := frame.Env{Width: 80, Rows: 40}
 	tb.Body(env)
-	tb.Key("r")
-	tb.Key("R")
-	tb.Key("p")
-	tb.Key("x") // claude cannot reset: no spend, a notice instead
+	tb.Key("\x1br")
+	tb.Key("\x1ba")
+	tb.Key("\x1bp")
+	tb.Key("\x1bx") // claude cannot reset: no spend, a notice instead
 	if len(reset) != 0 {
 		t.Fatalf("reset on a provider without credits: %v", reset)
 	}
@@ -171,7 +171,7 @@ func TestKeysDispatchActionsForTheSelectedProvider(t *testing.T) {
 		return v
 	}
 	tb.Body(env)
-	tb.Key("x")
+	tb.Key("\x1bx")
 	if len(refreshed) != 2 || refreshed[0] != "claude" || refreshed[1] != "" {
 		t.Fatalf("refreshed = %q", refreshed)
 	}
@@ -180,9 +180,26 @@ func TestKeysDispatchActionsForTheSelectedProvider(t *testing.T) {
 	}
 }
 
-func TestListLettersAreActionsSoTheTabNeverFilters(t *testing.T) {
-	if newTab("").Filterable() {
-		t.Fatal("bare letters are actions on this tab; typing must not filter")
+func TestListFiltersAndNoPrintableKeyActs(t *testing.T) {
+	var refreshed []string
+	reset, placement := 0, 0
+	tb := newTab("")
+	tb.actions = Actions{
+		Refresh:   func(id string) { refreshed = append(refreshed, id) },
+		Placement: func() { placement++ },
+		Reset:     func(string) { reset++ },
+	}
+	tb.Body(frame.Env{Width: 80, Rows: 40})
+	if !tb.Filterable() {
+		t.Fatal("the provider list must take typed filter text")
+	}
+	for c := rune(0x20); c < 0x7f; c++ {
+		if tb.Key(string(c)) {
+			t.Fatalf("printable %q was taken as an action", c)
+		}
+	}
+	if len(refreshed) != 0 || reset != 0 || placement != 0 {
+		t.Fatalf("printable keys acted: refreshed=%v reset=%d placement=%d", refreshed, reset, placement)
 	}
 }
 
@@ -263,5 +280,15 @@ func TestCreditSourcesLeadWithTheBalanceNotTheUsageWindow(t *testing.T) {
 	row, _ := summaryRow(plainTheme{}, v, Display{PercentUsed: true, CreditHealthyUSD: 50, CreditCriticalUSD: 5}, 10, false, 80, now, levelFull, true)
 	if !strings.Contains(row, "17.98") || strings.Contains(row, "100%") {
 		t.Fatalf("row %q", row)
+	}
+}
+
+func TestFilterWithNoMatchSaysSo(t *testing.T) {
+	tb := newTab("")
+	env := frame.Env{Width: 80, Rows: 20}
+	tb.Body(env)
+	tb.SetFilter("zzzz")
+	if body := plain(tb.Body(env)); !strings.Contains(body, "no provider matches") {
+		t.Fatalf("an empty filter result needs an explanatory row:\n%s", body)
 	}
 }

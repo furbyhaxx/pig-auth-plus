@@ -528,6 +528,8 @@ func (f *Frame) HandleInput(data string) (sdk.RemoteComponentResult, error) {
 		f.switchTab(1)
 	case tui.MatchesKey(data, "shift+tab"):
 		f.switchTab(-1)
+	case typed(data) && !typing(tab):
+		f.filterKey(tab, data)
 	case tab.Key(data):
 	case tui.MatchesKey(data, "alt+up"):
 		f.scroll(tab, -1)
@@ -612,9 +614,6 @@ func (f *Frame) filterKey(tab Tab, data string) {
 	q := f.filters[tab.ID()]
 	f.mu.Unlock()
 	switch {
-	case data == "/" && q == "":
-		// Slash focuses the search line, which always has focus on a filterable screen.
-		return
 	case tui.MatchesKey(data, "backspace"):
 		_, size := utf8.DecodeLastRuneInString(q)
 		q = q[:len(q)-size]
@@ -646,6 +645,12 @@ func (f *Frame) clearFilter(tab Tab) bool {
 	}
 	f.setFilter(tab, fl, "")
 	return true
+}
+
+// typing reports whether the tab's current screen takes typed text.
+func typing(tab Tab) bool {
+	t, ok := tab.(Typist)
+	return ok && t.Typing()
 }
 
 // typed reports whether data is printable text, not a key sequence.

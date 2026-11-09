@@ -111,7 +111,7 @@ func (t *Tab) snapshot() Breakdown {
 func (t *Tab) Key(data string) bool {
 	kb := tui.GetKeybindings()
 	switch {
-	case data == "r":
+	case tui.MatchesKey(data, frame.KeyRefresh):
 		if t.recount != nil {
 			t.recount()
 		}
@@ -147,7 +147,7 @@ func (t *Tab) Wheel(delta int) {
 
 // Hints implements frame.Tab.
 func (t *Tab) Hints(frame.Env) []string {
-	return []string{sdk.RawKeyHint("↑↓", "scroll"), sdk.RawKeyHint("r", "recount")}
+	return []string{sdk.RawKeyHint("↑↓", "scroll"), sdk.RawKeyHint(frame.KeyRefresh, "recount")}
 }
 
 // Help implements frame.Tab.
@@ -160,4 +160,4 @@ const helpText = ` Tokens
  ≈ estimate       measured characters per token; shown whenever a total includes one
  Pi is the host's own estimate; Δ is the difference. Breakdown recounts the full request and
  shows each part's share of that request, not of the context window.
- r  recount now     ↑↓  scroll     pgup/pgdn  page`
+alt+r  recount now     ↑↓  scroll     pgup/pgdn  page`

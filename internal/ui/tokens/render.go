@@ -227,7 +227,7 @@ func Lines(th line.Theme, r *tokens.Report, b Breakdown, d Display, width int) [
 	case b.Loading && len(b.Parts) == 0:
 		out = append(out, row(th, "Breakdown", paint(th, "fetching…", "dim"), width))
 	case b.Failed && len(b.Parts) == 0:
-		out = append(out, row(th, "Breakdown", paint(th, "▲ unavailable · r to retry", "warning"), width))
+		out = append(out, row(th, "Breakdown", paint(th, "▲ unavailable · alt+r to retry", "warning"), width))
 	default:
 		out = append(out, row(th, "Breakdown", paint(th, first(room, "full request · share of the request", "full request"), "dim"), width))
 		total := 0

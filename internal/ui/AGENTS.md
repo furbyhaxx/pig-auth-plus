@@ -1,6 +1,7 @@
 Dashboard UI: `frame/` is the `/auth` shell (nine-line frame, fixed height, tab bar, hint row, modal choice, discard protection); each section is a `frame.Tab` in its own package. The design, keyboard and mouse standard is skill `extending-pig`, `references/dashboard-standard.md`; follow it and update it when a convention changes.
 
 - Tabs return plain lines already fitted to `Env.Width`; check with `tui.VisibleWidth`, never `len`. Render does no I/O: tabs read cached state.
+- No single-key actions: a printable key only types into the search line or an inline input. Chords live in `frame/keys.go`; a tab takes printable keys only while its `Typing()` is true. Keep the printable-key tests passing.
 - Key hints come from `sdk.KeyHint`/`sdk.RawKeyHint`; match keys with `tui.GetKeybindings().Matches` or `tui.MatchesKey`.
 - A modal choice from outside the panel queue goes through `Frame.Choose` in a goroutine; a choice that may close the panel uses the frame's own `then` path.
 - Untrusted text (provider errors, model names) goes through `line.Plain` before styling.

@@ -233,7 +233,7 @@ func (t *Tab) Key(data string) bool {
 		l = &t.fields
 	}
 	switch {
-	case tui.MatchesKey(data, "alt+r"):
+	case tui.MatchesKey(data, frame.KeyRefresh):
 		if t.act.Reread != nil {
 			t.act.Reread()
 		}
@@ -322,7 +322,7 @@ func (t *Tab) Hints(frame.Env) []string {
 	if detail != "" {
 		return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "open")}
 	}
-	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "details"), sdk.RawKeyHint("alt+r", "reread")}
+	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "details"), sdk.RawKeyHint(frame.KeyRefresh, "reread")}
 }
 
 // Help implements frame.Tab.

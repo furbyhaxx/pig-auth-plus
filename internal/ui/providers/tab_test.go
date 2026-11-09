@@ -92,3 +92,17 @@ func TestSecondClickOpensDetail(t *testing.T) {
 		t.Fatalf("second click must open: %v", got)
 	}
 }
+
+func TestNoPrintableKeyActs(t *testing.T) {
+	var jumped string
+	tab := newTab(&jumped)
+	tab.Body(env)
+	for c := rune(0x20); c < 0x7f; c++ {
+		if tab.Key(string(c)) {
+			t.Fatalf("printable %q was taken as an action", c)
+		}
+	}
+	if jumped != "" {
+		t.Fatal("printable keys must not jump to another tab")
+	}
+}

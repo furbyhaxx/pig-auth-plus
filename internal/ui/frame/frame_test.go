@@ -33,11 +33,11 @@ func (t *fakeTab) Body(e Env) []string {
 	}
 	return []string{strings.Repeat("x", e.Width*2), "second", "third"}
 }
-func (t *fakeTab) Hints(Env) []string { return []string{"r refresh", "a solo", "p place"} }
+func (t *fakeTab) Hints(Env) []string { return []string{"alt+r refresh", "alt+a all", "alt+p place"} }
 func (t *fakeTab) Help(Env) []string  { return []string{"help text"} }
 func (t *fakeTab) Key(d string) bool {
 	t.keys = append(t.keys, d)
-	return d == "r"
+	return d == "\x1br"
 }
 func (t *fakeTab) Dirty() bool { return t.dirty }
 func (t *fakeTab) Discard()    { t.dirty, t.discarded = false, true }
@@ -214,12 +214,12 @@ func TestTabSwitchWrapsAndKeysReachTheActiveTab(t *testing.T) {
 	a, b := &fakeTab{id: "a", title: "A"}, &fakeTab{id: "b", title: "B"}
 	f := newFrame(80, 20, a, b)
 	f.HandleInput("\t")
-	f.HandleInput("r")
+	f.HandleInput("\x1br")
 	if len(b.keys) != 1 || len(a.keys) != 0 {
 		t.Fatalf("keys a=%v b=%v", a.keys, b.keys)
 	}
 	f.HandleInput("\t")
-	f.HandleInput("r")
+	f.HandleInput("\x1br")
 	if len(a.keys) != 1 {
 		t.Fatalf("wrap failed: %v", a.keys)
 	}
@@ -466,17 +466,13 @@ func TestMouseSelectsAndActivatesConfirmOptions(t *testing.T) {
 	}
 }
 
-func TestSlashFocusesSearchInsteadOfTypingAndAltArrowsScrollALine(t *testing.T) {
+func TestSlashIsTextAndAltArrowsScrollALine(t *testing.T) {
 	a := &fakeTab{id: "a", title: "A", filtering: true}
 	f := newFrame(80, 20, a)
 	f.HandleInput("/")
-	if a.filter != "" {
-		t.Fatalf("a leading slash must not enter the filter: %q", a.filter)
-	}
 	f.HandleInput("a")
-	f.HandleInput("/")
-	if a.filter != "a/" {
-		t.Fatalf("a slash inside a query is text: %q", a.filter)
+	if a.filter != "/a" {
+		t.Fatalf("slash is text like any printable key: %q", a.filter)
 	}
 	f.HandleInput("\x1b[1;3B") // alt+down
 	f.HandleInput("\x1b[1;3A") // alt+up
@@ -507,5 +503,38 @@ func TestChooseAtShowsItsOwnBreadcrumbUnderTheActiveTab(t *testing.T) {
 	top := plainRows(render(f, 80))[0]
 	if !strings.Contains(top, "Auth › Quotas › Codex › Reset") {
 		t.Fatalf("top rule %q", top)
+	}
+}
+
+// typingTab reports an inline input, so it is the only tab that may receive printable keys.
+type typingTab struct {
+	fakeTab
+	typing bool
+}
+
+func (t *typingTab) Typing() bool { return t.typing }
+
+func TestPrintableKeysNeverReachATabUnlessItIsTyping(t *testing.T) {
+	a := &typingTab{fakeTab: fakeTab{id: "a", title: "A", filtering: true}}
+	f := newFrame(80, 20, a)
+	for c := rune(0x20); c < 0x7f; c++ {
+		f.HandleInput(string(c))
+	}
+	if len(a.keys) != 0 {
+		t.Fatalf("printable keys reached a tab that is not typing: %q", a.keys)
+	}
+	if a.filter == "" {
+		t.Fatal("printable keys must feed the search line instead")
+	}
+	a.typing = true
+	f.HandleInput("x")
+	if len(a.keys) != 1 || a.keys[0] != "x" {
+		t.Fatalf("a typing tab owns printable keys: %q", a.keys)
+	}
+	a.typing = false
+	a.keys = nil
+	f.HandleInput("\x1br")
+	if len(a.keys) != 1 {
+		t.Fatal("modifier chords always reach the tab")
 	}
 }

@@ -110,6 +110,13 @@ func (t *Tab) Discard() {
 	t.mu.Unlock()
 }
 
+// Typing implements frame.Typist: an inline input owns printable keys.
+func (t *Tab) Typing() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return (t.ov != nil && t.ov.in.On) || (t.al != nil && t.al.in.On)
+}
+
 // Filterable implements frame.Filterer; only the catalog takes typed filter text.
 func (t *Tab) Filterable() bool {
 	t.mu.Lock()

@@ -27,6 +27,11 @@ type Filterer interface {
 	SetFilter(query string)
 }
 
+// Typist is implemented by tabs that take typed text on their current screen (an inline input
+// or an editor). The frame never hands a printable key to a tab unless Typing reports true:
+// elsewhere printable keys only feed the search line, so no bare letter can be an action.
+type Typist interface{ Typing() bool }
+
 // Overflower reports how many rows lie above and below the visible window of the body; the
 // frame shows them in the top and bottom rule.
 type Overflower interface{ Overflow() (above, below int) }

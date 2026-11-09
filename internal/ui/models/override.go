@@ -12,6 +12,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/modelsfile"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 )
 
 type fieldKind int
@@ -201,7 +202,7 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 	wasLeave := o.leave
 	o.leave = false
 	switch {
-	case tui.MatchesKey(data, "ctrl+s"):
+	case tui.MatchesKey(data, frame.KeySave):
 		if ops := o.ops(); len(ops) > 0 {
 			save(ops)
 		}
@@ -219,7 +220,7 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 		o.scr.L.Page(1)
 	case kb.Matches(data, "tui.select.pageUp"):
 		o.scr.L.Page(-1)
-	case isField && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right") || data == " "):
+	case isField && (tui.MatchesKey(data, "left") || tui.MatchesKey(data, "right")):
 		o.toggle(f)
 	case kb.Matches(data, "tui.select.confirm"):
 		switch {
@@ -230,7 +231,7 @@ func (o *override) key(data string, save func([]modelsfile.Op)) (closed bool) {
 		case isField:
 			o.in.Begin(format0(o.current(f)))
 		}
-	case isField && (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")):
+	case isField && tui.MatchesKey(data, frame.KeyDefault):
 		if o.overridden(f) {
 			o.changes[f.key()] = staged{remove: true}
 		} else {
@@ -311,7 +312,7 @@ func (o *override) hints() []string {
 	}
 	return []string{
 		sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("←→", "toggle"),
-		sdk.RawKeyHint("backspace", "reset"), sdk.RawKeyHint("ctrl+s", "save"),
+		sdk.RawKeyHint(frame.KeyDefault, "reset"), sdk.RawKeyHint(frame.KeySave, "save"),
 	}
 }
 

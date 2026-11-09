@@ -212,7 +212,7 @@ func TestOverrideRejectsInvalidNumbersAndAsksBeforeDiscarding(t *testing.T) {
 	}
 	tb.Key("\x1b") // leave the input
 	down(tb, 3)    // reasoning, input
-	tb.Key(" ")
+	tb.Key("\x1b[C")
 	if !tb.Dirty() {
 		t.Fatal("toggling image input must stage a change")
 	}
@@ -230,9 +230,9 @@ func TestOverrideRemovalOnlyForOverriddenFields(t *testing.T) {
 	var saved []modelsfile.Op
 	tb := overrideTab(t, &saved, "contextWindow")
 	down(tb, 1)
-	tb.Key("\x7f")
+	tb.Key("\x1bu")
 	down(tb, 1)
-	tb.Key("\x7f") // max tokens is not overridden: nothing to remove
+	tb.Key("\x1bu") // max tokens is not overridden: nothing to remove
 	tb.Key("\x13")
 	if len(saved) != 1 || !saved[0].Remove || saved[0].Path[0] != "contextWindow" {
 		t.Fatalf("got %+v", saved)
@@ -361,5 +361,23 @@ func TestStatusSaysLoadingNotZeroModelsWhileTheCatalogIsStillBeingRead(t *testin
 	tab.Body(env)
 	if got := tab.Status(env); !strings.Contains(got, "models") || strings.Contains(got, "loading") {
 		t.Fatalf("loaded: %q", got)
+	}
+}
+
+func TestNoPrintableKeyActsOnTheCatalogOrADetail(t *testing.T) {
+	var saved []modelsfile.Op
+	tb := overrideTab(t, &saved)
+	for c := rune(0x20); c < 0x7f; c++ {
+		tb.Key(string(c))
+	}
+	if tb.Dirty() || len(saved) != 0 {
+		t.Fatal("printable keys changed or saved a field outside a text input")
+	}
+	cat := newTab(Actions{})
+	cat.Body(env)
+	for c := rune(0x20); c < 0x7f; c++ {
+		if cat.Key(string(c)) {
+			t.Fatalf("printable %q was taken as an action on the catalog", c)
+		}
 	}
 }

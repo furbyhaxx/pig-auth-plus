@@ -121,6 +121,13 @@ func (t *Tab) stagedLocked() []config.Edit {
 	return out
 }
 
+// Typing implements frame.Typist: an inline input or the template editor owns printable keys.
+func (t *Tab) Typing() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.editing != nil || (t.coll != nil && t.coll.Typing())
+}
+
 // Filterable implements frame.Filterer; only the setting list takes typed filter text.
 func (t *Tab) Filterable() bool {
 	t.mu.Lock()
@@ -376,7 +383,6 @@ func (t *Tab) Key(data string) bool {
 	}
 	kb := tui.GetKeybindings()
 	d := t.selected()
-	idle := t.scr.L.Query() == ""
 	var save []config.Edit
 	t.jump = ""
 	switch {
@@ -394,13 +400,11 @@ func (t *Tab) Key(data string) bool {
 			dir = -1
 		}
 		t.step(d, dir)
-	case data == " " && idle && d != nil:
-		t.step(d, 1)
 	case kb.Matches(data, "tui.select.confirm") && d != nil:
 		t.enter(d)
-	case (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")) && idle && d != nil:
+	case tui.MatchesKey(data, frame.KeyDefault) && d != nil:
 		t.staged[d.Key] = config.Edit{Key: d.Key, Reset: true}
-	case tui.MatchesKey(data, "ctrl+s"):
+	case tui.MatchesKey(data, frame.KeySave):
 		if len(t.staged) == 0 {
 			t.notice, t.warn = "Nothing staged to save.", false
 		} else {
@@ -559,8 +563,8 @@ func (t *Tab) Hints(frame.Env) []string {
 	return []string{
 		sdk.RawKeyHint("←→", "change"),
 		sdk.KeyHint("tui.select.confirm", "edit"),
-		sdk.RawKeyHint("ctrl+s", "save"),
-		sdk.RawKeyHint("backspace", "default"),
+		sdk.RawKeyHint(frame.KeySave, "save"),
+		sdk.RawKeyHint(frame.KeyDefault, "default"),
 	}
 }
 
@@ -579,8 +583,8 @@ const helpText = ` Settings
  Every setting with its effective value and the layer it comes from:
  default, user (auth-plus.toml) or session. Edits are staged, shown with ●, and written
  only when you save; the save asks for user or session scope.
- type  filter by name or value             ←→ or space  toggle, cycle or nudge
- enter  edit text, numbers and lists        backspace  stage the built-in default
+ type  filter by name or value             ←→  toggle, cycle or nudge
+ enter  edit text, numbers and lists        alt+u  stage the built-in default
  ctrl+s  save staged edits                  esc  clear the filter, cancel an edit, or close
  Lists open a typed editor. A higher layer overrides a lower one, so a saved
  value can stay shadowed; the save reports which keys.`
@@ -589,7 +593,7 @@ const helpText = ` Settings
 func (t *Tab) collKeyLocked(data string) bool {
 	kb := tui.GetKeybindings()
 	switch {
-	case tui.MatchesKey(data, "ctrl+s"):
+	case tui.MatchesKey(data, frame.KeySave):
 		t.stageCollection()
 		return true
 	case kb.Matches(data, "tui.select.cancel") && !t.coll.Capturing():

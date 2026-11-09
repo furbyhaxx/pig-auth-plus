@@ -83,12 +83,15 @@ func (t *Tab) Dirty() bool { return false }
 // Discard implements frame.Tab.
 func (t *Tab) Discard() {}
 
-// Filterable implements frame.Filterer. The list is short and its letters are actions, so
-// typing never filters here.
-func (t *Tab) Filterable() bool { return false }
+// Filterable implements frame.Filterer: the provider list filters, an open detail does not.
+func (t *Tab) Filterable() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.detail == ""
+}
 
 // SetFilter implements frame.Filterer.
-func (t *Tab) SetFilter(string) {}
+func (t *Tab) SetFilter(q string) { t.list.SetFilter(q) }
 
 func (t *Tab) find(id string) (quota.View, bool) {
 	for _, v := range t.views() {
@@ -199,6 +202,9 @@ func (t *Tab) Body(env frame.Env) []string {
 		byID[v.Source.ID] = i
 	}
 	win := t.list.Window(entries, env.Rows)
+	if len(win.Entries) == 0 {
+		return append([]string{"  no provider matches “" + line.Plain(t.list.Query()) + "”"}, notice...)
+	}
 	t.mu.Lock()
 	t.above, t.below, t.rows = win.Above, win.Below, env.Rows
 	t.mu.Unlock()
@@ -214,7 +220,7 @@ func (t *Tab) detailBody(th uitheme.Theme, v quota.View, d Display, env frame.En
 	if v.Snapshot == nil || v.Snapshot.NeedsAuth {
 		text := describe(v, now, true)
 		if v.Snapshot == nil {
-			text = "Nothing fetched yet. Press r to refresh."
+			text = "Nothing fetched yet. Press alt+r to refresh."
 		}
 		all = nil
 		for _, l := range tui.WrapTextWithAnsi(text, max(env.Width-2, 10)) {
@@ -290,17 +296,17 @@ func (t *Tab) Key(data string) bool {
 	detail := t.detail
 	t.mu.Unlock()
 	switch {
-	case data == "r":
+	case tui.MatchesKey(data, frame.KeyRefresh):
 		t.act(func(id string) { t.actions.Refresh(id) })
-	case data == "R" && detail == "":
+	case tui.MatchesKey(data, frame.KeyRefreshAll) && detail == "":
 		if t.actions.Refresh != nil {
 			t.actions.Refresh("")
 		}
-	case data == "p" && detail == "":
+	case tui.MatchesKey(data, frame.KeyPosition) && detail == "":
 		if t.actions.Placement != nil {
 			t.actions.Placement()
 		}
-	case data == "x":
+	case tui.MatchesKey(data, frame.KeyReset):
 		t.act(func(id string) {
 			if t.actions.Reset != nil && t.canReset(id) {
 				t.actions.Reset(id)
@@ -414,12 +420,12 @@ func (t *Tab) Hints(frame.Env) []string {
 	t.mu.Unlock()
 	hints := []string{}
 	if detail != "" {
-		hints = append(hints, sdk.RawKeyHint("↑↓", "scroll"), sdk.RawKeyHint("r", "refresh"))
+		hints = append(hints, sdk.RawKeyHint("↑↓", "scroll"), sdk.RawKeyHint(frame.KeyRefresh, "refresh"))
 	} else {
-		hints = append(hints, sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "details"), sdk.RawKeyHint("r", "refresh"), sdk.RawKeyHint("R", "all"), sdk.RawKeyHint("p", "position"))
+		hints = append(hints, sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "details"), sdk.RawKeyHint(frame.KeyRefresh, "refresh"), sdk.RawKeyHint(frame.KeyRefreshAll, "all"), sdk.RawKeyHint(frame.KeyPosition, "position"))
 	}
 	if t.canReset(t.selected()) {
-		hints = append(hints, sdk.RawKeyHint("x", "reset"))
+		hints = append(hints, sdk.RawKeyHint(frame.KeyReset, "reset"))
 	}
 	return hints
 }
@@ -432,7 +438,7 @@ const helpText = ` Quotas
  and projected exhaustion. Unknown numbers show "?"; an explicit 0% is real usage; a
  missing limit is not "unlimited". The panel never fetches by itself.
  Up/Down  move or scroll       Enter  open the provider      esc  back or close
- r  refresh the selected provider      R  refresh every enabled provider
- p  choose where the quota line appears and where to save it
- x  spend a reset credit (asks first; only on providers that offer them)
+ alt+r  refresh the selected provider      alt+a  refresh every enabled provider
+ alt+p  choose where the quota line appears and where to save it
+ alt+x  spend a reset credit (asks first; only on providers that offer them)
  Refresh respects a provider's rate-limit hold.`

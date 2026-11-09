@@ -44,7 +44,7 @@ func TestStagingChangesNothingUntilSaved(t *testing.T) {
 	var saved []config.Edit
 	tb := New(get, Actions{Save: func(e []config.Edit) { saved = e }}, "")
 	selectKey(t, tb, "quotas.refreshOnRequest")
-	tb.Key(" ")
+	tb.Key(right)
 	if !tb.Dirty() {
 		t.Fatal("a toggle must stage a draft")
 	}
@@ -85,10 +85,10 @@ func TestIntegerEditingClampsAndRejectsText(t *testing.T) {
 	}
 }
 
-func TestBackspaceStagesBuiltInDefault(t *testing.T) {
+func TestAltUStagesBuiltInDefault(t *testing.T) {
 	tb := New(snap(t, ""), Actions{}, "")
 	selectKey(t, tb, "quotas.linePlacement")
-	tb.Key("\x7f")
+	tb.Key(altU)
 	e := tb.Staged()
 	if len(e) != 1 || !e[0].Reset {
 		t.Fatalf("expected a staged reset, got %+v", e)
@@ -138,14 +138,16 @@ func typeText(tb *Tab, s string) {
 }
 
 const (
-	down      = "\x1b[B"
-	shiftUp   = "\x1b[1;2A"
-	backspace = "\x7f"
+	down    = "\x1b[B"
+	right   = "\x1b[C"
+	shiftUp = "\x1b[1;2A"
+	altU    = "\x1bu"
+	altD    = "\x1bd"
 )
 
 func TestProviderListStagesCheckedAndCustomIDs(t *testing.T) {
 	tb := open(t, "quotas.providers")
-	press(tb, " ")                    // claude
+	press(tb, "\r")                   // claude
 	press(tb, down, down, down, "\r") // "+ Custom ID"
 	typeText(tb, "my-proxy")
 	press(tb, "\r", "\x13")
@@ -164,15 +166,15 @@ func TestCustomProviderIDIsMarkedAndRemovable(t *testing.T) {
 	if body := strings.Join(view(tb), "\n"); !strings.Contains(body, "⚠ unknown id") {
 		t.Fatalf("a custom id must be flagged:\n%s", body)
 	}
-	press(tb, backspace)
+	press(tb, altD)
 	if body := strings.Join(view(tb), "\n"); strings.Contains(body, "zai") {
-		t.Fatalf("backspace must remove a custom id:\n%s", body)
+		t.Fatalf("alt+d must remove a custom id:\n%s", body)
 	}
 }
 
 func TestEscOnDirtyEditorNeedsConfirmation(t *testing.T) {
 	tb := open(t, "claude.cacheRetentionProviders")
-	press(tb, " ")
+	press(tb, "\r")
 	if !tb.Dirty() {
 		t.Fatal("a changed draft must count as unsaved")
 	}
@@ -294,7 +296,7 @@ func TestDrillInHasBreadcrumbAndStatus(t *testing.T) {
 	if got := tb.Status(frame.Env{}); got != "0 selected" {
 		t.Fatalf("status %q", got)
 	}
-	press(tb, " ")
+	press(tb, "\r")
 	if got := tb.Status(frame.Env{}); got != "1 selected · ● staged" {
 		t.Fatalf("status %q", got)
 	}
@@ -326,21 +328,25 @@ func TestFilterMatchesTheKeyAndHidesHeaders(t *testing.T) {
 	}
 }
 
-func TestSpaceAndBackspaceBelongToTheFilterOnceItHasText(t *testing.T) {
-	tb := New(snap(t, ""), Actions{}, "")
-	selectKey(t, tb, "quotas.refreshOnRequest")
-	tb.SetFilter("refresh")
-	selectKey(t, tb, "quotas.refreshOnRequest")
-	if tb.Key(" ") || tb.Key("\x7f") {
-		t.Fatal("with filter text, space and backspace must reach the filter")
+func TestNoPrintableKeyActsOnTheListOrInAnEditor(t *testing.T) {
+	var saved []config.Edit
+	tb := New(snap(t, ""), Actions{Save: func(e []config.Edit) { saved = e }}, "")
+	for c := rune(0x20); c < 0x7f; c++ {
+		if tb.Key(string(c)) {
+			t.Fatalf("printable %q was taken as an action", c)
+		}
 	}
-	if tb.Dirty() {
-		t.Fatal("nothing may be staged by keys that belong to the filter")
+	if tb.Dirty() || len(saved) != 0 {
+		t.Fatal("printable keys must stage and save nothing")
 	}
-	tb.SetFilter("")
-	selectKey(t, tb, "quotas.refreshOnRequest")
-	if !tb.Key(" ") || !tb.Dirty() {
-		t.Fatal("with an empty filter, space toggles")
+	for _, key := range []string{"quotas.providers", "claude.replacePatterns"} {
+		tb = open(t, key)
+		for _, c := range " dDrRxpuaAh" {
+			press(tb, string(c))
+		}
+		if tb.Dirty() {
+			t.Fatalf("%s: printable keys changed the draft outside a text input", key)
+		}
 	}
 }
 

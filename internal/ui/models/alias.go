@@ -11,6 +11,7 @@ import (
 
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 )
 
 // Alias is the editable definition of a model alias. Blank optional fields inherit from the
@@ -162,7 +163,7 @@ func (f *aliasForm) key(data string, save func(Alias)) (closed bool) {
 	wasLeave := f.leave
 	f.leave, f.err = false, ""
 	switch {
-	case tui.MatchesKey(data, "ctrl+s"):
+	case tui.MatchesKey(data, frame.KeySave):
 		a, err := f.draft()
 		if err != nil {
 			f.err = err.Error()
@@ -189,11 +190,11 @@ func (f *aliasForm) key(data string, save func(Alias)) (closed bool) {
 		default:
 			f.in.Begin(f.values[sel])
 		}
-	case tui.MatchesKey(data, "backspace"), tui.MatchesKey(data, "delete"):
+	case tui.MatchesKey(data, frame.KeyDefault):
 		if sel == aName || sel == aCtx || sel == aMax {
 			f.values[sel] = ""
 		}
-	case sel == aRemove && data == "d":
+	case sel == aRemove && tui.MatchesKey(data, frame.KeyDelete):
 		if f.remove != nil {
 			f.remove()
 		}
@@ -217,7 +218,7 @@ func (f *aliasForm) hints() []string {
 	if f.in.On {
 		return []string{sdk.KeyHint("tui.select.confirm", "stage"), sdk.KeyHint("tui.select.cancel", "cancel")}
 	}
-	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("backspace", "inherit"), sdk.RawKeyHint("ctrl+s", "save")}
+	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint(frame.KeyDefault, "inherit"), sdk.RawKeyHint(frame.KeyDelete, "remove"), sdk.RawKeyHint(frame.KeySave, "save")}
 }
 
 func (f *aliasForm) status() string {

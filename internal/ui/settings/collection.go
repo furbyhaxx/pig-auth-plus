@@ -12,6 +12,7 @@ import (
 	"github.com/furbyhaxx/pig-auth-plus/internal/config"
 	"github.com/furbyhaxx/pig-auth-plus/internal/line"
 	"github.com/furbyhaxx/pig-auth-plus/internal/ui/form"
+	"github.com/furbyhaxx/pig-auth-plus/internal/ui/frame"
 )
 
 // collection is a drill-in editor for one setting. It edits a draft and hands back a value only
@@ -23,6 +24,8 @@ type collection interface {
 	Key(data string) bool
 	// Capturing reports whether a text input owns every key, Esc included.
 	Capturing() bool
+	// Typing reports whether printable keys are text for the editor rather than filter input.
+	Typing() bool
 	// Done reports a request to stage the draft and close, as Enter does on a one-field screen.
 	Done() bool
 	// Dirty reports whether the draft differs from the value it started from.
@@ -81,6 +84,7 @@ func (p *providerList) Value() any {
 
 func (p *providerList) Dirty() bool     { return !slices.Equal(p.orig, p.Value().([]string)) }
 func (p *providerList) Capturing() bool { return p.in.On }
+func (p *providerList) Typing() bool    { return p.in.On }
 func (p *providerList) Done() bool      { return false }
 
 func (p *providerList) rows() []form.Row {
@@ -147,9 +151,9 @@ func (p *providerList) Key(data string) bool {
 		p.scr.L.Page(-1)
 	case sel == addRow && kb.Matches(data, "tui.select.confirm"):
 		p.in.Begin("")
-	case sel != addRow && (data == " " || kb.Matches(data, "tui.select.confirm")):
+	case sel != addRow && kb.Matches(data, "tui.select.confirm"):
 		p.checked[sel] = !p.checked[sel]
-	case sel != addRow && !slices.Contains(p.known, sel) && (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")):
+	case sel != addRow && !slices.Contains(p.known, sel) && tui.MatchesKey(data, frame.KeyDelete):
 		p.custom = slices.DeleteFunc(p.custom, func(c string) bool { return c == sel })
 		delete(p.checked, sel)
 	default:
@@ -180,13 +184,13 @@ func (p *providerList) Hints() []string {
 	if p.in.On {
 		return []string{sdk.KeyHint("tui.select.confirm", "add")}
 	}
-	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.RawKeyHint("space", "toggle"), sdk.RawKeyHint("backspace", "remove custom"), sdk.RawKeyHint("ctrl+s", "stage")}
+	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "toggle"), sdk.RawKeyHint(frame.KeyDelete, "remove custom"), sdk.RawKeyHint(frame.KeySave, "stage")}
 }
 
 func (p *providerList) Help() string {
 	return ` Provider list
- space or enter toggles a provider. Enter on "+ Custom ID" adds an id that is not listed;
- backspace removes a custom id. Ctrl+S stages the list into Settings (save it there);
+ Enter toggles a provider; on "+ Custom ID" it adds an id that is not listed;
+ alt+d removes a custom id. Ctrl+S stages the list into Settings (save it there);
  Esc goes back, and asks first when the list changed.`
 }
 
@@ -215,6 +219,7 @@ func newPatternList(current []config.ReplacePattern) *patternList {
 func (p *patternList) Value() any      { return slices.Clone(p.rules) }
 func (p *patternList) Dirty() bool     { return !slices.Equal(p.orig, p.rules) }
 func (p *patternList) Capturing() bool { return p.in.On }
+func (p *patternList) Typing() bool    { return p.in.On }
 func (p *patternList) Done() bool      { return false }
 
 func quote(s string) string { return `"` + strings.Join(strings.Fields(line.Plain(s)), " ") + `"` }
@@ -314,7 +319,7 @@ func (p *patternList) Key(data string) bool {
 		case i >= 0:
 			p.begin(sel, p.rules[i])
 		}
-	case i >= 0 && (tui.MatchesKey(data, "backspace") || tui.MatchesKey(data, "delete")):
+	case i >= 0 && tui.MatchesKey(data, frame.KeyDelete):
 		p.rules = slices.Delete(p.rules, i, i+1)
 	case i > 0 && tui.MatchesKey(data, "shift+up"):
 		p.rules[i], p.rules[i-1] = p.rules[i-1], p.rules[i]
@@ -385,7 +390,7 @@ func (p *patternList) Hints() []string {
 	if p.in.On {
 		return []string{sdk.KeyHint("tui.select.confirm", "next")}
 	}
-	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("shift+↑↓", "reorder"), sdk.RawKeyHint("backspace", "delete"), sdk.RawKeyHint("ctrl+s", "stage")}
+	return []string{sdk.RawKeyHint("↑↓", "move"), sdk.KeyHint("tui.select.confirm", "edit"), sdk.RawKeyHint("shift+↑↓", "reorder"), sdk.RawKeyHint(frame.KeyDelete, "delete"), sdk.RawKeyHint(frame.KeySave, "stage")}
 }
 
 func (p *patternList) Help() string {
@@ -394,7 +399,7 @@ func (p *patternList) Help() string {
  Claude subscription requests. A rewrite replaces the matching text; a drop removes every
  paragraph containing the match.
  Enter on a rule edits it, on "+ Rewrite rule" or "+ Drop rule" adds one.
- shift+up/down reorders · backspace deletes · Ctrl+S stages the rules into Settings
+ shift+up/down reorders · alt+d deletes · Ctrl+S stages the rules into Settings
  (save them there); Esc goes back, and asks first when the rules changed.`
 }
 
@@ -422,6 +427,7 @@ func (t *templateEditor) text() string    { return string(t.in.Text) }
 func (t *templateEditor) Value() any      { return t.text() }
 func (t *templateEditor) Dirty() bool     { return t.text() != t.orig }
 func (t *templateEditor) Capturing() bool { return false }
+func (t *templateEditor) Typing() bool    { return true }
 func (t *templateEditor) Done() bool      { return t.done }
 
 func (t *templateEditor) unknown() []string {
