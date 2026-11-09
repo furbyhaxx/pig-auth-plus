@@ -11,9 +11,11 @@ refresh lifecycle, with a four-hour freshness window. Prices come from models.de
 catalog, falling back to PiG's bundled price for the same model if unavailable. Compatibility
 metadata comes from PiG, inheriting from the newest model in the same line when needed;
 unknown lines are omitted. Models without a verified price are offered only for OAuth; PiG
-restores its saved catalog offline and uses its bundled list before the first refresh. Open
-`/model` online to refresh; `--list-models` only reads the saved or bundled list. OAuth
-subscription models still show zero cost.
+restores its saved catalog offline and uses its bundled list before the first refresh. An
+undated alias of a listed model (`claude-opus-4-5`) stays available, priced like its dated
+id; the alias of a deprecated model is dropped. Open `/model` online to refresh;
+`--list-models` only reads the saved or bundled list. OAuth subscription models still show
+zero cost.
 
 ## Overrides
 

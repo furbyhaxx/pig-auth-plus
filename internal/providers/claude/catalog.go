@@ -334,7 +334,49 @@ func (c *Catalog) parse(listing, prices []byte, includeUnpriced bool) ([]map[str
 		model["cost"] = cost
 		models = append(models, model)
 	}
-	return models, nil
+	return c.aliases(models), nil
+}
+
+// aliases keeps the bundled undated ids of listed dated models, so saved selections and
+// `--model` values that name them stay resolvable. A deprecated listing emits no model, and its
+// alias stays dropped.
+func (c *Catalog) aliases(models []map[string]any) []map[string]any {
+	listed := make(map[string]bool, len(models))
+	for _, m := range models {
+		if id, _ := m["id"].(string); id != "" {
+			listed[id] = true
+		}
+	}
+	for _, alias := range c.base {
+		id, _ := alias["id"].(string)
+		if id == "" || listed[id] {
+			continue
+		}
+		var dated map[string]any
+		for _, m := range models {
+			if mid, _ := m["id"].(string); mid != id && undated(mid) == id {
+				dated = m
+				break
+			}
+		}
+		if dated == nil {
+			continue
+		}
+		listed[id] = true
+		model := maps.Clone(alias)
+		model["cost"] = maps.Clone(costMap(dated))
+		if window, ok := dated["contextWindow"]; ok {
+			model["contextWindow"] = window
+		}
+		if maxTokens, ok := dated["maxTokens"]; ok {
+			model["maxTokens"] = maxTokens
+		}
+		if unpriced, _ := dated[unpricedKey].(bool); unpriced {
+			model[unpricedKey] = true
+		}
+		models = append(models, model)
+	}
+	return models
 }
 
 // known is the bundled model of id, exact or without its date suffix.
@@ -471,6 +513,12 @@ func segment(s string) (head, rest string) {
 		i++
 	}
 	return s[:i], s[i:]
+}
+
+// costMap is a model's cost, as the bundled records and the price table hold it.
+func costMap(model map[string]any) map[string]any {
+	cost, _ := model["cost"].(map[string]any)
+	return cost
 }
 
 // zeroCost is the price of a model only a subscription may use.

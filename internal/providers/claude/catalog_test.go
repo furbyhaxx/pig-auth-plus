@@ -217,8 +217,8 @@ func TestParseDatedIDsUseUndatedPricesAndUnknownLinesAreSkipped(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(models) != 2 {
-		t.Fatalf("models = %d, want 2: %v", len(models), models)
+	if len(models) != 3 {
+		t.Fatalf("models = %d, want 3 including the undated alias: %v", len(models), models)
 	}
 	if models[0]["id"] != "claude-fable-5-1-20261109" || models[0]["name"] != "Claude Fable 5.1" ||
 		models[0]["contextWindow"] != float64(100) || models[0]["maxTokens"] != float64(10) {
@@ -232,6 +232,43 @@ func TestParseDatedIDsUseUndatedPricesAndUnknownLinesAreSkipped(t *testing.T) {
 	}
 	if models[1][unpricedKey] != true {
 		t.Fatalf("claude-fable-6 is not marked unpriced: %v", models[1])
+	}
+	if models[2]["id"] != "claude-fable-5-1" || models[2]["contextWindow"] != float64(100) || models[2]["maxTokens"] != float64(10) {
+		t.Fatalf("undated alias = %v", models[2])
+	}
+	if cost := costOf(t, models[2]); cost != [4]float64{10, 50, 0.25, 12.5} {
+		t.Fatalf("undated alias cost = %v", cost)
+	}
+}
+
+func TestParseKeepsBundledUndatedAliasesOfListedDatedModels(t *testing.T) {
+	catalog, err := NewCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	listing := []byte(`{"data":[
+		{"id":"claude-opus-4-5-20251101","line":"opus","lifecycle":"active","max_input_tokens":300000,"max_tokens":32000},
+		{"id":"claude-sonnet-4-5-20250929","line":"sonnet","lifecycle":"deprecated","max_input_tokens":200000,"max_tokens":64000}
+	],"has_more":false}`)
+	prices := []byte(`{"anthropic":{"models":{
+		"claude-opus-4-5-20251101":{"cost":{"input":6,"output":30,"cache_read":0.6,"cache_write":7.5}}
+	}}}`)
+	models, err := catalog.parse(listing, prices, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias := model(models, "claude-opus-4-5")
+	if alias == nil {
+		t.Fatalf("claude-opus-4-5 missing: %v", models)
+	}
+	if cost := costOf(t, alias); cost != [4]float64{6, 30, 0.6, 7.5} {
+		t.Fatalf("claude-opus-4-5 cost = %v, want the dated model's price", cost)
+	}
+	if alias["contextWindow"] != float64(300000) || alias["maxTokens"] != float64(32000) {
+		t.Fatalf("claude-opus-4-5 limits = %v %v", alias["contextWindow"], alias["maxTokens"])
+	}
+	if model(models, "claude-sonnet-4-5") != nil {
+		t.Fatal("a deprecated listing's undated alias was kept")
 	}
 }
 
