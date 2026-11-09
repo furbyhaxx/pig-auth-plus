@@ -64,7 +64,7 @@ web-search tool, the dedicated `/quota codex login` flow, project-scope settings
 ## Layout
 
 ```text
-extension.go                 factory: registers providers, hooks, commands, events; thin wiring
+extensions/pig-auth-plus/       factory: registers providers, hooks, commands, events; thin wiring
 internal/
   paths/                     agentDir, config dir, XDG state/cache (from the SDK, never hardcoded)
   config/                    catalog of settings, layered resolve, TOML round-trip save, import

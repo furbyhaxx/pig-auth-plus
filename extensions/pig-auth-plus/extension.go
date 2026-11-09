@@ -1,6 +1,6 @@
-// Package authplus is the pig-auth-plus factory: registration and wiring only.
+// Package pigauthplus is the pig-auth-plus factory: registration and wiring only.
 // Feature logic lives in internal/ as plain functions over plain data.
-package authplus
+package pigauthplus
 
 import (
 	sdk "github.com/MichaelKinsy/PiG/extensions/sdk"

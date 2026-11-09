@@ -5,7 +5,7 @@ Go factory extension for PiG that replaces the TypeScript package pi-auth-plus: 
 and line; per-model context token counts; one `/auth` dashboard. Login stays in PiG's `/login`.
 
 ## Layout
-- `extension.go` — `Extension()` factory, package `authplus`. Registration and wiring only.
+- `extensions/pig-auth-plus/` — the installable Go module (`Extension()` factory, package `pigauthplus`, registration and wiring only). The root `go.work` joins it to the root module, which holds `internal/`; `package.json` names it as the package's extension, because a Go extension cannot be installed from a root that also has a `package.json`.
 - `internal/` — feature packages, each with its own AGENTS.md: `providers/{claude,antigravity,synthetic}` (inference), `wire` (private runtime on PiG builtin APIs), `quota` + `quota/sources`, `line` (template), `tokens`, `bus`, `config`, `alias`, `modelsfile`, `hooks`, `resetflow`, `migrate`, `ui/*` (dashboard tabs), `app` (SDK wiring). Providers never import each other.
 - `docs/` — human-facing product docs. New command, setting or provider → update `README.md` and the matching doc in the same change.
 - `.project/` — development artifacts; never in `docs/`; committed. Load skill `dot-project` before writing, revising or deleting one. Only what currently applies or is planned stays; superseded artifacts are deleted with `Artifact-*` commit trailers, never archived. Do not read deleted artifacts from git history unless asked. Open work: `BACKLOG.md` pointers + `.project/backlog/`; live claims: project-scope `tasks`. Never put drift/TODOs in AGENTS.md.
@@ -22,10 +22,10 @@ and line; per-model context token counts; one `/auth` dashboard. Login stays in 
 - Gate: `just check` (gofmt, vet, test, validate, artifacts). Concurrency changes: `just race`.
 - Don't run bare `go build`/`go test`; the SDK resolves only through the staged copy. Use the Justfile or `-modfile=.tmp/go.mod` after `just _modfile`.
 - Add a dependency: `just get <module>@<version>`.
-- Load live: `pig -e .`; isolated: `pig --no-session -ne -e .`.
+- Load live: `pig -e ./extensions/pig-auth-plus`; isolated: `pig --no-session -ne -e ./extensions/pig-auth-plus`.
 
 ## Identity
-- Extension name `pig-auth-plus` = directory name = `name` in `extension.go`.
+- Extension name `pig-auth-plus` = directory name = `name` in `extensions/pig-auth-plus/extension.go`.
 - Commands: `/auth [section]`, `/quotas` = `/quota`, `/tokens` = `/token`. No `/pig-auth-plus` family.
 - Config: `<agentDir>/auth-plus.toml`; layers builtin < user < session. No project layer.
 - Bus channels stay `pi-auth-plus:v1:*` for existing consumers.

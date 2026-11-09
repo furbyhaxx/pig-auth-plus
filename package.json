@@ -1,0 +1,11 @@
+{
+  "name": "pig-auth-plus",
+  "version": "0.1.0",
+  "description": "PiG extension: subscription providers, quota monitoring, token counts and the /auth dashboard",
+  "license": "MIT",
+  "repository": "github:furbyhaxx/pig-auth-plus",
+  "keywords": ["pig-package"],
+  "pi": {
+    "extensions": ["extensions/pig-auth-plus"]
+  }
+}

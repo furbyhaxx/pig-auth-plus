@@ -1,5 +1,8 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# The root go.work only serves PiG's package build; the checks use the staged modfile instead.
+export GOWORK := "off"
+
 tmp := justfile_directory() + "/.tmp"
 
 go_sources := "find . -type f -name '*.go' -not -path './.*' -print0"
@@ -35,8 +38,12 @@ get +pkgs: _modfile
 	grep -v '^replace github.com/MichaelKinsy/PiG/extensions/sdk' "{{tmp}}/go.mod" > go.mod
 	cp "{{tmp}}/go.sum" go.sum
 
-validate:
-	pig install . --validate-only --json
+validate: build
+	pig package validate . --json
+
+# Build and load the installable extension through PiG, as an install would.
+build:
+	pig --no-session --offline -ne -e ./extensions/pig-auth-plus --list-models synthetic > /dev/null
 
 artifacts:
 	python3 scripts/check_artifacts.py .
