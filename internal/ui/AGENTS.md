@@ -1,4 +1,4 @@
-Dashboard UI: `frame/` is the `/auth` shell (tab strip, hint row, modal choice, discard protection); each section is a `frame.Tab` in its own package.
+Dashboard UI: `frame/` is the `/auth` shell (nine-line frame, fixed height, tab bar, hint row, modal choice, discard protection); each section is a `frame.Tab` in its own package. The design, keyboard and mouse standard is skill `extending-pig`, `references/dashboard-standard.md`; follow it and update it when a convention changes.
 
 - Tabs return plain lines already fitted to `Env.Width`; check with `tui.VisibleWidth`, never `len`. Render does no I/O: tabs read cached state.
 - Key hints come from `sdk.KeyHint`/`sdk.RawKeyHint`; match keys with `tui.GetKeybindings().Matches` or `tui.MatchesKey`.
