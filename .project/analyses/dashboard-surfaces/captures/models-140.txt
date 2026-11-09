@@ -27,6 +27,6 @@ online-research, python, reddit-cli, rust, skill-creator, systematic-debugging, 
  Claude Fable 5 · anthropic-messages · reasoning · text, image · in $10 / out $50
  ↑↓ move · enter open · tab next tab · type to filter · f1 help · escape/ctrl+c close
 ──────────────────────────────────────────────────────────────── ↓ 1190 more ───────────────────────────────────────────────────────────────
-openrouter: 17.93$ · deepseek: 6.57$ · codex: 52% · claude: 5h/? 7d/20% · antigravity: gem/3% arg/3% · synthetic: 9% · xai: 38%
+openrouter: 17.93$ · deepseek: 6.40$ · codex: 52% · claude: 5h/? 7d/21% · antigravity: gem/3% arg/3% · synthetic: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

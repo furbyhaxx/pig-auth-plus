@@ -26,7 +26,7 @@ systematic-debugging, toml, typescript
  dashboard.density · Dashboard row spacing; compact uses…
  ←→ change · enter edit · f1 help · escape/ctrl+c close
 ─────────────────────── ↓ 18 more ───────────────────────
-or: 17.93$ · ds: 6.67$ · cox: 52% · cl: 5h/? 7d/20%
-ag: gem/3% arg/3% · syn: 9% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52% · cl: 5h/? 7d/21%
+ag: gem/3% arg/3% · syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

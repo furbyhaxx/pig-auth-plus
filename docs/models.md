@@ -10,7 +10,7 @@ of pig-auth-plus.
 
 Enter on a model opens its fields. Name, context and output limits, reasoning, input types
 and prices can be staged individually; Enter edits a field, Left/Right changes an option and
-Backspace stages removal of that override. `ctrl+s` writes all staged fields in one locked
+`alt+u` stages removal of that override. `ctrl+s` writes all staged fields in one locked
 update; Esc asks before discarding them.
 
 Overrides are written to PiG's user `<agentDir>/models.json` (`modelOverrides`). The editor
@@ -24,7 +24,7 @@ a model; it does not change what the provider enforces. Fields such as headers,
 In a model's detail, `+ New alias` opens the alias form and Enter on an existing alias row
 edits it: an id (no spaces, not equal to the source and not taken in that provider), an
 optional display name and optional context and output limits. Blank optional fields inherit
-from the source. `Remove alias` (or `d` on it) deletes one. The save asks for `user` or
+from the source. `Remove alias` (or `alt+d` on it) deletes one. The save asks for `user` or
 `session` scope.
 
 An alias is a PiG virtual model listed under the source's provider; requests go to the

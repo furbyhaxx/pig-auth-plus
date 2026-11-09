@@ -25,7 +25,7 @@ reports `needs-auth`. `opencode` and `opencode-go` have no quota source.
 
 ## Status line
 
-`quotas.linePlacement`, or `p` in the Quotas tab:
+`quotas.linePlacement`, or `alt+p` in the Quotas tab:
 
 | Placement | Location |
 |---|---|
@@ -84,7 +84,7 @@ scope (session or user) and saves nothing until you confirm it.
 
 ## Reset credits
 
-Only `codex` supports reset credits: `x` on its row or `/quotas reset [provider]`. Credits
+Only `codex` supports reset credits: `alt+x` on its row or `/quotas reset [provider]`. Credits
 are listed first and the soonest-expiring is selected. **Keep the credit** is the first
 choice; only **Spend 1 credit now (cannot be undone)** sends one consume request. A consume
 is sent once, never retried, and is followed by a forced refresh. Dismissal, no UI or no

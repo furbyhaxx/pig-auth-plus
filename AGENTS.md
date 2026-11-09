@@ -37,5 +37,6 @@ and line; per-model context token counts; one `/auth` dashboard. Login stays in 
 - Quotas and token counts are reported by their owner or shown as unknown; never interpolate or default a missing number to 0. Label every count's source.
 - No credential in any log, notification, bus payload, fixture, doc or commit. Redact before writing evidence.
 - Live verification is authorized on the user's configured accounts for these providers and their quota/count endpoints. Irreversible calls (spending a reset credit, creating keys, revoking tokens) need explicit approval each time.
+- No single-key actions anywhere in the UI: printable keys only type into a search line or input; every action needs a modifier chord (`alt+r`, `ctrl+s`) or a leader. Enter, Esc, Tab, arrows and paging are navigation.
 - Panel, line or renderer change → tmux captures at 36/57/80/140 columns (skill `extending-pig` script).
 - Runtime dependencies: check latest version and maintenance first; record licenses in `THIRD_PARTY_NOTICES.md`.

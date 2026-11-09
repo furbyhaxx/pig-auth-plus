@@ -26,7 +26,7 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
  Claude Fable 5 · anthropic-messages · reasoning · text, image · in $10 / out $…
  ↑↓ move · enter open · tab next tab · f1 help · escape/ctrl+c close
 ────────────────────────────────── ↓ 1190 more ─────────────────────────────────
-or: 17.93$ · ds: 6.57$ · cox: 52% · cl: 5h/? 7d/20% · ag: gem/3% arg/3%
-syn: 9% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52% · cl: 5h/? 7d/21% · ag: gem/3% arg/3%
+syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

@@ -37,7 +37,7 @@ match = "paragraph to remove"
 Invalid values warn and inherit the lower layer. A missing file contributes nothing and a
 malformed file warns and is never overwritten. Saves lock the file, change only the keys you
 edited, keep comments, ordering and unknown keys, and write atomically with mode 0600. A save
-reports keys still shadowed by the session layer. Backspace previews the built-in default
+reports keys still shadowed by the session layer. `alt+u` previews the built-in default
 and stages removal of the key from the save scope. Session values vanish with the session.
 An existing `auth-plus.json` is imported once, see [getting started](getting-started.md#migrating-from-pi-auth-plus).
 

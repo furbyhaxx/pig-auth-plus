@@ -9,24 +9,24 @@ online-research, python, reddit-cli, rust, skill-creator, systematic-debugging, 
   pig-auth-plus
 
 
-── Auth › Quotas ────────────────────────────────────────────────────────────────────────────────── refreshed 22s ago · line below editor ──
+── Auth › Quotas ─────────────────────────────────────────────────────────────────────────────────── refreshed 4s ago · line below editor ──
  ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
- ⌕
+ ⌕ Type to filter…
 
-→ Claude      7d ▕██░░░░░░▏ 20% ↻5d8h                                                                                               ● 3m ago
-  Antigravity gem ▕░░░░░░░░▏ 3% ↻1h54m · 3p ▕░░░░░░░░▏ 1% ↻2d12h · arg ▕░░░░░░░░▏ 3% ↻6d3h                                         ● 23s ago
-  Synthetic   sub ▕░░░░░░░░▏ 0% ↻4h59m · 7d ▕█░░░░░░░▏ 8% ↻2h38m                                                                   ● 22s ago
-  ChatGPT     7d ▕████░░░░▏ 52% ↻1d19h                                                                                             ● 23s ago
-  xAI         7d ▕███░░░░░▏ 38% ↻1d2h                                                                                               ● 1m ago
-  OpenRouter  $17.93 left                                                                                                          ● 29s ago
-  DeepSeek    $6.77 left                                                                                                           ● 33s ago
+→ Claude      7d ▕██░░░░░░▏ 21% ↻5d7h                                                                                               ● 1m ago
+  Antigravity gem ▕░░░░░░░░▏ 3% ↻55m · 3p ▕░░░░░░░░▏ 1% ↻2d11h · arg ▕░░░░░░░░▏ 3% ↻6d2h                                            ● 1m ago
+  Synthetic   sub ▕░░░░░░░░▏ 0% ↻4h59m · 7d ▕█░░░░░░░▏ 12% ↻1h39m                                                                   ● 4s ago
+  ChatGPT     7d ▕████░░░░▏ 52% ↻1d18h                                                                                              ● 7s ago
+  xAI         7d ▕███░░░░░▏ 38% ↻1d1h                                                                                              ● 15s ago
+  OpenRouter  $17.93 left                                                                                                          ● 47s ago
+  DeepSeek    $6.40 left                                                                                                           ● 34s ago
 
 
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Enter shows every window with burn rate and projected exhaustion. Unknown stays "?".
- ↑↓ move · enter details · r refresh · R all · p position · tab next tab · f1 help · escape/ctrl+c close
+ ↑↓ move · enter details · alt+r refresh · alt+a all · alt+p position · tab next tab · type to filter · f1 help · escape/ctrl+c close
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-openrouter: 17.93$ · deepseek: 6.77$ · codex: 52% · claude: 5h/? 7d/20% · antigravity: gem/3% arg/3% · synthetic: 8% · xai: 38%
+openrouter: 17.93$ · deepseek: 6.40$ · codex: 52% · claude: 5h/? 7d/21% · antigravity: gem/3% arg/3% · synthetic: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

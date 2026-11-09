@@ -13,9 +13,9 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
  ⌕
 
 → Provider     Claude (claude · alias cl, cc)
-  Credential   ● signed in · OAuth login · expires in 1h 51m
+  Credential   ● signed in · OAuth login · expires in 53m
   Sign in/out  /login claude  /logout claude
-  Quota        7d 20%                                           → open in Quotas
+  Quota        7d 21%                                           → open in Quotas
   Models       17 listed · 0 aliases                            → open in Models
   Tokens       provider usage; native count endpoint without an anchor
   Settings     cache retention long · 0 prompt rules          → open in Settings
@@ -26,7 +26,7 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
  Read-only. Enter on a row marked → opens the tab that owns it.
  ↑↓ move · enter open · tab next tab · f1 help · escape/ctrl+c back
 ────────────────────────────────────────────────────────────────────────────────
-or: 17.93$ · ds: 6.77$ · cox: 52% · cl: 5h/? 7d/20% · ag: gem/3% arg/3%
-syn: 8% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52% · cl: 5h/? 7d/21% · ag: gem/3% arg/3%
+syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

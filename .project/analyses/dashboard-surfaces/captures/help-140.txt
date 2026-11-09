@@ -9,24 +9,24 @@ online-research, python, reddit-cli, rust, skill-creator, systematic-debugging, 
   pig-auth-plus
 
 
-── Auth › Providers › Help ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+── Auth › Quotas › Help ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
  ⌕
 
- Providers
- Credential state for every provider pig-auth-plus knows. Credentials are never shown.
- ● signed in      a usable credential exists; its source and expiry are named
- ◐ token expired  an OAuth token lapsed; PiG refreshes it on the next request
- ○ not signed in  no credential; the sign-in command is shown
- Enter opens a read-only detail with jumps to the tab that owns each value.
- Sign in and out with PiG's /login and /logout. Quota-only providers (codex, xai,
- openrouter, deepseek) use PiG's own login for inference and add usage reporting here.
- alt+r  reread state     type  filter the list     esc  back or close
+ Quotas
+ One row per provider with its important windows; Enter opens every window with burn rate
+ and projected exhaustion. Unknown numbers show "?"; an explicit 0% is real usage; a
+ missing limit is not "unlimited". The panel never fetches by itself.
+ Up/Down  move or scroll       Enter  open the provider      esc  back or close
+ alt+r  refresh the selected provider      alt+a  refresh every enabled provider
+ alt+p  choose where the quota line appears and where to save it
+ alt+x  spend a reset credit (asks first; only on providers that offer them)
+ Refresh respects a provider's rate-limit hold.
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Full descriptions and bindings; your edits are kept.
  ↑↓ scroll · f1 back · escape/ctrl+c back
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-openrouter: 17.93$ · deepseek: 6.67$ · codex: 52% · claude: 5h/? 7d/20% · antigravity: gem/3% arg/3% · synthetic: 9% · xai: 38%
+openrouter: 17.93$ · deepseek: 6.40$ · codex: 52% · claude: 5h/? 7d/21% · antigravity: gem/3% arg/3% · synthetic: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

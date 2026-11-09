@@ -12,21 +12,21 @@ systematic-debugging, toml, typescript
  ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
  ⌕
 
-  Context      ▕░░░░░░░░░░▏ 2.5% of 425K · 10,453 tokens
+  Context      ▕░░░░░░░░░░▏ 2.5% of 425K · 10,507 tokens
   Source       ≈ estimate
-  Pi           0 · Δ +10,453
+  Pi           0 · Δ +10,507
   Anchor       – none; counted from the full context
-  Tail         10,453 · ≈ estimate · 0 messages
+  Tail         10,507 · ≈ estimate · 0 messages
 
   Breakdown    full request · share of the request
-  system         8,870 ▕███████░▏  85%  1 message
+  system         8,924 ▕███████░▏  85%  1 message
   tools          1,583 ▕█░░░░░░░▏  15%  7 tools
 
 ─────────────────────────────────────────────────────────
  Live session context count, where it came from, and wha…
- ↑↓ scroll · r recount · f1 help · escape/ctrl+c close
+ ↑↓ scroll · f1 help · escape/ctrl+c close
 ─────────────────────────────────────────────────────────
-or: 17.93$ · ds: 6.72$ · cox: 52% · cl: 5h/? 7d/20%
-ag: gem/3% arg/3% · syn: 8% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52% · cl: 5h/? 7d/21%
+ag: gem/3% arg/3% · syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)           gpt-6.1-sol • low

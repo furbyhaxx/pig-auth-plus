@@ -8,13 +8,13 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
   pig-auth-plus
 
 
-── Auth › Quotas › Claude ─────────────────────────────── fetched 3m ago · ok ──
+── Auth › Quotas › Claude ─────────────────────────────── fetched 2m ago · ok ──
  ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
  ⌕
 
-    7d weekly                 ██░░░░░░  20% ↻ 5d 8h
-      drain window 6.8%/h · 1h 6.8%/h · 24h 6.8%/h · empty in 11h 45m
-    7d Fable                  ░░░░░░░░   0% ↻ 5d 8h
+    7d weekly                 ██░░░░░░  21% ↻ 5d 7h
+      drain window 8.3%/h · 1h 8.3%/h · 24h 8.3%/h · empty in 9h 32m
+    7d Fable                  ░░░░░░░░   0% ↻ 5d 7h
       drain window 0.0%/h · 1h 0.0%/h · 24h 0.0%/h
 
 
@@ -24,9 +24,9 @@ python, reddit-cli, rust, skill-creator, systematic-debugging, toml, typescript
 
 ────────────────────────────────────────────────────────────────────────────────
  Every window the provider reports, with observed burn rate and projected exhau…
- ↑↓ scroll · r refresh · tab next tab · f1 help · escape/ctrl+c back
+ ↑↓ scroll · alt+r refresh · tab next tab · f1 help · escape/ctrl+c back
 ────────────────────────────────────────────────────────────────────────────────
-or: 17.93$ · ds: 6.77$ · cox: 52% · cl: 5h/? 7d/20% · ag: gem/3% arg/3%
-syn: 8% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52% · cl: 5h/? 7d/21% · ag: gem/3% arg/3%
+syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                   (openai-codex) gpt-6.1-sol • low

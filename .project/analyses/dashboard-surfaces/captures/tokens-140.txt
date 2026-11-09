@@ -13,20 +13,20 @@ online-research, python, reddit-cli, rust, skill-creator, systematic-debugging, 
  ❱ Providers ❱ Quotas ❱ Tokens ❱ Models ❱ Settings
  ⌕
 
-  Context      ▕░░░░░░░░░░▏ 2.5% of 425K · 10,453 tokens
+  Context      ▕░░░░░░░░░░▏ 2.5% of 425K · 10,507 tokens
   Source       ≈ estimate
-  Pi           0 · Δ +10,453
+  Pi           0 · Δ +10,507
   Anchor       – none; counted from the full context
-  Tail         10,453 · ≈ estimate · 0 messages
+  Tail         10,507 · ≈ estimate · 0 messages
 
   Breakdown    full request · share of the request
-  system         8,870 ▕███████░▏  85%  1 message   ≈ estimate
+  system         8,924 ▕███████░▏  85%  1 message   ≈ estimate
   tools          1,583 ▕█░░░░░░░▏  15%  7 tools     ≈ estimate
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  Live session context count, where it came from, and what fills it.
- ↑↓ scroll · r recount · tab next tab · f1 help · escape/ctrl+c close
+ ↑↓ scroll · alt+r recount · tab next tab · f1 help · escape/ctrl+c close
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-openrouter: 17.93$ · deepseek: 6.72$ · codex: 52% · claude: 5h/? 7d/20% · antigravity: gem/3% arg/3% · synthetic: 9% · xai: 38%
+openrouter: 17.93$ · deepseek: 6.40$ · codex: 52% · claude: 5h/? 7d/21% · antigravity: gem/3% arg/3% · synthetic: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-plus (dev)
 $0.000 (sub) 0.0%/425k (auto)                                                                               (openai-codex) gpt-6.1-sol • low

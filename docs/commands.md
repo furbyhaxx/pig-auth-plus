@@ -70,19 +70,24 @@ is clickable. Every action also has a key.
 commands, quota, models, token source, settings); rows marked `→ open in` jump to that tab.
 `alt+r` rereads credential state.
 
-**Quotas:** one row per provider. Enter opens every window with burn rate and projected
-exhaustion. `r` refreshes the selected provider, `R` all, `p` chooses the line placement
-(then a save scope) and `x` starts a reset-credit request. This list does not filter on
-typed text because those letters are actions.
+**No single-key actions.** A letter, digit or space never triggers anything: it types into the
+search line or an inline input. Every action uses a modifier: `alt+r` refresh, reread or
+recount, `alt+a` refresh every provider, `alt+p` quota line position, `alt+x` spend a reset
+credit, `alt+d` delete, `alt+u` stage the default or inherited value, `ctrl+s` save.
 
-**Tokens:** `r` recounts. Up/Down scroll.
+**Quotas:** one row per provider. Enter opens every window with burn rate and projected
+exhaustion. `alt+r` refreshes the selected provider, `alt+a` all, `alt+p` chooses the line
+placement (then a save scope) and `alt+x` starts a reset-credit request. Type to filter
+the provider list.
+
+**Tokens:** `alt+r` recounts. Up/Down scroll.
 
 **Models:** only models of providers you are signed in to are listed; type to filter. Enter
-opens a model: Enter edits a field, Backspace resets an override, `ctrl+s` saves overrides
+opens a model: Enter edits a field, `alt+u` resets an override, `ctrl+s` saves overrides
 to `<agentDir>/models.json`. The detail has `+ New alias` and a row per existing alias.
 
-**Settings:** Left/Right or Space toggle, cycle or nudge; Enter edits text and numbers and
-opens the provider-list, prompt-rule and line-template editors; Backspace stages the
+**Settings:** Left/Right toggle, cycle or nudge; Enter edits text and numbers and
+opens the provider-list, prompt-rule and line-template editors; `alt+u` stages the
 built-in default; `ctrl+s` saves. Each row shows where its value comes from (`default`,
 `user` or `session`) and `●` marks a staged edit.
 

@@ -11,13 +11,13 @@ typescript
  ❱ Providers ❱ Quotas ❱ Tokens … 1/5
  ⌕ Type to filter…
 
-→ Claude       ● expires 1h 52m
-  Antigravity  ● expires 23m
-  Synthetic    ●      sub 0% · 7d 8%
+→ Claude       ● expires 53m  7d 21%
+  Antigravity  ● expires 19m
+  Synthetic    ●     sub 0% · 7d 12%
   ChatGPT      ● expires 3d   7d 52%
-  xAI          ● expires 1h 7m
+  xAI          ● expires 8m   7d 38%
   OpenRouter   ●         $17.93 left
-  DeepSeek     ●          $6.82 left
+  DeepSeek     ●          $6.40 left
   OpenCode Zen ○ /login opencode
   OpenCode Go  ○ /login opencode-go
 
@@ -25,8 +25,8 @@ typescript
  Enter shows everything known about…
  f1 help · escape/ctrl+c close
 ────────────────────────────────────
-or: 17.93$ · ds: 6.82$ · cox: 52%
-cl: 5h/? 7d/20% · ag: gem/3% arg/3%
-syn: 8% · xai: 38%
+or: 17.93$ · ds: 6.40$ · cox: 52%
+cl: 5h/? 7d/21% · ag: gem/3% arg/3%
+syn: 12% · xai: 38%
 /mnt/Projects/furbyhaxx/pig-auth-...
 $0.000 (sub) 0.0%/425k (auto)  gpt-6

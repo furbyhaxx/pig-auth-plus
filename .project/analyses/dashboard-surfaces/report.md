@@ -5,15 +5,15 @@ document:
   title: "Dashboard screens at 36, 57, 80 and 140 columns"
   description: "Live tmux captures of every /auth screen on the redesigned frame against the user's configured accounts, with the defects the captures exposed"
   status: "published"
-  revision: 2
+  revision: 3
   created_at: "2026-11-08T21:10:48+01:00"
-  updated_at: "2026-11-09T01:30:00+01:00"
+  updated_at: "2026-11-09T11:30:00+01:00"
   created_by: "orchestrator"
   updated_by: "orchestrator"
   changelog:
-    - revision: 2
-      reason: "dashboard redesign (fixed-height frame, detail screens)"
-      changes: ["captures replaced: nine screens at four widths plus a 16-row terminal", "result and defect list rewritten for the new frame"]
+    - revision: 3
+      reason: "no single-key actions: every action moved to a modifier chord"
+      changes: ["all 36 captures plus the 16-row one retaken; hints show alt+r, alt+u and ctrl+s", "result lists the keyboard rule"]
 ---
 
 # Dashboard screens at four widths
@@ -33,6 +33,12 @@ and help (36 files), plus `providers-57x16.txt` at a 16-row terminal.
 - Identity survives narrow widths: provider rows keep label and state glyph (`●`, `◐`, `○`)
   while source, plan, expiry and headline quota drop first; the tab bar scrolls and shows
   `n/5` at 36 columns.
+
+- Hints name only modifier chords (`alt+r`, `alt+a`, `alt+p`, `alt+x`, `alt+u`, `ctrl+s`).
+  At 80 columns the Quotas row keeps `alt+r refresh` and drops `alt+a all` and `alt+p position`
+  by priority; the full set is on F1.
+- A typed filter on Quotas (`rxpa`) hid every row and the live run showed the bare letters
+  only in the search line, with no action fired.
 
 ## Defects the captures exposed, all fixed
 
